@@ -1,0 +1,8 @@
+build(
+	out javac,
+) {
+	$javac =  saker.java.compile(
+		SourceDirectories: cpsrc,
+		Identifier: cp,
+	)
+}

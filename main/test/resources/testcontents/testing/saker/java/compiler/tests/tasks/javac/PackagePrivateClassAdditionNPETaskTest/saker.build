@@ -1,0 +1,7 @@
+build {
+	saker.java.compile(
+		SourceDirectories: src,
+		GenerateNativeHeaders: true,
+		Identifier: src,
+	)
+}

@@ -1,0 +1,2 @@
+@MyAnnot
+package test;

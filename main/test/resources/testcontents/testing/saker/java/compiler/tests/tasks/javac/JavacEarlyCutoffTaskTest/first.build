@@ -1,0 +1,8 @@
+build(
+	out javac
+) {
+	$javac = saker.java.compile(
+		SourceDirectories: first,
+		Identifier: first_withinclude,
+	)
+}

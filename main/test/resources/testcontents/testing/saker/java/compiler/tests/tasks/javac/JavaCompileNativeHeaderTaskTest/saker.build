@@ -1,0 +1,12 @@
+build {
+	saker.java.compile(
+		SourceDirectories: src,
+		BuildIncremental: false,
+		GenerateNativeHeaders: true,
+	)
+	saker.java.compile(
+		SourceDirectories: incsrc,
+		BuildIncremental: true,
+		GenerateNativeHeaders: true,
+	)
+}

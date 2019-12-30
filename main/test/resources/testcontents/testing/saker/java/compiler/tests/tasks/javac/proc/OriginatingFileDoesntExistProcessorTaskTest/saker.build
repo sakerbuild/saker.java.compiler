@@ -1,0 +1,18 @@
+saker.java.compile(
+	SourceDirectories: [
+		src
+	],
+	ClassPath: [
+		lib/cmdline-api.jar,
+	],
+	AnnotationProcessors: {
+		Processor: saker.java.processor(
+			ClassPath: lib/cmdline-processor.jar,
+			Class: bence.sipka.cmd.CommandLineProcessor,
+		),
+		Aggregating: false,
+		SuppressWarnings: [ 
+			LastRoundGeneration,
+		],
+	},
+)

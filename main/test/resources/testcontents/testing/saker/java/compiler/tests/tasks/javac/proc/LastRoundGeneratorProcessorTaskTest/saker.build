@@ -1,0 +1,16 @@
+build {
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		Identifier: proc,
+	)
+	saker.java.compile(
+		SourceDirectories: src,
+		AnnotationProcessors: {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.LastRoundGeneratorProcessor,
+			),
+			Aggregating: false,
+		},
+	)
+}

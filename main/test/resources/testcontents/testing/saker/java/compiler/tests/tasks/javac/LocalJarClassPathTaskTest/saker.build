@@ -1,0 +1,6 @@
+$second = saker.java.compile(
+	SourceDirectories: second,
+	ClassPath: [
+		std.file.local(test.local.jar.path()),
+	],
+)

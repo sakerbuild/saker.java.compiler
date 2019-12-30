@@ -1,0 +1,31 @@
+samebuild {
+	$cppass = saker.java.compile(
+		SourceDirectories: cp,
+		ClassPath: [
+			classpath.jar
+		],
+		Identifier: cp,
+	)
+	
+	$mainpass = saker.java.compile(
+		SourceDirectories: src,
+		Identifier: main,
+		ClassPath: $cppass,
+	)
+}
+
+jarmodifybuild{
+	$cppass = saker.java.compile(
+		SourceDirectories: cp,
+		ClassPath: [
+			test.jar.path()
+		],
+		Identifier: cp_jm,
+	)
+	
+	$mainpass = saker.java.compile(
+		SourceDirectories: src,
+		Identifier: main_jm,
+		ClassPath: $cppass,
+	)
+}

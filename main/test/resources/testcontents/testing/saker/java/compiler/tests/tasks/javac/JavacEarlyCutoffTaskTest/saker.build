@@ -1,0 +1,47 @@
+build {
+	$firstpass = saker.java.compile(
+		SourceDirectories: first,
+		Identifier: first,
+	)
+	
+	$secondpass = saker.java.compile(
+		SourceDirectories: second,
+		Identifier: second,
+		ClassPath: $firstpass,
+	)
+	
+	$thirdpass = saker.java.compile(
+		SourceDirectories: third,
+		Identifier: third,
+		ClassPath: $secondpass,
+	)
+}
+
+build_withlist {
+	$firstpass = saker.java.compile(
+		SourceDirectories: first,
+		Identifier: first_withlist,
+	)
+	
+	$secondpass = saker.java.compile(
+		SourceDirectories: second,
+		Identifier: second_withlist,
+		ClassPath: [
+			$firstpass
+		],
+	)
+	
+	$thirdpass = saker.java.compile(
+		SourceDirectories: third,
+		Identifier: third_withlist,
+		ClassPath: [
+			$secondpass
+		],
+	)
+}
+
+build_withinclude {
+	include(Path: first.build)
+	include(Path: second.build)
+	include(Path: third.build)
+}

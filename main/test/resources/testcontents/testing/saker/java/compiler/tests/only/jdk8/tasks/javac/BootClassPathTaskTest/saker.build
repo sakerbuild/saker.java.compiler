@@ -1,0 +1,12 @@
+build {
+	$cppass = saker.java.compile(
+		SourceDirectories: cp,
+		#empty boot classpath
+		BootClassPath: [],
+	)
+	
+	$mainpass = saker.java.compile(
+		SourceDirectories: src,
+		BootClassPath: $cppass,
+	)
+}

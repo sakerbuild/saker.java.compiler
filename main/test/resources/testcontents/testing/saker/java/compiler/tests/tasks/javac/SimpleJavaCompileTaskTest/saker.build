@@ -1,0 +1,5 @@
+build {
+	saker.java.compile(
+		SourceDirectories: src
+	)
+}

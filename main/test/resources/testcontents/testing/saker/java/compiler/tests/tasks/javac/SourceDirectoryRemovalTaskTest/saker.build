@@ -1,0 +1,10 @@
+build {
+	saker.java.compile(
+		SourceDirectories: [
+			src,
+			src2,
+			src3,
+		],
+		Identifier: main,
+	)
+}

@@ -1,0 +1,44 @@
+build {
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		Identifier: proc,
+	)
+	saker.java.compile(
+		SourceDirectories: src,
+		AnnotationProcessors: {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.ExtractProcessor,
+			),
+			Aggregating: false,
+		},
+		ProcessorInputLocations:{
+			WORKING_DIRECTORY: "",
+			PROC_RES: procresdir,
+		},
+		BuildIncremental: false,
+	)
+}
+
+incbuild {
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		Identifier: incproc,
+	)
+	saker.java.compile(
+		SourceDirectories: src,
+		AnnotationProcessors: {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.ExtractProcessor,
+			),
+			Aggregating: false,
+		},
+		ProcessorInputLocations:{
+			WORKING_DIRECTORY: "",
+			PROC_RES: procresdir,
+		},
+		Identifier: incsrc,
+		BuildIncremental: true,
+	)
+}

@@ -1,0 +1,5 @@
+saker.java.compile=saker.java.compiler.main.compile.JavaCompilerTaskFactory
+saker.java.processor=saker.java.compiler.main.processor.ClassPathProcessorTaskFactory
+saker.java.processor.bundle=saker.java.compiler.main.processor.BundleProcessorTaskFactory
+saker.java.sdk=saker.java.compiler.main.sdk.JavaSDKTaskFactory
+saker.java.classpath.bundle=saker.java.compiler.main.classpath.bundle.BundleClassPathTaskFactory

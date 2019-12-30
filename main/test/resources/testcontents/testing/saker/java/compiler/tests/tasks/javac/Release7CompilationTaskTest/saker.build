@@ -1,0 +1,29 @@
+releasebuild {
+	saker.java.compile(
+		SourceDirectories: src,
+		Parameters: [
+			--release,
+			7,	
+		],
+		Identifier: releasebuild,
+	)
+}
+
+sourcetargetbuild {
+	saker.java.compile(
+		SourceDirectories: src,
+		SourceVersion: 7,
+		TargetVersion: 7,
+		Identifier: sourcetargetbuild,
+	)
+}
+
+bothbuild {
+	saker.java.compile(
+		SourceDirectories: src,
+		SourceVersion: RELEASE_7,
+		TargetVersion: RELEASE_7,
+		Parameters: [--release, 7,],
+		Identifier: bothbuild,
+	)
+}

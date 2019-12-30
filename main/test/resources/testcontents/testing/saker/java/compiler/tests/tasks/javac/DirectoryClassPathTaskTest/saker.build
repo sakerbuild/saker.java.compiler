@@ -1,0 +1,6 @@
+$second = saker.java.compile(
+	SourceDirectories: second,
+	ClassPath: [
+		firstbin,
+	],
+)

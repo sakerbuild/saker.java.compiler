@@ -1,0 +1,30 @@
+build {
+	saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: saker.java.classpath.bundle([
+			simple.bundle-v1, dep.bundle-v1]
+		),
+		Identifier: build,
+	)
+}
+resolveclasspath {
+	saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: saker.java.classpath.bundle(
+			nest.dependency.resolve(simple.bundle)
+		),
+		Identifier: resolve,
+	)
+}
+downloadclasspath {
+	saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: saker.java.classpath.bundle(
+			nest.bundle.download([
+				simple.bundle-v1,
+				dep.bundle-v1,
+			])
+		),
+		Identifier: dl,
+	)
+}

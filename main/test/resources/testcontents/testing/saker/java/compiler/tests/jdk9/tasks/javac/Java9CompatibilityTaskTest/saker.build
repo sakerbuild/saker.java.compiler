@@ -1,0 +1,3 @@
+$proc = saker.java.compile(
+	SourceDirectories: src,
+)

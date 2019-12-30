@@ -1,0 +1,4 @@
+saker.java.compile(
+	SourceDirectories: src,
+	ClassPath: cp*,
+)

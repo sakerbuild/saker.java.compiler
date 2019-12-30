@@ -1,0 +1,22 @@
+build {
+	$common = saker.java.compile(
+		SourceDirectories: common,	
+	)
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		ClassPath: $common,
+		Identifier: proc,
+	)
+	$SrcPass = saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: $common,
+		AnnotationProcessors: {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.TesterProcessor,
+			),
+			Aggregating: false,
+		},
+		Identifier: main,
+	)
+}

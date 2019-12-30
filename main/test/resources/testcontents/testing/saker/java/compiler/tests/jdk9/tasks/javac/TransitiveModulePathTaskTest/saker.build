@@ -1,0 +1,15 @@
+$first = saker.java.compile(
+	SourceDirectories: first,
+)
+$second = saker.java.compile(
+	SourceDirectories: second,
+	ModulePath: [
+		$first,
+	],
+)
+$third = saker.java.compile(
+	SourceDirectories: third,
+	ModulePath: [
+		$second,
+	],
+)

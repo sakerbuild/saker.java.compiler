@@ -1,0 +1,11 @@
+build(
+	out javac
+) {
+	$javac = saker.java.compile(
+		SourceDirectories: third,
+		Identifier: third_withinclude,
+		ClassPath: [
+			include(Path: second.build)[javac]
+		],
+	)
+}

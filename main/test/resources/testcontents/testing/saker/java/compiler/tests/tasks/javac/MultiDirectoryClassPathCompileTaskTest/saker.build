@@ -1,0 +1,11 @@
+build(
+	out mainpass,
+) {
+	$cpinc = include(Path: cp/saker.build)
+	
+	$mainpass = saker.java.compile(
+		SourceDirectories: src,
+		Identifier: main,
+		ClassPath: $cpinc[javac],
+	)
+}

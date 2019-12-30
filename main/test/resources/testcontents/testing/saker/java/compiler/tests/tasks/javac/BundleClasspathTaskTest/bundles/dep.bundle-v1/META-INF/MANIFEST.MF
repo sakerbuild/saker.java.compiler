@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Nest-Bundle-Format-Version: 1
+Nest-Bundle-Identifier: dep.bundle-v1

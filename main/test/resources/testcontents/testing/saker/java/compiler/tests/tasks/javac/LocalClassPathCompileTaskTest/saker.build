@@ -1,0 +1,9 @@
+build {
+	saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: [
+			std.file.local(test.local.path()),
+		],
+		Identifier: main,
+	)
+}

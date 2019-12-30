@@ -1,0 +1,10 @@
+saker.java.compiler-api
+	classpath: [0)
+nest.repository.support-api
+	classpath: [0)
+saker.sdk.support
+	classpath: [0)
+saker.compiler.utils
+	classpath: [0)
+saker.standard
+	classpath: [0)

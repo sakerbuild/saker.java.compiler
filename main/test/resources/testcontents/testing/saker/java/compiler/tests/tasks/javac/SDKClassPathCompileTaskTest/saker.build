@@ -1,0 +1,13 @@
+$second = saker.java.compile(
+	SourceDirectories: second,
+	ClassPath: [
+		sdk.path(mysdk, Identifier: myclasspath),
+	],
+	SDKs: {
+		mysdk: sdk.user(
+			Paths: {
+				myclasspath: test.sdk.classpath(),
+			},
+		),
+	},
+)

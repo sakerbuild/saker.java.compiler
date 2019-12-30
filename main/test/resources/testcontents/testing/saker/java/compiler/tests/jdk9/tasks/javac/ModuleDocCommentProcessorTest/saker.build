@@ -1,0 +1,13 @@
+$proc = saker.java.compile(
+	SourceDirectories: proc,
+)
+saker.java.compile(
+	SourceDirectories: src,
+	AnnotationProcessors: {
+		Processor: saker.java.processor(
+			ClassPath: $proc,
+			Class: proc.ModuleDocProcessor,
+		),
+		Aggregating: false,
+	},
+)

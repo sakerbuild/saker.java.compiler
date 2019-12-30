@@ -1,0 +1,24 @@
+build {
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		Identifier: proc,
+	)
+	if test.Include() {
+		$procopt = {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.OptionGeneratingProcessor,
+			),
+			Aggregating: false,
+			Options: {
+				test.processor.optiongenerating.value: test.Value(),
+			},
+		}
+	} else {
+		$procopt = null
+	}
+	saker.java.compile(
+		SourceDirectories: src,
+		AnnotationProcessors: $procopt,
+	)
+}
