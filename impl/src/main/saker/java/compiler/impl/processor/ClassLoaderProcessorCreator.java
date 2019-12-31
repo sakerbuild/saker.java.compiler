@@ -36,6 +36,7 @@ import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.api.processing.SakerProcessingEnvironment;
 import saker.java.compiler.api.processor.ProcessorCreationContext;
 import saker.java.compiler.api.processor.ProcessorCreator;
+import saker.java.compiler.impl.compile.handler.ProcessorCreationContextImpl;
 import saker.std.api.file.location.ExecutionFileLocation;
 import saker.std.api.file.location.FileLocation;
 import saker.std.api.file.location.FileLocationVisitor;
@@ -81,6 +82,8 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 		if (supp != null) {
 			return supp.get();
 		}
+		//TODO REWORK this implementation to cache the classpath in the bundle storage and use cached data to properly close the JARs
+		ProcessorCreationContextImpl contextimpl = (ProcessorCreationContextImpl) creationcontext;
 		synchronized (this) {
 			if (this.supplier == null) {
 				Collection<ClassLoaderDataFinder> datafinders = new ArrayList<>(fileLocations.size());
@@ -90,13 +93,14 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 						filelocation.accept(new FileLocationVisitor() {
 							@Override
 							public void visit(ExecutionFileLocation loc) {
-								SakerFile file = SakerPathFiles.resolveAtPath(creationcontext, null, loc.getPath());
+								SakerFile file = SakerPathFiles.resolveAtPath(contextimpl.getExecutionContext(), null,
+										loc.getPath());
 								try {
 									if (file == null) {
 										throw new FileNotFoundException(
 												"Processor class path file not found: " + loc.getPath());
 									}
-									Path mirrorpath = creationcontext.mirror(file);
+									Path mirrorpath = contextimpl.mirror(file);
 									ClassLoaderDataFinder clfinder;
 									if (file instanceof SakerDirectory) {
 										clfinder = new PathClassLoaderDataFinder(mirrorpath);

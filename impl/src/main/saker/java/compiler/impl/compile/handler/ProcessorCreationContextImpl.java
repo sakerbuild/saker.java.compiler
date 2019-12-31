@@ -2,14 +2,12 @@ package saker.java.compiler.impl.compile.handler;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
 
 import saker.build.exception.FileMirroringUnavailableException;
 import saker.build.file.DirectoryVisitPredicate;
-import saker.build.file.SakerDirectory;
 import saker.build.file.SakerFile;
-import saker.build.file.path.SakerPath;
+import saker.build.runtime.environment.SakerEnvironment;
+import saker.build.runtime.execution.ExecutionContext;
 import saker.build.task.TaskContext;
 import saker.java.compiler.api.processor.ProcessorCreationContext;
 
@@ -20,39 +18,31 @@ public class ProcessorCreationContextImpl implements ProcessorCreationContext {
 		this.taskContext = taskContext;
 	}
 
-	@Override
-	public SakerDirectory getExecutionWorkingDirectory() {
-		return taskContext.getExecutionContext().getExecutionWorkingDirectory();
+	@Deprecated
+	public ExecutionContext getExecutionContext() {
+		return taskContext.getExecutionContext();
 	}
 
-	@Override
-	public SakerDirectory getExecutionBuildDirectory() {
-		return taskContext.getExecutionContext().getExecutionBuildDirectory();
-	}
-
-	@Override
-	public NavigableMap<String, ? extends SakerDirectory> getRootDirectories() {
-		return taskContext.getExecutionContext().getRootDirectories();
-	}
-
-	@Override
+	/**
+	 * @see TaskContext#mirror(SakerFile, DirectoryVisitPredicate)
+	 */
+	@Deprecated
 	public Path mirror(SakerFile file, DirectoryVisitPredicate synchpredicate)
 			throws IOException, NullPointerException, FileMirroringUnavailableException {
 		return taskContext.mirror(file, synchpredicate);
 	}
 
-	@Override
-	public SakerPath getExecutionWorkingDirectoryPath() {
-		return taskContext.getExecutionContext().getExecutionWorkingDirectoryPath();
+	/**
+	 * @see TaskContext#mirror(SakerFile)
+	 */
+	@Deprecated
+	public Path mirror(SakerFile file) throws IOException, NullPointerException, FileMirroringUnavailableException {
+		return mirror(file, DirectoryVisitPredicate.everything());
 	}
 
 	@Override
-	public SakerPath getExecutionBuildDirectoryPath() {
-		return taskContext.getExecutionContext().getExecutionBuildDirectoryPath();
+	public SakerEnvironment getEnvironment() {
+		return taskContext.getExecutionContext().getEnvironment();
 	}
 
-	@Override
-	public NavigableSet<String> getRootDirectoryNames() {
-		return taskContext.getExecutionContext().getRootDirectoryNames();
-	}
 }
