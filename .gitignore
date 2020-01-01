@@ -5,3 +5,4 @@ secret/**
 /.saker.build.ideconfigs
 /.saker.project.lock
 /.classpath
+/bin/
