@@ -1,6 +1,6 @@
 saker.java.compiler-api
 	classpath: [this]
-saker.compiler.utils
+saker.compiler.utils-api
 	classpath: [0)
 
 saker.java.compiler-impl-jdk8

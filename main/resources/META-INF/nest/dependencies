@@ -3,8 +3,8 @@ saker.java.compiler-api
 nest.repository.support-api
 	classpath: [0)
 saker.sdk.support
-	classpath: [0)
+	classpath: 0.8
 saker.compiler.utils
-	classpath: [0)
+	classpath: 0.8
 saker.standard
-	classpath: [0)
+	classpath: 0.8
