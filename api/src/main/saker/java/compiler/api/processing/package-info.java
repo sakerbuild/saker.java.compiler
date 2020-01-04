@@ -22,3 +22,6 @@
  * build environment.
  */
 package saker.java.compiler.api.processing;
+
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.ProcessingEnvironment;
