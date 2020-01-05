@@ -225,6 +225,10 @@ export(
 					Directory: $compile[javac][ClassDirectory],
 					Resources: saker/java/compiler/impl/**,
 				},
+				{
+					Files: LICENSE,
+					TargetDirectory: META-INF,
+				},
 			] + ($compile[testapi][enabled] ? [{
 				Directory: $compile[testapi][javac][ClassDirectory],
 				Resources: **/*.class,
@@ -246,7 +250,11 @@ export(
 						api/src/main/,
 					],
 					Resources: **/*.java,
-				}
+				},
+				{
+					Files: LICENSE,
+					TargetDirectory: META-INF,
+				},
 			],
 			Manifest: {
 				MainAttributes: {
@@ -272,6 +280,10 @@ export(
 				Directory: $compile[javac][ClassDirectory],
 				Resources: saker/java/compiler/jdk/impl/**,
 			},
+			{
+				Files: LICENSE,
+				TargetDirectory: META-INF,
+			},
 		],
 		Manifest: {
 			MainAttributes: {
@@ -291,6 +303,10 @@ export(
 				Directory: $compile[javac][ClassDirectory],
 				Resources: "saker/java/compiler/util{ static(JDK_ID_TO_MAJOR)[$jdk] }/impl/**",
 			},
+			{
+				Files: LICENSE,
+				TargetDirectory: META-INF,
+			},
 		],
 		Manifest: {
 			MainAttributes: {
@@ -308,7 +324,11 @@ export(
 					"impl-util-{ $jdk }/src/main/",
 				],
 				Resources: **/*.java,
-			}
+			},
+			{
+				Files: LICENSE,
+				TargetDirectory: META-INF,
+			},
 		],
 		Manifest: {
 			MainAttributes: {
