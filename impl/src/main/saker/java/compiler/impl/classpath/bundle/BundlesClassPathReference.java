@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package saker.java.compiler.main.classpath.bundle;
+package saker.java.compiler.impl.classpath.bundle;
 
 import java.io.Externalizable;
 import java.io.IOException;

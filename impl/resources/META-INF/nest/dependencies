@@ -2,6 +2,8 @@ saker.java.compiler-api
 	classpath: [this]
 saker.compiler.utils-api
 	classpath: [0)
+nest.repository.support-api
+	classpath: [0)
 
 saker.java.compiler-impl-jdk8
 	classpath: [this]
