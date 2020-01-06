@@ -49,7 +49,7 @@ import saker.nest.support.api.property.BundlePropertyUtils;
 import saker.nest.utils.FrontendTaskFactory;
 
 @NestTaskInformation(returnType = @NestTypeUsage(DocBundleClassPath.class))
-@NestInformation("Creates a class path reference for the specified Nest bundles.\n"
+@NestInformation("Creates a class path reference for the specified saker.nest bundles.\n"
 		+ "This task creates a class path to be used with tasks that accept the class path inputs the same way as "
 		+ JavaCompilerTaskFactory.TASK_NAME + "() task.\n"
 		+ "If the build is configured in a way that it requires IDE configurations to be reported, the task will fetch the "

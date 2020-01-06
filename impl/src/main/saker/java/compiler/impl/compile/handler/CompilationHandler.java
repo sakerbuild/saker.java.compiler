@@ -214,7 +214,7 @@ public abstract class CompilationHandler {
 		result.add("-Xlint:all");
 		//XXX don't remove processing lint for full compilation
 		result.add("-Xlint:-processing");
-		if (hadrelease) {
+		if (!hadrelease) {
 			//--release overrides the -source and -target arguments. this is also ensured with the task builder
 			if (passsourceversion != null) {
 				String sourceversion = sourceVersionToParameterString(passsourceversion);
