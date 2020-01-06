@@ -37,7 +37,7 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.function.LazySupplier;
-import saker.compiler.utils.api.options.CompilationIdentifier;
+import saker.compiler.utils.api.CompilationIdentifier;
 import saker.java.compiler.api.classpath.JavaClassPath;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.java.compiler.api.modulepath.JavaModulePath;

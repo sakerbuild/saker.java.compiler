@@ -29,7 +29,7 @@ import saker.build.exception.InvalidPathFormatException;
 import saker.build.file.path.SakerPath;
 import saker.build.task.TaskDirectoryContext;
 import saker.build.task.TaskFactory;
-import saker.compiler.utils.api.options.CompilationIdentifier;
+import saker.compiler.utils.api.CompilationIdentifier;
 import saker.java.compiler.api.classpath.JavaClassPath;
 import saker.java.compiler.api.classpath.JavaClassPathBuilder;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
