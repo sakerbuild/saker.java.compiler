@@ -16,7 +16,6 @@
 package saker.java.compiler.jdk.impl.invoker;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Objects;
@@ -48,6 +47,7 @@ import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 
 import saker.build.file.path.SakerPath;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.compile.handler.info.ClassGenerationInfo;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
@@ -56,8 +56,6 @@ import saker.java.compiler.impl.compile.handler.invoker.JavaCompilerInvocationDi
 import saker.java.compiler.impl.compile.handler.invoker.PreviousCompilationClassInfo;
 import saker.java.compiler.impl.compile.handler.invoker.SakerPathJavaInputFileObject;
 import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignatureParser;
-import saker.build.thirdparty.saker.util.ImmutableUtils;
-import saker.build.thirdparty.saker.util.ObjectUtils;
 
 public class InternalIncrementalCompilationInvoker extends InternalIncrementalCompilationInvokerBase {
 	@Override

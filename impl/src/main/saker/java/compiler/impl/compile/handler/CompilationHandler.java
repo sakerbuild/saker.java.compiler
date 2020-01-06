@@ -134,6 +134,7 @@ public abstract class CompilationHandler {
 		String presentclasspathparam = null;
 		String presentmodulepathparam = null;
 		String presentbootclasspathparam = null;
+		boolean hadrelease = false;
 		boolean parameternamespresent = false;
 		int paramssize = passparameters.size();
 		for (int i = 0; i < paramssize; i++) {
@@ -203,29 +204,36 @@ public abstract class CompilationHandler {
 				continue;
 			}
 
+			if (p.equals("--release")) {
+				hadrelease = true;
+			}
+
 			result.add(p);
 		}
 
 		result.add("-Xlint:all");
 		//XXX don't remove processing lint for full compilation
 		result.add("-Xlint:-processing");
-		if (passsourceversion != null) {
-			String sourceversion = sourceVersionToParameterString(passsourceversion);
-			if (sourceversion == null) {
-				throw new IllegalArgumentException("Source version not found: " + passsourceversion);
+		if (hadrelease) {
+			//--release overrides the -source and -target arguments. this is also ensured with the task builder
+			if (passsourceversion != null) {
+				String sourceversion = sourceVersionToParameterString(passsourceversion);
+				if (sourceversion == null) {
+					throw new IllegalArgumentException("Source version not found: " + passsourceversion);
+				}
+				if (sourceversion != null) {
+					result.add("-source");
+					result.add(sourceversion);
+				}
 			}
-			if (sourceversion != null) {
-				result.add("-source");
-				result.add(sourceversion);
+			if (passtargetversion != null) {
+				String targetversion = sourceVersionToParameterString(passtargetversion);
+				if (targetversion == null) {
+					throw new IllegalArgumentException("Target version not found: " + passtargetversion);
+				}
+				result.add("-target");
+				result.add(targetversion);
 			}
-		}
-		if (passtargetversion != null) {
-			String targetversion = sourceVersionToParameterString(passtargetversion);
-			if (targetversion == null) {
-				throw new IllegalArgumentException("Target version not found: " + passtargetversion);
-			}
-			result.add("-target");
-			result.add(targetversion);
 		}
 		if (!passaddexports.isEmpty()) {
 			//use a buffer set to prevent duplicates

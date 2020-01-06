@@ -113,24 +113,30 @@ public interface JavaCompilationTaskBuilder {
 	 * 
 	 * @param parameters
 	 *            The parameters.
+	 * @throws IllegalArgumentException
+	 *             If the specified parameters are in conflict with other properties.
 	 */
-	public void setParameters(List<String> parameters);
+	public void setParameters(List<String> parameters) throws IllegalArgumentException;
 
 	/**
 	 * Sets the source version of the source files.
 	 * 
 	 * @param version
 	 *            The source version major number or <code>null</code> to use the default.
+	 * @throws IllegalArgumentException
+	 *             If the specified argument is in conflict with other properties.
 	 */
-	public void setSourceVersion(Integer version);
+	public void setSourceVersion(Integer version) throws IllegalArgumentException;
 
 	/**
 	 * Sets the target version of the generated class files.
 	 * 
 	 * @param version
 	 *            The target version major number or <code>null</code> to use the default.
+	 * @throws IllegalArgumentException
+	 *             If the specified argument is in conflict with other properties.
 	 */
-	public void setTargetVersion(Integer version);
+	public void setTargetVersion(Integer version) throws IllegalArgumentException;
 
 	/**
 	 * Sets the SDKs that should be used during the compilation.

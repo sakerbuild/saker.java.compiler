@@ -60,8 +60,8 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 
 	protected Supplier<CompilationIdentifier> compilationIdentifier;
 	protected List<String> parameters;
-	protected String sourceVersionName;
-	protected String targetVersionName;
+	protected Integer sourceVersion;
+	protected Integer targetVersion;
 	protected boolean parallelProcessing;
 	protected NavigableMap<String, String> annotationProcessorOptions;
 	protected NavigableSet<String> suppressWarnings;
@@ -121,25 +121,71 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 
 	@Override
 	public void setParameters(List<String> parameters) {
-		this.parameters = ImmutableUtils.makeImmutableList(parameters);
+		List<String> nparams = ImmutableUtils.makeImmutableList(parameters);
+		if (nparams != null) {
+			int relidx = nparams.indexOf("--release");
+			if (relidx >= 0) {
+				if (nparams.size() <= relidx + 1) {
+					throw new IllegalArgumentException("Parameter --release has no argument.");
+				}
+				String arg = nparams.get(relidx + 1);
+				if (!isReleaseCompatibleWithLegacyVersions(arg, sourceVersion)) {
+					throw new IllegalArgumentException(
+							"--release argument: " + arg + " is not compatible with SourceVersion: " + sourceVersion);
+				}
+				if (!isReleaseCompatibleWithLegacyVersions(arg, targetVersion)) {
+					throw new IllegalArgumentException(
+							"--release argument: " + arg + " is not compatible with TargetVersion: " + targetVersion);
+				}
+			}
+		}
+		this.parameters = nparams;
+	}
+
+	private static boolean isReleaseCompatibleWithLegacyVersions(String release, Integer version) {
+		//the --release arg is an integer, 6, 7, 8, 9 ... not like 1.6, 1.7
+		if (release == null || version == null) {
+			return true;
+		}
+		if (release.equals(Integer.toString(version))) {
+			return true;
+		}
+		return false;
+	}
+
+	private String getCurrentReleaseParameterValue() {
+		if (this.parameters == null) {
+			return null;
+		}
+		int relidx = this.parameters.indexOf("--release");
+		if (relidx < 0) {
+			return null;
+		}
+		return this.parameters.get(relidx + 1);
 	}
 
 	@Override
 	public void setSourceVersion(Integer version) {
-		if (version == null) {
-			this.sourceVersionName = null;
-			return;
+		if (version != null) {
+			String arg = getCurrentReleaseParameterValue();
+			if (!isReleaseCompatibleWithLegacyVersions(arg, version)) {
+				throw new IllegalArgumentException(
+						"--release argument: " + arg + " is not compatible with SourceVersion: " + version);
+			}
 		}
-		this.sourceVersionName = "RELEASE_" + version;
+		this.sourceVersion = version;
 	}
 
 	@Override
 	public void setTargetVersion(Integer version) {
-		if (version == null) {
-			this.targetVersionName = null;
-			return;
+		if (version != null) {
+			String arg = getCurrentReleaseParameterValue();
+			if (!isReleaseCompatibleWithLegacyVersions(arg, version)) {
+				throw new IllegalArgumentException(
+						"--release argument: " + arg + " is not compatible with TargetVersion: " + version);
+			}
 		}
-		this.targetVersionName = "RELEASE_" + version;
+		this.targetVersion = version;
 	}
 
 	@Override
@@ -266,8 +312,12 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 		workertask.setModulePath(modulePath);
 		workertask.setBootClassPath(bootClassPath);
 		workertask.setParameters(parameters);
-		workertask.setSourceVersionName(sourceVersionName);
-		workertask.setTargetVersionName(targetVersionName);
+		if (this.sourceVersion != null) {
+			workertask.setSourceVersionName("RELEASE_" + this.sourceVersion);
+		}
+		if (this.targetVersion != null) {
+			workertask.setTargetVersionName("RELEASE_" + this.targetVersion);
+		}
 		if (!ObjectUtils.isNullOrEmpty(annotationProcessors)) {
 			workertask.setAnnotationProcessors(annotationProcessors);
 			workertask.setProcessorInputLocations(processorInputLocations);
