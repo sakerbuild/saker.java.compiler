@@ -1440,7 +1440,6 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 							return;
 						}
 						//the import changed, either removed or added
-						//TODO
 						ImportDeclaration id = pi == null ? i : pi;
 						boolean hadimportrelatedchange = detectImportABIChanges(prevsfd.getABIUsage(), id);
 						if (hadimportrelatedchange) {
