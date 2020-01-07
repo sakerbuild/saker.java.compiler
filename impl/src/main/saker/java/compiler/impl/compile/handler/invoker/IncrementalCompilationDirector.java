@@ -118,6 +118,7 @@ import saker.java.compiler.impl.compile.handler.incremental.model.elem.Documente
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalAnnotationMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalAnnotationValue;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.SignaturedElement;
+import saker.java.compiler.impl.compile.handler.incremental.model.scope.ImportDeclaration;
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.ImportScope;
 import saker.java.compiler.impl.compile.handler.info.ClassFileData;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
@@ -141,6 +142,9 @@ import saker.java.compiler.impl.compile.handler.info.SignatureSourcePositions;
 import saker.java.compiler.impl.compile.handler.info.SignatureSourcePositions.Position;
 import saker.java.compiler.impl.compile.handler.info.SourceFileData;
 import saker.java.compiler.impl.compile.handler.invoker.JavaCompilationInvoker.ABIParseInfo;
+import saker.java.compiler.impl.compile.handler.usage.AbiUsage;
+import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage;
+import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage.FieldABIInfo;
 import saker.java.compiler.impl.compile.signature.change.AbiChange;
 import saker.java.compiler.impl.compile.signature.change.ClassAddedABIChange;
 import saker.java.compiler.impl.compile.signature.change.ClassRemovedABIChange;
@@ -148,6 +152,7 @@ import saker.java.compiler.impl.compile.signature.change.ModuleChangeABIChange;
 import saker.java.compiler.impl.compile.signature.change.ModulePathABIChange;
 import saker.java.compiler.impl.compile.signature.change.PackageAnnotationsChangeABIChange;
 import saker.java.compiler.impl.compile.signature.change.PlainPackageInfoAddedABIChange;
+import saker.java.compiler.impl.compile.signature.change.member.FieldInitializerABIChange;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.Signature;
 import saker.java.compiler.impl.signature.element.AnnotatedSignature;
@@ -1343,6 +1348,68 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		return resourcepath;
 	}
 
+	private boolean detectImportABIChanges(TopLevelAbiUsage usage, ImportDeclaration i) {
+		boolean result = false;
+		if (i.isWildcard()) {
+			//the import is a wildcard
+			// we generally can't know what could be imported, therefore a wildcard import should be treated
+			// as if it could contain ANY simple names
+			// this can affect basically ALL elements in a source file that has at least one simple name
+			if (i.isStatic()) {
+				//import static some.qualified.Type.*
+				//if the import is static, we only care about fields that may have constant values
+				//as types are not imported
+				//therefore method or class changes are not affected
+				for (Entry<FieldABIInfo, ? extends AbiUsage> entry : usage.getFields().entrySet()) {
+					FieldABIInfo finfo = entry.getKey();
+					if (!finfo.hasConstantValue()) {
+						continue;
+					}
+					if (!entry.getValue().hasAnySimpleVariableIdentifier()) {
+						//the field initializer doesn't use any simple variables, therefore the import cannot affect it
+						continue;
+					}
+					result = true;
+					addABIChange(new FieldInitializerABIChange(finfo.getClassCanonicalName(), finfo.getFieldName()));
+				}
+			} else {
+				//import some.qualified.Type.*
+				//imports a type that can be named anything
+				result = usage.addABIChangeForEachMember(AbiUsage::hasAnySimpleTypeIdentifier, this::addABIChange);
+			}
+		} else {
+			String ipath = i.getPath();
+			int lastdotidx = ipath.lastIndexOf('.');
+			String lastname = ipath.substring(lastdotidx + 1);
+			if (i.isStatic()) {
+				//import static some.qualified.Type.member
+				//the only scenario when this can trigger an ABI change is when the 
+				//  constant initializer of a field is changed due to this
+				String enclosingtype = ipath.substring(0, lastdotidx);
+				if (usage.isReferencesField(enclosingtype, lastname)) {
+					for (Entry<FieldABIInfo, ? extends AbiUsage> entry : usage.getFields().entrySet()) {
+						FieldABIInfo finfo = entry.getKey();
+						if (!finfo.hasConstantValue()) {
+							continue;
+						}
+						if (entry.getValue().isReferencesField(enclosingtype, lastname)) {
+							result = true;
+							addABIChange(
+									new FieldInitializerABIChange(finfo.getClassCanonicalName(), finfo.getFieldName()));
+						}
+					}
+				}
+			} else {
+				//import some.qualified.Type
+				//this change affects all elements that use the simple identifier Type
+				if (usage.isSimpleTypePresent(lastname)) {
+					result = usage.addABIChangeForEachMember(u -> u.isSimpleTypePresent(lastname), this::addABIChange);
+				}
+			}
+		}
+		return result;
+	}
+
 	private void determineABIChanges(ClassHoldingFileData prevsfd, ClassHoldingFileData sfd,
 			SignatureNameChecker methodparamnamechecker) {
 		PackageSignature packsig = sfd.getPackageSignature();
@@ -1361,6 +1428,25 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		} else {
 			boolean trackdocs = !docCommentInterestedProcessors.isEmpty();
 			boolean[] hadabichange = { false };
+
+			ImportScope previmports = prevsfd.getImportScope();
+			ImportScope imports = sfd.getImportScope();
+
+			ObjectUtils.iterateOrderedIterables(previmports.getImportDeclarations(), imports.getImportDeclarations(),
+					(pi, i) -> {
+						if (pi != null && i != null) {
+							//the current import wasn't changed
+							//as the imports are compareTo 0, we visit them at the same time
+							return;
+						}
+						//the import changed, either removed or added
+						ImportDeclaration id = pi == null ? i : pi;
+						boolean hadimportrelatedchange = detectImportABIChanges(prevsfd.getABIUsage(), id);
+						if (hadimportrelatedchange) {
+							hadabichange[0] = true;
+						}
+					});
+
 			ObjectUtils.iterateSortedMapEntries(prevsfd.getClasses(), sfd.getClasses(), (k, prevclass, parsedclass) -> {
 				if (prevclass != null) {
 					if (parsedclass != null) {

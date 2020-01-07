@@ -1,0 +1,12 @@
+typeimport {
+	saker.java.compile(typeimport)
+}
+staticimport {
+	saker.java.compile(staticimport)
+}
+wildcardimport {
+	saker.java.compile(wildcardimport)
+}
+staticwildcardimport {
+	saker.java.compile(staticwildcardimport)
+}

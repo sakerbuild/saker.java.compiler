@@ -1203,7 +1203,10 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 	public Void visitTypeParameter(TypeParameterTree tree, ParseContext param) {
 		for (Tree bound : tree.getBounds()) {
 			TreePath boundpath = descend(bound, param);
-			withExpressionType(boundpath, param.typeElementAddTypeAppearanceConsumer);
+			//the type should be added as used types instead of only presence
+			//as if the type is changed to a class instead of interface
+			//that could cause the bounds to be invalid, therefore the recompilation is necessary
+			withExpressionType(boundpath, param.typeElementAddUsedTypeConsumer);
 		}
 		for (AnnotationTree annot : tree.getAnnotations()) {
 			descend(annot, param);

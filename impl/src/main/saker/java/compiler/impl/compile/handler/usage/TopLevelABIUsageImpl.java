@@ -15,6 +15,7 @@
  */
 package saker.java.compiler.impl.compile.handler.usage;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -54,6 +55,9 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 
 	private MemberABIUsage packageUsage;
 
+	/**
+	 * For {@link Externalizable}.
+	 */
 	public TopLevelABIUsageImpl() {
 	}
 
