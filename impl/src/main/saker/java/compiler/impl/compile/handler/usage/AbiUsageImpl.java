@@ -25,6 +25,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 
@@ -161,8 +162,18 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 	}
 
 	@Override
+	public boolean hasAnySimpleTypeIdentifier() {
+		return !ObjectUtils.isNullOrEmpty(presentSimpleTypeIdentifiers);
+	}
+
+	@Override
 	public boolean isSimpleVariablePresent(String simplename) {
 		return presentSimpleVariableIdentifiers != null && presentSimpleVariableIdentifiers.contains(simplename);
+	}
+
+	@Override
+	public boolean hasAnySimpleVariableIdentifier() {
+		return !ObjectUtils.isNullOrEmpty(presentSimpleVariableIdentifiers);
 	}
 
 	@Override

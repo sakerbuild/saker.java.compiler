@@ -1,6 +1,5 @@
 package test.p1;
 
 public class ImportedClass {
-	public void p1() {
-	}
+	public static final int CONSTANT = 1;
 }

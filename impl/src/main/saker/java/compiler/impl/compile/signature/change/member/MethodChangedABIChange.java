@@ -31,7 +31,14 @@ public class MethodChangedABIChange implements AbiChange {
 
 	@Override
 	public boolean affects(TopLevelAbiUsage usage, Consumer<AbiChange> foundchanges) {
-		return usage.isReferencesMethod(classCanonicalName, methodName);
+		if (usage.isInheritesFromClass(classCanonicalName)) {
+			//TODO shouldn't detect ABI change if the changed method is private and is not visible from the subclass
+			return true;
+		}
+		if (usage.isReferencesMethod(classCanonicalName, methodName)) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override

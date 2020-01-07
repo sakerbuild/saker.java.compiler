@@ -28,6 +28,10 @@ public interface AbiUsage {
 
 	public boolean isSimpleVariablePresent(String simplename);
 
+	public boolean hasAnySimpleVariableIdentifier();
+
+	public boolean hasAnySimpleTypeIdentifier();
+
 	public boolean isReferencesField(String canonicaltypename, String member);
 
 	public boolean isReferencesMethod(String canonicaltypename, String name);
@@ -37,7 +41,7 @@ public interface AbiUsage {
 	public boolean isInheritanceChangeAffected(String canonicaltypename);
 
 	public boolean isInheritesFromClass(String canonicalname);
-	
+
 	public boolean isReferencesPackageOrSubPackage(String packagename);
 
 }
