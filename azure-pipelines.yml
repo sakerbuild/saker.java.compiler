@@ -15,6 +15,10 @@ steps:
   displayName: 'Setup JDK12'
 - script: echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash azure_jdksetup.sh 13)"
   displayName: 'Setup JDK13'
+- script: |
+    ls -la
+    ls -la dl_tools
+  displayName: 'Echo'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
   displayName: 'Test'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" exportall
