@@ -202,7 +202,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 
 		methodKind = (ElementKind) in.readObject();
 
-		receiverParameter = (ParameterizedTypeSignature) in.readObject();
+		receiverParameter = (TypeSignature) in.readObject();
 
 		varArg = in.readBoolean();
 		docComment = (String) in.readObject();
