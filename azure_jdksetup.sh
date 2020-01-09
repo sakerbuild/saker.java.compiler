@@ -38,4 +38,4 @@ mkdir -p "${LOCATION}/jdk"
 
 curl -L -f -s $DOWNLOAD_URL -o "${LOCATION}/jdk_download.tar.gz"
 tar -xzf "${LOCATION}/jdk_download.tar.gz" -C "$LOCATION/jdk"
-echo "$(pwd)/${LOCATION}/$(ls ${LOCATION}/jdk)"
+echo "$(pwd)/${LOCATION}/jdk/$(ls ${LOCATION}/jdk)"
