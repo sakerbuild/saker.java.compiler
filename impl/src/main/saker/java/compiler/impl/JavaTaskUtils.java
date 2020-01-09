@@ -185,8 +185,6 @@ public class JavaTaskUtils {
 		return SakerJavaCompilerUtils.toAddExportsCommandLineStrings(addexports);
 	}
 
-	
-
 	public static class LocalDirectoryClassFilesExecutionProperty
 			implements ExecutionProperty<LocalDirectoryClassFilesExecutionProperty.PropertyValue>, Externalizable {
 		private static final long serialVersionUID = 1L;
@@ -251,6 +249,7 @@ public class JavaTaskUtils {
 
 		}
 
+		private TaskIdentifier associatedTaskId;
 		private SakerPath path;
 
 		/**
@@ -259,7 +258,8 @@ public class JavaTaskUtils {
 		public LocalDirectoryClassFilesExecutionProperty() {
 		}
 
-		public LocalDirectoryClassFilesExecutionProperty(SakerPath path) {
+		public LocalDirectoryClassFilesExecutionProperty(TaskIdentifier associatedTaskId, SakerPath path) {
+			this.associatedTaskId = associatedTaskId;
 			this.path = path;
 		}
 
@@ -278,7 +278,7 @@ public class JavaTaskUtils {
 				}
 				SakerPath cpabspath = path.resolve(keypath);
 				ContentDescriptor classfilecd = executioncontext.getExecutionPropertyCurrentValue(
-						new LocalPathFileContentDescriptorExecutionProperty(cpabspath));
+						new LocalPathFileContentDescriptorExecutionProperty(associatedTaskId, cpabspath));
 				if (classfilecd == null) {
 					continue;
 				}
@@ -289,11 +289,13 @@ public class JavaTaskUtils {
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(associatedTaskId);
 			out.writeObject(path);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			associatedTaskId = (TaskIdentifier) in.readObject();
 			path = (SakerPath) in.readObject();
 		}
 
@@ -301,6 +303,7 @@ public class JavaTaskUtils {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
+			result = prime * result + ((associatedTaskId == null) ? 0 : associatedTaskId.hashCode());
 			result = prime * result + ((path == null) ? 0 : path.hashCode());
 			return result;
 		}
@@ -314,6 +317,11 @@ public class JavaTaskUtils {
 			if (getClass() != obj.getClass())
 				return false;
 			LocalDirectoryClassFilesExecutionProperty other = (LocalDirectoryClassFilesExecutionProperty) obj;
+			if (associatedTaskId == null) {
+				if (other.associatedTaskId != null)
+					return false;
+			} else if (!associatedTaskId.equals(other.associatedTaskId))
+				return false;
 			if (path == null) {
 				if (other.path != null)
 					return false;

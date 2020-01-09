@@ -216,6 +216,9 @@ public final class ProcessorCreatorTaskFactory
 									fp.writeToFile(in, temp);
 								}
 							});
+							taskcontext.getTaskUtilities().getReportExecutionDependency(
+									new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(),
+											SakerPath.valueOf(cachejarpath)));
 						} catch (IOException e) {
 							throw ObjectUtils.sneakyThrow(e);
 						}
@@ -276,6 +279,9 @@ public final class ProcessorCreatorTaskFactory
 										fp.writeToFile(in, temp);
 									}
 								});
+								taskcontext.getTaskUtilities().getReportExecutionDependency(
+										new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(),
+												SakerPath.valueOf(cachejarpath)));
 							} catch (IOException e) {
 								throw ObjectUtils.sneakyThrow(e);
 							}
@@ -290,6 +296,9 @@ public final class ProcessorCreatorTaskFactory
 										fp.writeToFile(in, temp);
 									}
 								});
+								taskcontext.getTaskUtilities().getReportExecutionDependency(
+										new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(),
+												SakerPath.valueOf(cachejarpath)));
 							} catch (NoSuchAlgorithmException | IOException e) {
 								throw ObjectUtils.sneakyThrow(e);
 							}
@@ -509,7 +518,7 @@ public final class ProcessorCreatorTaskFactory
 						SakerPath path = loc.getLocalPath();
 						TaskExecutionUtilities taskutils = taskcontext.getTaskUtilities();
 						ContentDescriptor cd = taskutils.getReportExecutionDependency(
-								new LocalPathFileContentDescriptorExecutionProperty(path));
+								new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(), path));
 						if (cd == null) {
 							throw ObjectUtils
 									.sneakyThrow(new FileNotFoundException("Class path local file not found: " + path));
@@ -520,7 +529,8 @@ public final class ProcessorCreatorTaskFactory
 							//add the dependencies on the files (all files, not only .class files)
 
 							LocalDirectoryFilesExecutionProperty.PropertyValue pval = taskutils
-									.getReportExecutionDependency(new LocalDirectoryFilesExecutionProperty(path));
+									.getReportExecutionDependency(
+											new LocalDirectoryFilesExecutionProperty(taskcontext.getTaskId(), path));
 							cdres[0] = new MultiPathContentDescriptor(pval.getContents());
 							localdircontentsconsumer.accept(loc, pval.getContents().navigableKeySet());
 						} else {
@@ -655,6 +665,7 @@ public final class ProcessorCreatorTaskFactory
 
 		}
 
+		private TaskIdentifier associatedTaskId;
 		private SakerPath path;
 
 		/**
@@ -663,7 +674,8 @@ public final class ProcessorCreatorTaskFactory
 		public LocalDirectoryFilesExecutionProperty() {
 		}
 
-		public LocalDirectoryFilesExecutionProperty(SakerPath path) {
+		public LocalDirectoryFilesExecutionProperty(TaskIdentifier associatedTaskId, SakerPath path) {
+			this.associatedTaskId = associatedTaskId;
 			this.path = path;
 		}
 
@@ -678,7 +690,7 @@ public final class ProcessorCreatorTaskFactory
 				SakerPath keypath = entry.getKey();
 				SakerPath cpabspath = path.resolve(keypath);
 				ContentDescriptor classfilecd = executioncontext.getExecutionPropertyCurrentValue(
-						new LocalPathFileContentDescriptorExecutionProperty(cpabspath));
+						new LocalPathFileContentDescriptorExecutionProperty(associatedTaskId, cpabspath));
 				if (classfilecd == null) {
 					continue;
 				}
@@ -689,11 +701,13 @@ public final class ProcessorCreatorTaskFactory
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(associatedTaskId);
 			out.writeObject(path);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			associatedTaskId = (TaskIdentifier) in.readObject();
 			path = (SakerPath) in.readObject();
 		}
 
@@ -701,6 +715,7 @@ public final class ProcessorCreatorTaskFactory
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
+			result = prime * result + ((associatedTaskId == null) ? 0 : associatedTaskId.hashCode());
 			result = prime * result + ((path == null) ? 0 : path.hashCode());
 			return result;
 		}
@@ -714,6 +729,11 @@ public final class ProcessorCreatorTaskFactory
 			if (getClass() != obj.getClass())
 				return false;
 			LocalDirectoryFilesExecutionProperty other = (LocalDirectoryFilesExecutionProperty) obj;
+			if (associatedTaskId == null) {
+				if (other.associatedTaskId != null)
+					return false;
+			} else if (!associatedTaskId.equals(other.associatedTaskId))
+				return false;
 			if (path == null) {
 				if (other.path != null)
 					return false;
