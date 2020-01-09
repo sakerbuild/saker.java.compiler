@@ -7,7 +7,18 @@ pool:
 steps:
 - script: curl -s https://api.nest.saker.build/bundle/download/saker.build-v0.8.0 -o saker.build.jar
   displayName: 'Download saker.build'
+- script: |
+    # to exit if an error happens
+    set -e
+    if [[ -z "${JAVA_HOME_9_X64}" ]]; then
+      curl -L -f -s https://github.com/AdoptOpenJDK/openjdk9-binaries/releases/download/jdk-9.0.4%2B11/OpenJDK9U-jdk_x64_linux_hotspot_9.0.4_11.tar.gz -o /tmp/jdk9.tar.gz
+      tar -xzf /tmp/jdk9.tar.gz -C /tmp/dl_tool_jdk9
+      echo /tmp/dl_tool_jdk9
+    else
+      echo $JAVA_HOME_9_X64
+    fi
+  displayName: 'Setup JDK9'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" test
-  displayName: 'Test'  
+  displayName: 'Test'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" exportall
   displayName: 'Export'
