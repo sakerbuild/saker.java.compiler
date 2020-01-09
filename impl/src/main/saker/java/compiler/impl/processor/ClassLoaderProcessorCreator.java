@@ -16,60 +16,38 @@
 package saker.java.compiler.impl.processor;
 
 import java.io.Externalizable;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Path;
-import java.util.ArrayList;
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
-import java.util.function.Supplier;
+import java.util.jar.JarFile;
 
 import javax.annotation.processing.Processor;
 
-import saker.build.file.SakerDirectory;
-import saker.build.file.SakerFile;
-import saker.build.file.path.SakerPath;
-import saker.build.file.provider.FileEntry;
 import saker.build.file.provider.LocalFileProvider;
-import saker.build.file.provider.SakerPathFiles;
-import saker.build.thirdparty.saker.util.ObjectUtils;
-import saker.build.thirdparty.saker.util.ReflectUtils;
+import saker.build.runtime.environment.SakerEnvironment;
 import saker.build.thirdparty.saker.util.classloader.ClassLoaderDataFinder;
 import saker.build.thirdparty.saker.util.classloader.ClassLoaderUtil;
 import saker.build.thirdparty.saker.util.classloader.JarClassLoaderDataFinder;
 import saker.build.thirdparty.saker.util.classloader.MultiClassLoader;
 import saker.build.thirdparty.saker.util.classloader.MultiDataClassLoader;
-import saker.build.thirdparty.saker.util.classloader.PathClassLoaderDataFinder;
-import saker.build.thirdparty.saker.util.io.ResourceCloser;
+import saker.build.thirdparty.saker.util.io.JarFileUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.build.util.cache.CacheKey;
 import saker.java.compiler.api.processing.SakerProcessingEnvironment;
 import saker.java.compiler.api.processor.ProcessorCreationContext;
 import saker.java.compiler.api.processor.ProcessorCreator;
-import saker.java.compiler.impl.compile.handler.ProcessorCreationContextImpl;
-import saker.std.api.file.location.ExecutionFileLocation;
-import saker.std.api.file.location.FileLocation;
-import saker.std.api.file.location.FileLocationVisitor;
 import saker.std.api.file.location.LocalFileLocation;
 
 public final class ClassLoaderProcessorCreator implements ProcessorCreator, Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	private transient String className;
-	private transient Set<FileLocation> fileLocations;
-
-	/**
-	 * An UUID that identifies this processor version instance. It is newly generated every time the processor creating
-	 * task is run.
-	 */
-	private UUID changedUUID;
-
-	private transient volatile Supplier<Processor> supplier;
+	private String className;
+	private Set<LocalFileLocation> classPathJarFileLocations;
 
 	/**
 	 * For {@link Externalizable}.
@@ -77,13 +55,12 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 	public ClassLoaderProcessorCreator() {
 	}
 
-	public ClassLoaderProcessorCreator(String className, Set<FileLocation> fileLocations) {
+	public ClassLoaderProcessorCreator(String className, Set<LocalFileLocation> classPathJarFileLocations) {
 		Objects.requireNonNull(className, "className");
-		Objects.requireNonNull(fileLocations, "fileLocations");
+		Objects.requireNonNull(classPathJarFileLocations, "classPathJarFileLocations");
 
 		this.className = className;
-		this.fileLocations = fileLocations;
-		this.changedUUID = UUID.randomUUID();
+		this.classPathJarFileLocations = classPathJarFileLocations;
 	}
 
 	@Override
@@ -93,116 +70,31 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 
 	@Override
 	public Processor create(ProcessorCreationContext creationcontext) throws Exception {
-		Supplier<Processor> supp = this.supplier;
-		if (supp != null) {
-			return supp.get();
-		}
-		//TODO REWORK this implementation to cache the classpath in the bundle storage and use cached data to properly close the JARs
-		ProcessorCreationContextImpl contextimpl = (ProcessorCreationContextImpl) creationcontext;
-		synchronized (this) {
-			if (this.supplier == null) {
-				Collection<ClassLoaderDataFinder> datafinders = new ArrayList<>(fileLocations.size());
-				try (ResourceCloser closer = new ResourceCloser()) {
-					for (FileLocation filelocation : fileLocations) {
-						//XXX delay the jar opening until a class or file is accessed from it
-						filelocation.accept(new FileLocationVisitor() {
-							@Override
-							public void visit(ExecutionFileLocation loc) {
-								SakerFile file = SakerPathFiles.resolveAtPath(contextimpl.getExecutionContext(), null,
-										loc.getPath());
-								try {
-									if (file == null) {
-										throw new FileNotFoundException(
-												"Processor class path file not found: " + loc.getPath());
-									}
-									Path mirrorpath = contextimpl.mirror(file);
-									ClassLoaderDataFinder clfinder;
-									if (file instanceof SakerDirectory) {
-										clfinder = new PathClassLoaderDataFinder(mirrorpath);
-									} else {
-										clfinder = new JarClassLoaderDataFinder(mirrorpath);
-									}
-									datafinders.add(clfinder);
-								} catch (IOException e) {
-									throw ObjectUtils.sneakyThrow(e);
-								}
-							}
-
-							@Override
-							public void visit(LocalFileLocation loc) {
-								SakerPath path = loc.getLocalPath();
-								try {
-									Path realpath = LocalFileProvider.toRealPath(path);
-									FileEntry attrs = LocalFileProvider.getInstance().getFileAttributes(realpath);
-									ClassLoaderDataFinder clfinder;
-									if (attrs.isDirectory()) {
-										clfinder = new PathClassLoaderDataFinder(realpath);
-									} else {
-										clfinder = new JarClassLoaderDataFinder(realpath);
-									}
-									datafinders.add(clfinder);
-								} catch (IOException e) {
-									throw ObjectUtils.sneakyThrow(e);
-								}
-							}
-						});
-					}
-					//TODO use environment caching for the class loader and the files and jars
-					// if someone wants to unpack to the file we use as classloader, then some invalidation should go through
-
-					//the processor parent classloader is the API bundle classloader
-					//  so they can access the API classes of the incremental compiler
-					//the platform classloader is also added, so the javac classes are also available to the processor
-					ClassLoader parentcl = SakerProcessingEnvironment.class.getClassLoader();
-					try {
-						ClassLoader cl = new MultiDataClassLoader(
-								MultiClassLoader.create(
-										Arrays.asList(parentcl, ClassLoaderUtil.getPlatformClassLoaderParent())),
-								datafinders);
-						Class<? extends Processor> procclass = Class.forName(className, false, cl)
-								.asSubclass(Processor.class);
-						//XXX reify exceptions
-						supplier = () -> {
-							try {
-								return ReflectUtils.newInstance(procclass);
-							} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-									| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-								throw new IllegalArgumentException("Failed to instantiate Processor: " + className, e);
-							}
-						};
-					} catch (ClassNotFoundException e) {
-						throw new ClassNotFoundException(
-								"Processor class not found: " + className + " in " + datafinders, e);
-					} catch (ClassCastException e) {
-						throw new IllegalArgumentException(
-								"Class doesn't implement " + Processor.class.getName() + ": " + className, e);
-					}
-					closer.clearWithoutClosing();
-				}
-			}
-		}
-		return this.supplier.get();
+		SakerEnvironment environment = creationcontext.getEnvironment();
+		Constructor<? extends Processor> constructor = environment
+				.getCachedData(new ProcessorConstructorCacheKey(environment, className,
+						classPathJarFileLocations));
+		return constructor.newInstance();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeUTF(className);
-		SerialUtils.writeExternalCollection(out, fileLocations);
-		out.writeObject(changedUUID);
+		SerialUtils.writeExternalCollection(out, classPathJarFileLocations);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		className = in.readUTF();
-		fileLocations = SerialUtils.readExternalImmutableLinkedHashSet(in);
-		changedUUID = (UUID) in.readObject();
+		classPathJarFileLocations = SerialUtils.readExternalImmutableLinkedHashSet(in);
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((changedUUID == null) ? 0 : changedUUID.hashCode());
+		result = prime * result + ((className == null) ? 0 : className.hashCode());
+		result = prime * result + ((classPathJarFileLocations == null) ? 0 : classPathJarFileLocations.hashCode());
 		return result;
 	}
 
@@ -215,12 +107,107 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 		if (getClass() != obj.getClass())
 			return false;
 		ClassLoaderProcessorCreator other = (ClassLoaderProcessorCreator) obj;
-		if (changedUUID == null) {
-			if (other.changedUUID != null)
+		if (className == null) {
+			if (other.className != null)
 				return false;
-		} else if (!changedUUID.equals(other.changedUUID))
+		} else if (!className.equals(other.className))
+			return false;
+		if (classPathJarFileLocations == null) {
+			if (other.classPathJarFileLocations != null)
+				return false;
+		} else if (!classPathJarFileLocations.equals(other.classPathJarFileLocations))
 			return false;
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[className=" + className + ", classPathJarFileLocations="
+				+ classPathJarFileLocations + "]";
+	}
+
+	private static class JarClassLoaderCacheKey implements CacheKey<JarClassLoaderDataFinder, JarFile> {
+		private LocalFileLocation fileLocation;
+
+		public JarClassLoaderCacheKey(LocalFileLocation fileLocation) {
+			this.fileLocation = fileLocation;
+		}
+
+		@Override
+		public JarFile allocate() throws Exception {
+			return JarFileUtils.createMultiReleaseJarFile(LocalFileProvider.toRealPath(fileLocation.getLocalPath()));
+		}
+
+		@Override
+		public void close(JarClassLoaderDataFinder data, JarFile resource) throws Exception {
+			resource.close();
+		}
+
+		@Override
+		public JarClassLoaderDataFinder generate(JarFile resource) throws Exception {
+			return new JarClassLoaderDataFinder(resource);
+		}
+
+		@Override
+		public long getExpiry() {
+			// 5 min
+			return 5 * 60 * 1000;
+		}
+
+		@Override
+		public boolean validate(JarClassLoaderDataFinder data, JarFile resource) {
+			return true;
+		}
+	}
+
+	private static class ProcessorConstructorCacheKey implements CacheKey<Constructor<? extends Processor>, Object> {
+		private static final ClassLoader PROCESSOR_PARENT_CLASSLOADER = MultiClassLoader.create(Arrays.asList(
+				SakerProcessingEnvironment.class.getClassLoader(), ClassLoaderUtil.getPlatformClassLoaderParent()));
+
+		private SakerEnvironment environment;
+		private String className;
+		private Set<JarClassLoaderCacheKey> cacheKeys;
+
+		public ProcessorConstructorCacheKey(SakerEnvironment environment, String className,
+				Set<LocalFileLocation> files) {
+			this.environment = environment;
+			this.className = className;
+			this.cacheKeys = new LinkedHashSet<>();
+			for (LocalFileLocation f : files) {
+				cacheKeys.add(new JarClassLoaderCacheKey(f));
+			}
+		}
+
+		@Override
+		public Object allocate() throws Exception {
+			return new Object();
+		}
+
+		@Override
+		public void close(Constructor<? extends Processor> data, Object resource) throws Exception {
+		}
+
+		@Override
+		public Constructor<? extends Processor> generate(Object resource) throws Exception {
+			Set<ClassLoaderDataFinder> datafinders = new LinkedHashSet<>();
+			for (JarClassLoaderCacheKey ck : cacheKeys) {
+				JarClassLoaderDataFinder jarcldf = environment.getCachedData(ck);
+				datafinders.add(jarcldf);
+			}
+			MultiDataClassLoader cl = new MultiDataClassLoader(PROCESSOR_PARENT_CLASSLOADER, datafinders);
+			return Class.forName(className, false, cl).asSubclass(Processor.class).getConstructor();
+		}
+
+		@Override
+		public long getExpiry() {
+			// 5 min
+			return 5 * 60 * 1000;
+		}
+
+		@Override
+		public boolean validate(Constructor<? extends Processor> data, Object resource) {
+			return true;
+		}
+
+	}
 }
