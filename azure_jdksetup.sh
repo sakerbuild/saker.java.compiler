@@ -9,7 +9,7 @@ if [ $# -eq 0 ]; then
 fi
 
 ENVNAME="JAVA_HOME_$1_X64"
-LOCATION="dl_tools/jdk$1"
+LOCATION="/tmp/dl_tools/jdk$1"
 
 if [ $1 -eq 8 ]; then 
 	DOWNLOAD_URL="https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u232-b09/OpenJDK8U-jdk_x64_linux_hotspot_8u232b09.tar.gz"
@@ -38,4 +38,4 @@ mkdir -p "${LOCATION}/jdk"
 
 curl -L -f -s $DOWNLOAD_URL -o "${LOCATION}/jdk_download.tar.gz"
 tar -xzf "${LOCATION}/jdk_download.tar.gz" -C "$LOCATION/jdk"
-echo "$(pwd)/${LOCATION}/jdk/$(ls ${LOCATION}/jdk)"
+echo "${LOCATION}/jdk/$(ls ${LOCATION}/jdk)"
