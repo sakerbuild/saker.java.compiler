@@ -15,11 +15,14 @@
  */
 package saker.java.compiler.impl.processor;
 
+import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Constructor;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -35,6 +38,7 @@ import saker.build.thirdparty.saker.util.classloader.ClassLoaderUtil;
 import saker.build.thirdparty.saker.util.classloader.JarClassLoaderDataFinder;
 import saker.build.thirdparty.saker.util.classloader.MultiClassLoader;
 import saker.build.thirdparty.saker.util.classloader.MultiDataClassLoader;
+import saker.build.thirdparty.saker.util.classloader.PathClassLoaderDataFinder;
 import saker.build.thirdparty.saker.util.io.JarFileUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.util.cache.CacheKey;
@@ -47,7 +51,7 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 	private static final long serialVersionUID = 1L;
 
 	private String className;
-	private Set<LocalFileLocation> classPathJarFileLocations;
+	private Set<LocalFileLocation> classPathFileLocations;
 
 	/**
 	 * For {@link Externalizable}.
@@ -55,12 +59,12 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 	public ClassLoaderProcessorCreator() {
 	}
 
-	public ClassLoaderProcessorCreator(String className, Set<LocalFileLocation> classPathJarFileLocations) {
+	public ClassLoaderProcessorCreator(String className, Set<LocalFileLocation> classPathFileLocations) {
 		Objects.requireNonNull(className, "className");
-		Objects.requireNonNull(classPathJarFileLocations, "classPathJarFileLocations");
+		Objects.requireNonNull(classPathFileLocations, "classPathFileLocations");
 
 		this.className = className;
-		this.classPathJarFileLocations = classPathJarFileLocations;
+		this.classPathFileLocations = classPathFileLocations;
 	}
 
 	@Override
@@ -72,21 +76,20 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 	public Processor create(ProcessorCreationContext creationcontext) throws Exception {
 		SakerEnvironment environment = creationcontext.getEnvironment();
 		Constructor<? extends Processor> constructor = environment
-				.getCachedData(new ProcessorConstructorCacheKey(environment, className,
-						classPathJarFileLocations));
+				.getCachedData(new ProcessorConstructorCacheKey(environment, className, classPathFileLocations));
 		return constructor.newInstance();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeUTF(className);
-		SerialUtils.writeExternalCollection(out, classPathJarFileLocations);
+		SerialUtils.writeExternalCollection(out, classPathFileLocations);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		className = in.readUTF();
-		classPathJarFileLocations = SerialUtils.readExternalImmutableLinkedHashSet(in);
+		classPathFileLocations = SerialUtils.readExternalImmutableLinkedHashSet(in);
 	}
 
 	@Override
@@ -94,7 +97,7 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((className == null) ? 0 : className.hashCode());
-		result = prime * result + ((classPathJarFileLocations == null) ? 0 : classPathJarFileLocations.hashCode());
+		result = prime * result + ((classPathFileLocations == null) ? 0 : classPathFileLocations.hashCode());
 		return result;
 	}
 
@@ -112,10 +115,10 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 				return false;
 		} else if (!className.equals(other.className))
 			return false;
-		if (classPathJarFileLocations == null) {
-			if (other.classPathJarFileLocations != null)
+		if (classPathFileLocations == null) {
+			if (other.classPathFileLocations != null)
 				return false;
-		} else if (!classPathJarFileLocations.equals(other.classPathJarFileLocations))
+		} else if (!classPathFileLocations.equals(other.classPathFileLocations))
 			return false;
 		return true;
 	}
@@ -123,10 +126,15 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[className=" + className + ", classPathJarFileLocations="
-				+ classPathJarFileLocations + "]";
+				+ classPathFileLocations + "]";
 	}
 
-	private static class JarClassLoaderCacheKey implements CacheKey<JarClassLoaderDataFinder, JarFile> {
+	private interface ClassLoaderDataFinderCreator extends Closeable {
+		public ClassLoaderDataFinder create();
+	}
+
+	private static class JarClassLoaderCacheKey
+			implements CacheKey<ClassLoaderDataFinder, ClassLoaderDataFinderCreator> {
 		private LocalFileLocation fileLocation;
 
 		public JarClassLoaderCacheKey(LocalFileLocation fileLocation) {
@@ -134,18 +142,43 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 		}
 
 		@Override
-		public JarFile allocate() throws Exception {
-			return JarFileUtils.createMultiReleaseJarFile(LocalFileProvider.toRealPath(fileLocation.getLocalPath()));
+		public ClassLoaderDataFinderCreator allocate() throws Exception {
+			Path realpath = LocalFileProvider.toRealPath(fileLocation.getLocalPath());
+			if (Files.isDirectory(realpath)) {
+				return new ClassLoaderDataFinderCreator() {
+					@Override
+					public void close() throws IOException {
+					}
+
+					@Override
+					public ClassLoaderDataFinder create() {
+						return new PathClassLoaderDataFinder(realpath);
+					}
+				};
+			}
+			return new ClassLoaderDataFinderCreator() {
+				private final JarFile jarfile = JarFileUtils.createMultiReleaseJarFile(realpath);
+
+				@Override
+				public void close() throws IOException {
+					jarfile.close();
+				}
+
+				@Override
+				public ClassLoaderDataFinder create() {
+					return new JarClassLoaderDataFinder(jarfile);
+				}
+			};
 		}
 
 		@Override
-		public void close(JarClassLoaderDataFinder data, JarFile resource) throws Exception {
+		public void close(ClassLoaderDataFinder data, ClassLoaderDataFinderCreator resource) throws Exception {
 			resource.close();
 		}
 
 		@Override
-		public JarClassLoaderDataFinder generate(JarFile resource) throws Exception {
-			return new JarClassLoaderDataFinder(resource);
+		public ClassLoaderDataFinder generate(ClassLoaderDataFinderCreator resource) throws Exception {
+			return resource.create();
 		}
 
 		@Override
@@ -155,7 +188,7 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 		}
 
 		@Override
-		public boolean validate(JarClassLoaderDataFinder data, JarFile resource) {
+		public boolean validate(ClassLoaderDataFinder data, ClassLoaderDataFinderCreator resource) {
 			return true;
 		}
 	}
@@ -191,7 +224,7 @@ public final class ClassLoaderProcessorCreator implements ProcessorCreator, Exte
 		public Constructor<? extends Processor> generate(Object resource) throws Exception {
 			Set<ClassLoaderDataFinder> datafinders = new LinkedHashSet<>();
 			for (JarClassLoaderCacheKey ck : cacheKeys) {
-				JarClassLoaderDataFinder jarcldf = environment.getCachedData(ck);
+				ClassLoaderDataFinder jarcldf = environment.getCachedData(ck);
 				datafinders.add(jarcldf);
 			}
 			MultiDataClassLoader cl = new MultiDataClassLoader(PROCESSOR_PARENT_CLASSLOADER, datafinders);

@@ -44,6 +44,7 @@ import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -142,8 +143,9 @@ public final class ProcessorCreatorTaskFactory
 	public ProcessorCreator run(TaskContext taskcontext) throws Exception {
 		Map<String, SDKReference> sdkreferences = WorkerJavaCompilerTaskFactoryBase.toSDKReferences(taskcontext, sdks);
 		Map<LocalFileLocation, NavigableSet<SakerPath>> localdirectorycontents = new HashMap<>();
+		Set<FileLocation> immutableclasspaths = new HashSet<>();
 		Map<FileLocation, ContentDescriptor> filelocations = collectFileLocations(taskcontext, classPath, sdkreferences,
-				localdirectorycontents::put);
+				localdirectorycontents::put, immutableclasspaths::add);
 		Set<LocalFileLocation> cachedfiles = new LinkedHashSet<>();
 		if (!filelocations.isEmpty()) {
 			NestBundleClassLoader cl = (NestBundleClassLoader) this.getClass().getClassLoader();
@@ -155,6 +157,16 @@ public final class ProcessorCreatorTaskFactory
 				entry.getKey().accept(new FileLocationVisitor() {
 					@Override
 					public void visit(ExecutionFileLocation loc) {
+						if (immutableclasspaths.contains(loc)) {
+							Path localpath = taskcontext.getExecutionContext().getPathConfiguration()
+									.toLocalPath(loc.getPath());
+							if (localpath != null) {
+								cachedfiles.add(LocalFileLocation.create(SakerPath.valueOf(localpath)));
+								return;
+							}
+							//its not a local path, we can't use it. we need to copy it to the local storage
+						}
+
 						SakerFile f = taskcontext.getTaskUtilities().resolveAtPath(loc.getPath());
 						if (f == null) {
 							throw ObjectUtils
@@ -211,6 +223,10 @@ public final class ProcessorCreatorTaskFactory
 
 					@Override
 					public void visit(LocalFileLocation loc) {
+						if (immutableclasspaths.contains(loc)) {
+							cachedfiles.add(loc);
+							return;
+						}
 						SakerPath cppath = loc.getLocalPath();
 						FileEntry fattrs;
 						try {
@@ -336,7 +352,8 @@ public final class ProcessorCreatorTaskFactory
 
 	private static Map<FileLocation, ContentDescriptor> collectFileLocations(TaskContext taskcontext,
 			JavaClassPath classpath, Map<String, SDKReference> sdkreferences,
-			BiConsumer<LocalFileLocation, NavigableSet<SakerPath>> localdircontentsconsumer) throws IOException {
+			BiConsumer<LocalFileLocation, NavigableSet<SakerPath>> localdircontentsconsumer,
+			Consumer<? super FileLocation> immutableclasspathconsumer) throws IOException {
 		return collectFileLocationsWithImplementationDependencyReporting(taskcontext, classpath,
 				CompileFileTags.INPUT_CLASSPATH, sdkreferences, entry -> {
 					//we need to add a dependency on the file locations returned from the ClassPathEntry instances
@@ -345,7 +362,7 @@ public final class ProcessorCreatorTaskFactory
 					//e.g. if a nest bundle is moved from pending to local, the classpath doesn't change only the file location
 					return taskcontext.getTaskUtilities()
 							.getReportExecutionDependency(new ClassPathEntryFileLocationExecutionProperty(entry));
-				}, localdircontentsconsumer);
+				}, localdircontentsconsumer, immutableclasspathconsumer);
 	}
 
 	@Override
@@ -359,7 +376,8 @@ public final class ProcessorCreatorTaskFactory
 	public static Map<FileLocation, ContentDescriptor> collectFileLocationsWithImplementationDependencyReporting(
 			TaskContext taskcontext, JavaClassPath classpath, Object tag, Map<String, SDKReference> sdks,
 			Function<ClassPathEntry, FileLocation> classpathentryfilelocationhandler,
-			BiConsumer<LocalFileLocation, NavigableSet<SakerPath>> localdircontentsconsumer) throws IOException {
+			BiConsumer<LocalFileLocation, NavigableSet<SakerPath>> localdircontentsconsumer,
+			Consumer<? super FileLocation> immutableclasspathconsumer) throws IOException {
 		if (classpath == null) {
 			return Collections.emptyMap();
 		}
@@ -383,6 +401,9 @@ public final class ProcessorCreatorTaskFactory
 					if (filelocation == null) {
 						SakerLog.warning().println("No class path file location for: " + entry);
 						continue;
+					}
+					if (entry.isImmutable()) {
+						immutableclasspathconsumer.accept(filelocation);
 					}
 					handleFileLocation(filelocation);
 
@@ -451,6 +472,7 @@ public final class ProcessorCreatorTaskFactory
 				SakerPath path = SDKSupportUtils.getSDKPathReferencePath(sdkpathref, sdks);
 				LocalFileLocation fileloc = LocalFileLocation.create(path);
 				result.put(fileloc, null);
+				immutableclasspathconsumer.accept(fileloc);
 			}
 
 			private ContentDescriptor handleExecutionFileLocation(SakerPath path, SakerFile cpfile) {

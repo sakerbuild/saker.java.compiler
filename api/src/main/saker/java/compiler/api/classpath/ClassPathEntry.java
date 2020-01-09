@@ -128,6 +128,28 @@ public interface ClassPathEntry {
 	 */
 	public Object getImplementationVersionKey();
 
+	/**
+	 * Checks if this classpath should be considered immutable.
+	 * <p>
+	 * An immutable classpaths is one that is expected to <b>never</b> change in any way. This includes that the
+	 * classpath contents doesn't change during the build and between builds. The classpath contents are expected to be
+	 * the same after the initial construction of the classpath.
+	 * <p>
+	 * The consumer of this classpath may lock the contents of the classpath in ways that prevent its mutability. If a
+	 * classpath is reported as immutable, build errors should be expected if it is modified.
+	 * <p>
+	 * An example for these are classpaths from SDKs, release artifacts from repositories, and others. These are
+	 * expected to not be modified after they've been published.
+	 * <p>
+	 * Using immutable classpaths can improve performance as various tasks may not need to cache them in an off-site
+	 * location, but can use them in-place as that doesn't distrupt the workflow.
+	 * 
+	 * @return <code>true</code> if the classpath is immutable.
+	 */
+	public default boolean isImmutable() {
+		return false;
+	}
+
 	@Override
 	public int hashCode();
 
