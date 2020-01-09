@@ -9,7 +9,7 @@ if [ $# -eq 0 ]; then
 fi
 
 ENVNAME="JAVA_HOME_$1_X64"
-LOCATION="/tmp/dl_tool_jdk$1"
+LOCATION="dl_tools/jdk$1"
 
 if [ $1 -eq 8 ]; then 
 	DOWNLOAD_URL="https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/download/jdk8u232-b09/OpenJDK8U-jdk_x64_linux_hotspot_8u232b09.tar.gz"
