@@ -55,9 +55,19 @@ public class VersionKeyUtils {
 	}
 
 	public static boolean updateAbiHashOfClassBytes(ByteArrayRegion classbytes, MessageDigest hasher) {
-		ClassReader cr = new ClassReader(classbytes.getArray(), classbytes.getOffset(), classbytes.getLength());
-
 		try {
+			ClassReader cr;
+			try {
+				cr = new ClassReader(classbytes.getArray(), classbytes.getOffset(), classbytes.getLength());
+			} catch (RuntimeException e) {
+				// it could be that ASM doesn't support the class file version yet.
+				// in this case it throws IllegalArgumentException
+				// however, it may be modified in the future to a different kind of exceptions
+				// and if the class reader fails for any reason, we should fall back
+				// in this case we use all bytes of the class to update the ABI hash
+				hasher.update(classbytes.getArray(), classbytes.getOffset(), classbytes.getLength());
+				return true;
+			}
 			AbiHasherClassVisitor abivisitor = new AbiHasherClassVisitor(hasher);
 			cr.accept(abivisitor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 		} catch (NotAbiClassException e) {

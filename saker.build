@@ -72,6 +72,10 @@ static(TARGET_JDKS) = [
 		Id: jdk13,
 		Major: 13,
 	},
+	{
+		Id: jdk14,
+		Major: 14,
+	},
 ]
 static(JDK_ID_TO_MAJOR) = foreach $jdk in static(TARGET_JDKS) : { $jdk[Id]: $jdk[Major] }
 global(saker.java.compiler_DEPENDENCIES) = [
@@ -137,6 +141,15 @@ compile(
 					impl-util-jdk8/src/main/,
 					impl-util-jdk9/src/main/,
 					impl-util-jdk12/src/main/,
+				],
+			},
+			{
+				Identifier: jdk14,
+				SourceDirectories: [
+					impl-util-jdk8/src/main/,
+					impl-util-jdk9/src/main/,
+					impl-util-jdk12/src/main/,
+					impl-util-jdk13/src/main/,
 				],
 			},
 		] + [
@@ -347,6 +360,9 @@ compile12() {
 compile13() {
 	include(compile, jdk: jdk13)
 }
+compile14() {
+	include(compile, jdk: jdk14)
+}
 export9(){
 	include(export, compile: include(compile, jdk: jdk9))
 }
@@ -355,7 +371,7 @@ export12(){
 }
 exportall(
 	in testapi = include(_testapicompile),
-	in jdkids = [ jdk8, jdk9, jdk12, jdk13 ],
+	in jdkids = [ jdk8, jdk9, jdk12, jdk13, jdk14 ],
 	
 	out bundlepaths,
 	out exportbyjdkid,

@@ -97,6 +97,7 @@ public abstract class CompilationHandler {
 		SOURCE_VERSION_STRINGS.put("RELEASE_11", "11");
 		SOURCE_VERSION_STRINGS.put("RELEASE_12", "12");
 		SOURCE_VERSION_STRINGS.put("RELEASE_13", "13");
+		SOURCE_VERSION_STRINGS.put("RELEASE_14", "14");
 	}
 
 	public static String sourceVersionToParameterString(String srcversion) {
