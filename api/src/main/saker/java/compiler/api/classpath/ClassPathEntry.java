@@ -120,13 +120,44 @@ public interface ClassPathEntry {
 	 * In general, if the implementation version key of a classpath changes, the dependent code needs to be re-executed
 	 * or recompiled.
 	 * <p>
-	 * The implementation verison key should include all aspects of the class files available in the (non-transitive)
+	 * The implementation version key should include all aspects of the class files available in the (non-transitive)
 	 * classpath.
 	 * 
 	 * @return The implementation version key or <code>null</code> if none.
 	 * @see JavaCompilerWorkerTaskOutput#getImplementationVersionKey()
 	 */
 	public Object getImplementationVersionKey();
+
+	/**
+	 * Checks if the {@linkplain #getFileLocation() file location} of this classpath may be considered static.
+	 * <p>
+	 * A static classpath is one that doesn't change during the lifetime of the enclosing build environment. The files
+	 * of a static classpath will not be attempted to be modified by other agents on the same computer. If the classpath
+	 * represents a directory, then the enclosed files in the directory mustn't change. If it is a JAR, or other
+	 * archive, then the file itself mustn't change.
+	 * <p>
+	 * If a classpath is static, that means that the users of the classpath are allowed to load the files of the
+	 * classpath directly from its location and doesn't need to copy it elsewhere. As the classpath is opened,
+	 * modifications may be blocked to them by the operating system.
+	 * <p>
+	 * E.g. if a static JAR path is opened by the build environment, and the user attempts to delete, rename, modify, or
+	 * otherwise manipulate the JAR, then it may fail, as the build environment loaded it.
+	 * <p>
+	 * In order to modify static classpaths, the user may need to reload the build environment. If that is distruptive
+	 * to the normal workflow, then the classpath shouldn't be considered static.
+	 * <p>
+	 * An example for static classpaths are classpaths from SDKs, artifacts from repositories, and others. These are
+	 * expected to not be modified after they've been published.
+	 * <p>
+	 * Using static classpaths can improve performance as various tasks may not need to cache them in an off-site
+	 * location, but can use them in-place as that doesn't distrupt the workflow.
+	 * 
+	 * @return <code>true</code> if the classpath is static.
+	 * @since saker.java.compiler 0.8.1
+	 */
+	public default boolean isStaticFile() {
+		return false;
+	}
 
 	@Override
 	public int hashCode();

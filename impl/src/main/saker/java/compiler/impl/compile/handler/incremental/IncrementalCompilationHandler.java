@@ -1177,7 +1177,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 					public void visit(LocalFileLocation loc) {
 						SakerPath path = loc.getLocalPath();
 						ContentDescriptor cd = taskContext.getTaskUtilities().getReportExecutionDependency(
-								new LocalPathFileContentDescriptorExecutionProperty(path));
+								new LocalPathFileContentDescriptorExecutionProperty(taskContext.getTaskId(), path));
 						if (cd == null) {
 							throw ObjectUtils.sneakyThrow(
 									new FileNotFoundException("Module path local file not found: " + path));
@@ -1192,7 +1192,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 
 							NavigableMap<SakerPath, ? extends ContentDescriptor> classfilecontents = taskContext
 									.getTaskUtilities()
-									.getReportExecutionDependency(new LocalDirectoryClassFilesExecutionProperty(path))
+									.getReportExecutionDependency(new LocalDirectoryClassFilesExecutionProperty(
+											taskContext.getTaskId(), path))
 									.getContents();
 							cpcontentdescriptors = classfilecontents;
 						} else {
@@ -1459,7 +1460,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 					public void visit(LocalFileLocation loc) {
 						SakerPath path = loc.getLocalPath();
 						ContentDescriptor cd = taskContext.getTaskUtilities().getReportExecutionDependency(
-								new LocalPathFileContentDescriptorExecutionProperty(path));
+								new LocalPathFileContentDescriptorExecutionProperty(taskContext.getTaskId(), path));
 						if (cd == null) {
 							throw ObjectUtils
 									.sneakyThrow(new FileNotFoundException("Class path local file not found: " + path));
@@ -1474,7 +1475,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 
 							NavigableMap<SakerPath, ? extends ContentDescriptor> classfilecontents = taskContext
 									.getTaskUtilities()
-									.getReportExecutionDependency(new LocalDirectoryClassFilesExecutionProperty(path))
+									.getReportExecutionDependency(new LocalDirectoryClassFilesExecutionProperty(
+											taskContext.getTaskId(), path))
 									.getContents();
 							cpcontentdescriptors = classfilecontents;
 						} else {

@@ -16,7 +16,6 @@
 package saker.java.compiler.impl;
 
 import java.io.Externalizable;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -24,10 +23,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
@@ -36,27 +33,15 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 
-import saker.build.file.SakerDirectory;
-import saker.build.file.SakerFile;
 import saker.build.file.content.ContentDescriptor;
-import saker.build.file.content.DirectoryContentDescriptor;
-import saker.build.file.content.MultiPathContentDescriptor;
-import saker.build.file.content.SerializableContentDescriptor;
 import saker.build.file.path.SakerPath;
 import saker.build.file.provider.FileEntry;
 import saker.build.file.provider.LocalFileProvider;
-import saker.build.file.provider.SakerPathFiles;
 import saker.build.runtime.execution.ExecutionContext;
 import saker.build.runtime.execution.ExecutionProperty;
-import saker.build.runtime.execution.SakerLog;
-import saker.build.task.TaskContext;
-import saker.build.task.TaskDependencyFuture;
-import saker.build.task.TaskExecutionUtilities;
 import saker.build.task.dependencies.CommonTaskOutputChangeDetector;
-import saker.build.task.dependencies.FileCollectionStrategy;
 import saker.build.task.dependencies.TaskOutputChangeDetector;
 import saker.build.task.identifier.TaskIdentifier;
-import saker.build.task.utils.dependencies.RecursiveIgnoreCaseExtensionFileCollectionStrategy;
 import saker.build.thirdparty.org.objectweb.asm.ClassReader;
 import saker.build.thirdparty.org.objectweb.asm.ClassVisitor;
 import saker.build.thirdparty.org.objectweb.asm.ModuleVisitor;
@@ -67,28 +52,11 @@ import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
 import saker.build.thirdparty.saker.util.io.FileUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
-import saker.java.compiler.api.classpath.ClassPathEntry;
-import saker.java.compiler.api.classpath.ClassPathReference;
-import saker.java.compiler.api.classpath.ClassPathVisitor;
-import saker.java.compiler.api.classpath.CompilationClassPath;
-import saker.java.compiler.api.classpath.FileClassPath;
-import saker.java.compiler.api.classpath.JavaClassPath;
-import saker.java.compiler.api.classpath.JavaClassPathBuilder;
-import saker.java.compiler.api.classpath.SDKClassPath;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
-import saker.java.compiler.api.compile.JavaCompilerWorkerTaskOutput;
 import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.option.JavaAddExports;
-import saker.java.compiler.impl.JavaTaskUtils.LocalDirectoryClassFilesExecutionProperty.PropertyValue;
 import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
 import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
-import saker.sdk.support.api.SDKPathReference;
-import saker.sdk.support.api.SDKReference;
-import saker.sdk.support.api.SDKSupportUtils;
-import saker.std.api.file.location.ExecutionFileLocation;
-import saker.std.api.file.location.FileLocation;
-import saker.std.api.file.location.FileLocationVisitor;
-import saker.std.api.file.location.LocalFileLocation;
 
 public class JavaTaskUtils {
 	public static final String EXTENSION_CLASSFILE = "class";
@@ -217,163 +185,6 @@ public class JavaTaskUtils {
 		return SakerJavaCompilerUtils.toAddExportsCommandLineStrings(addexports);
 	}
 
-	/**
-	 * @return The content descriptors may be <code>null</code>.
-	 */
-	public static Map<FileLocation, ContentDescriptor> collectFileLocationsWithImplementationDependencyReporting(
-			TaskContext taskcontext, JavaClassPath classpath, Object tag, Map<String, SDKReference> sdks,
-			Function<ClassPathEntry, FileLocation> classpathentryfilelocationhandler) throws IOException {
-		if (classpath == null) {
-			return Collections.emptyMap();
-		}
-		Map<FileLocation, ContentDescriptor> result = new LinkedHashMap<>();
-		classpath.accept(new ClassPathVisitor() {
-			private Set<JavaCompilationWorkerTaskIdentifier> handledWorkerTaskIds = new HashSet<>();
-
-			@Override
-			public void visit(ClassPathReference classpath) {
-				Collection<? extends ClassPathEntry> entries = classpath.getEntries();
-				if (ObjectUtils.isNullOrEmpty(entries)) {
-					SakerLog.warning().println("No class path entries found for: " + classpath);
-					return;
-				}
-				for (ClassPathEntry entry : entries) {
-					if (entry == null) {
-						SakerLog.warning().println("Class path entry is null for: " + classpath);
-						continue;
-					}
-					FileLocation filelocation = classpathentryfilelocationhandler.apply(entry);
-					if (filelocation == null) {
-						SakerLog.warning().println("No class path file location for: " + entry);
-						continue;
-					}
-					handleFileLocation(filelocation);
-
-					Collection<? extends ClassPathReference> additionalclasspaths = entry
-							.getAdditionalClassPathReferences();
-					if (!ObjectUtils.isNullOrEmpty(additionalclasspaths)) {
-						JavaClassPathBuilder additionalcpbuilder = JavaClassPathBuilder.newBuilder();
-						for (ClassPathReference additionalcp : additionalclasspaths) {
-							additionalcpbuilder.addClassPath(additionalcp);
-						}
-						JavaClassPath additionalcp = additionalcpbuilder.build();
-						additionalcp.accept(this);
-					}
-				}
-			}
-
-			@Override
-			public void visit(CompilationClassPath classpath) {
-				JavaCompilationWorkerTaskIdentifier workertaskid = classpath.getCompilationWorkerTaskIdentifier();
-				if (!handledWorkerTaskIds.add(workertaskid)) {
-					//don't get the task result to not install another dependency
-					return;
-				}
-				TaskDependencyFuture<?> depresult = taskcontext.getTaskDependencyFuture(workertaskid);
-				JavaCompilerWorkerTaskOutput output = (JavaCompilerWorkerTaskOutput) depresult.getFinished();
-				SakerPath classdirpath = output.getClassDirectory();
-				ExecutionFileLocation filelocation = ExecutionFileLocation.create(classdirpath);
-				JavaClassPath outputcp = output.getClassPath();
-
-				Object implversionkey = output.getImplementationVersionKey();
-				if (implversionkey != null) {
-					depresult.setTaskOutputChangeDetector(SakerJavaCompilerUtils
-							.getCompilerOutputImplementationVersionKeyTaskOutputChangeDetector(implversionkey));
-					depresult.setTaskOutputChangeDetector(
-							SakerJavaCompilerUtils.getCompilerOutputClassPathTaskOutputChangeDetector(outputcp));
-					result.put(filelocation, new SerializableContentDescriptor(implversionkey));
-				} else {
-					SakerDirectory classesdir = taskcontext.getTaskUtilities().resolveDirectoryAtPath(classdirpath);
-					if (classesdir == null) {
-						throw ObjectUtils.sneakyThrow(
-								new FileNotFoundException("Compilation class directory not found: " + classesdir));
-					}
-
-					FileCollectionStrategy classfileadditiondep = RecursiveIgnoreCaseExtensionFileCollectionStrategy
-							.create(classdirpath, "." + EXTENSION_CLASSFILE);
-					NavigableMap<SakerPath, SakerFile> classfiles = taskcontext.getTaskUtilities()
-							.collectFilesReportInputFileAndAdditionDependency(tag, classfileadditiondep);
-
-					NavigableMap<SakerPath, ContentDescriptor> contentmap = SakerPathFiles.toFileContentMap(classfiles);
-					result.put(filelocation, new MultiPathContentDescriptor(contentmap));
-				}
-				if (outputcp != null) {
-					outputcp.accept(this);
-				}
-			}
-
-			@Override
-			public void visit(FileClassPath classpath) {
-				FileLocation location = classpath.getFileLocation();
-				handleFileLocation(location);
-			}
-
-			@Override
-			public void visit(SDKClassPath classpath) {
-				SDKPathReference sdkpathref = classpath.getSDKPathReference();
-				SakerPath path = SDKSupportUtils.getSDKPathReferencePath(sdkpathref, sdks);
-				LocalFileLocation fileloc = LocalFileLocation.create(path);
-				result.put(fileloc, null);
-			}
-
-			private ContentDescriptor handleExecutionFileLocation(SakerPath path, SakerFile cpfile) {
-				if (cpfile instanceof SakerDirectory) {
-					FileCollectionStrategy classfileadditiondep = RecursiveIgnoreCaseExtensionFileCollectionStrategy
-							.create(path, "." + EXTENSION_CLASSFILE);
-					NavigableMap<SakerPath, SakerFile> classfiles = taskcontext.getTaskUtilities()
-							.collectFilesReportInputFileAndAdditionDependency(tag, classfileadditiondep);
-					return new MultiPathContentDescriptor(SakerPathFiles.toFileContentMap(classfiles));
-				}
-				taskcontext.getTaskUtilities().reportInputFileDependency(tag, cpfile);
-				return cpfile.getContentDescriptor();
-			}
-
-			private void handleFileLocation(FileLocation location) {
-				if (result.containsKey(location)) {
-					return;
-				}
-				ContentDescriptor[] cdres = { null };
-				location.accept(new FileLocationVisitor() {
-					@Override
-					public void visit(ExecutionFileLocation loc) {
-						SakerPath path = loc.getPath();
-						SakerFile cpfile = taskcontext.getTaskUtilities().resolveAtPath(path);
-						if (cpfile == null) {
-							throw ObjectUtils
-									.sneakyThrow(new FileNotFoundException("Class path file not found: " + path));
-						}
-						cdres[0] = handleExecutionFileLocation(path, cpfile);
-					}
-
-					@Override
-					public void visit(LocalFileLocation loc) {
-						SakerPath path = loc.getLocalPath();
-						TaskExecutionUtilities taskutils = taskcontext.getTaskUtilities();
-						ContentDescriptor cd = taskutils.getReportExecutionDependency(
-								new LocalPathFileContentDescriptorExecutionProperty(path));
-						if (cd == null) {
-							throw ObjectUtils
-									.sneakyThrow(new FileNotFoundException("Class path local file not found: " + path));
-						}
-
-						if (DirectoryContentDescriptor.INSTANCE.equals(cd)) {
-							//the class path denotes a directory
-							//add the dependencies on the class files
-
-							PropertyValue pval = taskutils
-									.getReportExecutionDependency(new LocalDirectoryClassFilesExecutionProperty(path));
-							cdres[0] = new MultiPathContentDescriptor(pval.getContents());
-						} else {
-							cdres[0] = cd;
-						}
-					}
-				});
-				result.put(location, cdres[0]);
-			}
-		});
-		return result;
-	}
-
 	public static class LocalDirectoryClassFilesExecutionProperty
 			implements ExecutionProperty<LocalDirectoryClassFilesExecutionProperty.PropertyValue>, Externalizable {
 		private static final long serialVersionUID = 1L;
@@ -438,6 +249,7 @@ public class JavaTaskUtils {
 
 		}
 
+		private TaskIdentifier associatedTaskId;
 		private SakerPath path;
 
 		/**
@@ -446,7 +258,8 @@ public class JavaTaskUtils {
 		public LocalDirectoryClassFilesExecutionProperty() {
 		}
 
-		public LocalDirectoryClassFilesExecutionProperty(SakerPath path) {
+		public LocalDirectoryClassFilesExecutionProperty(TaskIdentifier associatedTaskId, SakerPath path) {
+			this.associatedTaskId = associatedTaskId;
 			this.path = path;
 		}
 
@@ -465,7 +278,7 @@ public class JavaTaskUtils {
 				}
 				SakerPath cpabspath = path.resolve(keypath);
 				ContentDescriptor classfilecd = executioncontext.getExecutionPropertyCurrentValue(
-						new LocalPathFileContentDescriptorExecutionProperty(cpabspath));
+						new LocalPathFileContentDescriptorExecutionProperty(associatedTaskId, cpabspath));
 				if (classfilecd == null) {
 					continue;
 				}
@@ -476,11 +289,13 @@ public class JavaTaskUtils {
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(associatedTaskId);
 			out.writeObject(path);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			associatedTaskId = (TaskIdentifier) in.readObject();
 			path = (SakerPath) in.readObject();
 		}
 
@@ -488,6 +303,7 @@ public class JavaTaskUtils {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
+			result = prime * result + ((associatedTaskId == null) ? 0 : associatedTaskId.hashCode());
 			result = prime * result + ((path == null) ? 0 : path.hashCode());
 			return result;
 		}
@@ -501,6 +317,11 @@ public class JavaTaskUtils {
 			if (getClass() != obj.getClass())
 				return false;
 			LocalDirectoryClassFilesExecutionProperty other = (LocalDirectoryClassFilesExecutionProperty) obj;
+			if (associatedTaskId == null) {
+				if (other.associatedTaskId != null)
+					return false;
+			} else if (!associatedTaskId.equals(other.associatedTaskId))
+				return false;
 			if (path == null) {
 				if (other.path != null)
 					return false;

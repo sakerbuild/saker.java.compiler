@@ -370,8 +370,8 @@ public class FullCompilationHandler extends CompilationHandler {
 			@Override
 			public void visit(LocalFileLocation loc) {
 				SakerPath path = loc.getLocalPath();
-				taskContext.getTaskUtilities()
-						.getReportExecutionDependency(new LocalPathFileContentDescriptorExecutionProperty(path));
+				taskContext.getTaskUtilities().getReportExecutionDependency(
+						new LocalPathFileContentDescriptorExecutionProperty(taskContext.getTaskId(), path));
 				paths.add(path);
 			}
 		});

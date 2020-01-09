@@ -96,6 +96,12 @@ public class BundleClassPathEntry implements ClassPathEntry, Externalizable {
 	}
 
 	@Override
+	public boolean isStaticFile() {
+		//the bundle files doesn't change during the lifetime of the build environment, so they are static
+		return true;
+	}
+
+	@Override
 	public Collection<? extends ClassPathReference> getAdditionalClassPathReferences() {
 		return null;
 	}

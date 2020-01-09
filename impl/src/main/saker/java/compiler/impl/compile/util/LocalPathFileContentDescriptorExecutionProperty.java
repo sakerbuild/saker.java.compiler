@@ -25,11 +25,14 @@ import saker.build.file.path.SakerPath;
 import saker.build.file.provider.LocalFileProvider;
 import saker.build.runtime.execution.ExecutionContext;
 import saker.build.runtime.execution.ExecutionProperty;
+import saker.build.task.identifier.TaskIdentifier;
 
 public class LocalPathFileContentDescriptorExecutionProperty
 		implements ExecutionProperty<ContentDescriptor>, Externalizable {
 	private static final long serialVersionUID = 1L;
 
+	//associatedTask field is necessary for the incremental behaviours of the build system to work
+	private TaskIdentifier associatedTask;
 	private SakerPath path;
 
 	/**
@@ -38,7 +41,8 @@ public class LocalPathFileContentDescriptorExecutionProperty
 	public LocalPathFileContentDescriptorExecutionProperty() {
 	}
 
-	public LocalPathFileContentDescriptorExecutionProperty(SakerPath path) {
+	public LocalPathFileContentDescriptorExecutionProperty(TaskIdentifier associatedTask, SakerPath path) {
+		this.associatedTask = associatedTask;
 		this.path = path;
 	}
 
@@ -55,11 +59,13 @@ public class LocalPathFileContentDescriptorExecutionProperty
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(associatedTask);
 		out.writeObject(path);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		associatedTask = (TaskIdentifier) in.readObject();
 		path = (SakerPath) in.readObject();
 	}
 
@@ -67,6 +73,7 @@ public class LocalPathFileContentDescriptorExecutionProperty
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((associatedTask == null) ? 0 : associatedTask.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		return result;
 	}
@@ -80,6 +87,11 @@ public class LocalPathFileContentDescriptorExecutionProperty
 		if (getClass() != obj.getClass())
 			return false;
 		LocalPathFileContentDescriptorExecutionProperty other = (LocalPathFileContentDescriptorExecutionProperty) obj;
+		if (associatedTask == null) {
+			if (other.associatedTask != null)
+				return false;
+		} else if (!associatedTask.equals(other.associatedTask))
+			return false;
 		if (path == null) {
 			if (other.path != null)
 				return false;
