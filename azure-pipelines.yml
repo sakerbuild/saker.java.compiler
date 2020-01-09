@@ -1,30 +1,54 @@
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-steps:
-- script: curl -s https://api.nest.saker.build/bundle/download/saker.build-v0.8.0 -o saker.build.jar
-  displayName: 'Download saker.build'
-- script: echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash azure_jdksetup.sh 8)"
+jobs:
+- job: setupJDK8
+  steps:
+  - script: echo "##vso[task.setvariable variable=JAVA_HOME_8_X64;isOutput=true]$(bash azure_jdksetup.sh 8)"
+    name: setupstep
   displayName: 'Setup JDK8'
-- script: echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash azure_jdksetup.sh 9)"
+  pool:
+    vmImage: 'ubuntu-latest'
+- job: setupJDK9
+  steps:
+  - script: echo "##vso[task.setvariable variable=JAVA_HOME_9_X64;isOutput=true]$(bash azure_jdksetup.sh 9)"
+    name: setupstep
   displayName: 'Setup JDK9'
-- script: echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash azure_jdksetup.sh 12)"
+  pool:
+    vmImage: 'ubuntu-latest'
+- job: setupJDK12
+  steps:
+  - script: echo "##vso[task.setvariable variable=JAVA_HOME_12_X64;isOutput=true]$(bash azure_jdksetup.sh 12)"
+    name: setupstep
   displayName: 'Setup JDK12'
-- script: echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash azure_jdksetup.sh 13)"
+  pool:
+    vmImage: 'ubuntu-latest'
+- job: setupJDK13
+  steps:
+  - script: echo "##vso[task.setvariable variable=JAVA_HOME_13_X64;isOutput=true]$(bash azure_jdksetup.sh 13)"
+    name: setupstep
   displayName: 'Setup JDK13'
-- script: |
-    pwd
-    ls -la
-    ls -la dl_tools
-    ls -la dl_tools/jdk13
-    ls -la dl_tools/jdk13/jdk/jdk-13.0.1+9
-    ls -la dl_tools/jdk13/jdk/jdk-13.0.1+9/bin
-    exit 0
-  displayName: 'Echo'
-- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
-  displayName: 'Test'
-- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" exportall
-  displayName: 'Export'
+  pool:
+    vmImage: 'ubuntu-latest'
+- job: dlSaker
+  steps:
+  - script: curl -s https://api.nest.saker.build/bundle/download/saker.build-v0.8.0 -o saker.build.jar
+  displayName: 'Download saker.build'
+  pool:
+    vmImage: 'ubuntu-latest'
+- job: test
+  dependsOn:
+  - setupJDK8
+  - setupJDK9
+  - setupJDK12
+  - setupJDK13
+  - dlSaker
+  variables:
+    JAVA_HOME_8_X64: $[ dependencies.setupJDK8.outputs['setupstep.JAVA_HOME_8_X64'] ]
+    JAVA_HOME_9_X64: $[ dependencies.setupJDK9.outputs['setupstep.JAVA_HOME_9_X64'] ]
+    JAVA_HOME_12_X64: $[ dependencies.setupJDK12.outputs['setupstep.JAVA_HOME_12_X64'] ]
+    JAVA_HOME_13_X64: $[ dependencies.setupJDK13.outputs['setupstep.JAVA_HOME_13_X64'] ]
+  steps:
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
+  pool:
+    vmImage: 'ubuntu-latest'
