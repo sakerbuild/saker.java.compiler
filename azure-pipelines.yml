@@ -14,8 +14,7 @@ steps:
       curl -L -f -s https://github.com/AdoptOpenJDK/openjdk9-binaries/releases/download/jdk-9.0.4%2B11/OpenJDK9U-jdk_x64_linux_hotspot_9.0.4_11.tar.gz -o /tmp/jdk9.tar.gz
       mkdir /tmp/dl_tool_jdk9
       tar -xzf /tmp/jdk9.tar.gz -C /tmp/dl_tool_jdk9
-      export JAVA_HOME_9_X64=/tmp/dl_tool_jdk9
-      ls -la /tmp/dl_tool_jdk9
+      export JAVA_HOME_9_X64=/tmp/dl_tool_jdk9/jdk-9.0.4+11
     else
       echo $JAVA_HOME_9_X64
     fi
