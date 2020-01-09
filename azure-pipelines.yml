@@ -15,10 +15,13 @@ steps:
       mkdir /tmp/dl_tool_jdk9
       tar -xzf /tmp/jdk9.tar.gz -C /tmp/dl_tool_jdk9
       export JAVA_HOME_9_X64=/tmp/dl_tool_jdk9/jdk-9.0.4+11
+      ls -la /tmp/dl_tool_jdk9/jdk-9.0.4+11
     else
       echo $JAVA_HOME_9_X64
     fi
   displayName: 'Setup JDK9'
+- script: echo java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" test
+  displayName: 'Echo'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" test
   displayName: 'Test'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" exportall
