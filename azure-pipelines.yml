@@ -20,8 +20,9 @@ steps:
     ls -la
     ls -la dl_tools
     ls -la dl_tools/jdk13
-    ls -la dl_tools/jdk13/jdk-13.0.1+9
-    ls -la dl_tools/jdk13/jdk-13.0.1+9/bin
+    ls -la dl_tools/jdk13/jdk/jdk-13.0.1+9
+    ls -la dl_tools/jdk13/jdk/jdk-13.0.1+9/bin
+    exit 0
   displayName: 'Echo'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
   displayName: 'Test'
