@@ -13,9 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package saker.java.compiler.jdk.impl.compat.element;
+package saker.java.compiler.util14.impl.compat.element;
 
-import saker.java.compiler.util14.impl.compat.element.DefaultedElementVisitor14;
+import javax.lang.model.element.RecordComponentElement;
 
-public interface DefaultedElementVisitor<R, P> extends DefaultedElementVisitor14<R, P> {
+import saker.java.compiler.util9.impl.compat.element.DefaultedElementVisitor9;
+
+public interface DefaultedElementVisitor14<R, P> extends DefaultedElementVisitor9<R, P> {
+	public default R visitRecordComponent(RecordComponentElement t, P p) {
+		return visitRecordComponentElementCompat(new RecordComponentElementCompatImpl(t), p);
+	}
 }
