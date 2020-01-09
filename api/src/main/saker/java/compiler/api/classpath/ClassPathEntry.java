@@ -120,7 +120,7 @@ public interface ClassPathEntry {
 	 * In general, if the implementation version key of a classpath changes, the dependent code needs to be re-executed
 	 * or recompiled.
 	 * <p>
-	 * The implementation verison key should include all aspects of the class files available in the (non-transitive)
+	 * The implementation version key should include all aspects of the class files available in the (non-transitive)
 	 * classpath.
 	 * 
 	 * @return The implementation version key or <code>null</code> if none.

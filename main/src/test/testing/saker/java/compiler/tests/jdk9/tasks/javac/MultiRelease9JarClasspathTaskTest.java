@@ -32,7 +32,7 @@ import testing.saker.java.compiler.JavaCompilerVariablesMetricEnvironmentTaskTes
  * This test is disabled for now, as the javac implementation doesn't work.
  * <p>
  * In order to have multi-release JARs on the classpath, the <i>hidden</i> <code>--multi-release</code> option needs to
- * be added with the verison number as its argument to javac.
+ * be added with the version number as its argument to javac.
  * <p>
  * Then, it will use <code>JarFileSystem</code> to access the JAR files. However, it fails to properly list the
  * versioned entries, therefore the version 9 of the given class will not be enumerated.
