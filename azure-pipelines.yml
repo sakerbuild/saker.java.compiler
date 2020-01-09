@@ -7,32 +7,15 @@ pool:
 steps:
 - script: curl -s https://api.nest.saker.build/bundle/download/saker.build-v0.8.0 -o saker.build.jar
   displayName: 'Download saker.build'
-- script: |
-    # to exit if an error happens
-    set -e
-    if [[ -z "${JAVA_HOME_9_X64}" ]]; then
-      curl -L -f -s https://github.com/AdoptOpenJDK/openjdk9-binaries/releases/download/jdk-9.0.4%2B11/OpenJDK9U-jdk_x64_linux_hotspot_9.0.4_11.tar.gz -o /tmp/jdk9.tar.gz
-      mkdir /tmp/dl_tool_jdk9
-      tar -xzf /tmp/jdk9.tar.gz -C /tmp/dl_tool_jdk9
-      ls -la /tmp/dl_tool_jdk9/jdk-9.0.4+11
-      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]/tmp/dl_tool_jdk9/jdk-9.0.4+11"
-    else
-      echo $JAVA_HOME_9_X64
-      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$JAVA_HOME_9_X64"
-    fi
+- script: echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash azure_jdksetup.sh 8)"
+  displayName: 'Setup JDK8'
+- script: echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash azure_jdksetup.sh 9)"
   displayName: 'Setup JDK9'
-- script: |
-    echo $(JAVA_HOME_8_X64)
-    echo $(JAVA_HOME_9_X64)
-    echo $(JAVA_HOME_12_X64)
-    echo $(JAVA_HOME_13_X64)
-    echo ${JAVA_HOME_8_X64}
-    echo ${JAVA_HOME_9_X64}
-    echo ${JAVA_HOME_12_X64}
-    echo ${JAVA_HOME_13_X64}
-    echo java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" test
-  displayName: 'Echo'
-- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" test
+- script: echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash azure_jdksetup.sh 12)"
+  displayName: 'Setup JDK12'
+- script: echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash azure_jdksetup.sh 13)"
+  displayName: 'Setup JDK13
+- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$=JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
   displayName: 'Test'
-- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=${JAVA_HOME_8_X64};${JAVA_HOME_9_X64};${JAVA_HOME_12_X64};${JAVA_HOME_13_X64}" exportall
+- script: - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$=JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" exportall
   displayName: 'Export'
