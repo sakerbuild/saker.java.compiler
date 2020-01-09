@@ -15,6 +15,7 @@ steps:
       mkdir /tmp/dl_tool_jdk9
       tar -xzf /tmp/jdk9.tar.gz -C /tmp/dl_tool_jdk9
       export JAVA_HOME_9_X64=/tmp/dl_tool_jdk9
+      ls -la /tmp/dl_tool_jdk9
     else
       echo $JAVA_HOME_9_X64
     fi
