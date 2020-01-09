@@ -17,5 +17,5 @@ steps:
   displayName: 'Setup JDK13'
 - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$=JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
   displayName: 'Test'
-- script: - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$=JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" exportall
+- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$=JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" exportall
   displayName: 'Export'
