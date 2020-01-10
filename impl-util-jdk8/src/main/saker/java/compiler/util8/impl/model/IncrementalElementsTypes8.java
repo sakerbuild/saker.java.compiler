@@ -79,7 +79,9 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compat.element.ModuleElementCompat;
+import saker.java.compiler.impl.compat.element.RecordComponentElementCompat;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonDeclaredType;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonPackageType;
@@ -282,7 +284,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 	static {
 		ELEMENT_KIND_PACKAGE_MODULE = EnumSet.of(ElementKind.PACKAGE);
-		JavaCompilationUtils.addModuleElementKind(ELEMENT_KIND_PACKAGE_MODULE);
+		ElementKind moduleelemkind = JavaCompilationUtils.getModuleElementKind();
+		if (moduleelemkind != null) {
+			ELEMENT_KIND_PACKAGE_MODULE.add(moduleelemkind);
+		}
 	}
 
 	static {
@@ -3508,8 +3513,8 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	public static boolean isClassUnrelatedToEnclosing(ClassSignature sig) {
-		return sig.getKind() != ElementKind.CLASS || sig.getNestingKind() == NestingKind.TOP_LEVEL
-				|| sig.getModifiers().contains(Modifier.STATIC);
+		return sig.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_CLASS
+				|| sig.getNestingKind() == NestingKind.TOP_LEVEL || sig.getModifiers().contains(Modifier.STATIC);
 	}
 
 	public static boolean isClassUnrelatedToEnclosing(TypeElement elem) {
@@ -4920,6 +4925,16 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		@Override
 		public Signature visitModuleCompat(ModuleElementCompat moduleElement, Void p) {
 			return JavaModelUtils.moduleElementToSignature(moduleElement.getRealObject(), cache);
+		}
+
+		@Override
+		public Signature visitRecordComponentElementCompat(RecordComponentElementCompat e, Void p) {
+			Element realelem = e.getRealObject();
+			List<AnnotationSignature> annotationsignatures = getAnnotationSignaturesForAnnotatedConstruct(realelem,
+					cache);
+			TypeSignature variabletypesignature = createTypeSignature(realelem.asType(), cache, annotationsignatures);
+			return FieldSignatureImpl.createRecordComponent(realelem.getModifiers(), variabletypesignature,
+					realelem.getSimpleName().toString(), null);
 		}
 
 		@Override

@@ -30,18 +30,18 @@ import javax.lang.model.element.Modifier;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
-import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
 public final class FullMethodSignature extends MethodSignatureBase {
 	private static final long serialVersionUID = 1L;
 
-	protected ElementKind methodKind;
+	protected byte elementKindIndex;
 	protected TypeSignature returnType;
 	protected String name;
 	protected List<TypeSignature> throwsTypes = Collections.emptyList();
@@ -111,7 +111,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 		this.name = name;
 		this.throwsTypes = throwsTypes;
 		this.returnType = returnType;
-		this.methodKind = methodKind;
+		this.elementKindIndex = KindCompatUtils.getElementKindIndex(methodKind);
 		this.typeParameters = typeParameters;
 		this.receiverParameter = receiverParameter;
 		this.varArg = varArg;
@@ -153,8 +153,13 @@ public final class FullMethodSignature extends MethodSignatureBase {
 	}
 
 	@Override
-	public ElementKind getKind() {
-		return methodKind;
+	public final ElementKind getKind() {
+		return KindCompatUtils.getElementKind(elementKindIndex);
+	}
+
+	@Override
+	public final byte getKindIndex() {
+		return elementKindIndex;
 	}
 
 	@Override
@@ -182,7 +187,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 		out.writeUTF(name);
 		out.writeObject(returnType);
 
-		out.writeObject(methodKind);
+		out.writeByte(elementKindIndex);
 
 		out.writeObject(receiverParameter);
 
@@ -200,7 +205,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 		name = in.readUTF();
 		returnType = (TypeSignature) in.readObject();
 
-		methodKind = (ElementKind) in.readObject();
+		elementKindIndex = in.readByte();
 
 		receiverParameter = (TypeSignature) in.readObject();
 
@@ -222,7 +227,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 				return false;
 		} else if (!docComment.equals(other.docComment))
 			return false;
-		if (methodKind != other.methodKind)
+		if (elementKindIndex != other.elementKindIndex)
 			return false;
 		if (name == null) {
 			if (other.name != null)

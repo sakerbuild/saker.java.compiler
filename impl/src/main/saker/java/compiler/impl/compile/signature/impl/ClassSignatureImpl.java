@@ -31,6 +31,7 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.ArrayTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
@@ -132,7 +133,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 	protected static boolean hasAnyConstructor(List<? extends ClassMemberSignature> members) {
 		for (ClassMemberSignature mem : members) {
-			if (mem.getKind() == ElementKind.CONSTRUCTOR) {
+			if (mem.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR) {
 				return true;
 			}
 		}

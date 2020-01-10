@@ -16,6 +16,7 @@
 package saker.java.compiler.jdk.impl;
 
 import java.util.Collection;
+import java.util.Map;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -24,6 +25,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.StandardJavaFileManager;
 
 import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.util.Trees;
 
 import saker.build.thirdparty.saker.rmi.connection.RMITransferProperties;
@@ -35,6 +37,7 @@ import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignaturePar
 import saker.java.compiler.jdk.impl.parser.usage.AbiUsageParser;
 import saker.java.compiler.util12.impl.Java12LanguageUtils;
 import saker.java.compiler.util13.impl.Java13LanguageUtils;
+import saker.java.compiler.util14.impl.Java14LanguageUtils;
 import saker.java.compiler.util8.impl.Java8LanguageUtils;
 import saker.java.compiler.util9.impl.Java9LanguageUtils;
 import saker.java.compiler.util9.impl.file.IncrementalJavaFileManager9;
@@ -72,6 +75,7 @@ public class JavaCompilationUtils {
 		Java9LanguageUtils.applyRMIProperties(builder);
 		Java12LanguageUtils.applyRMIProperties(builder);
 		Java13LanguageUtils.applyRMIProperties(builder);
+		Java14LanguageUtils.applyRMIProperties(builder);
 	}
 
 	public static String getModuleNameOf(Element elem) {
@@ -82,7 +86,27 @@ public class JavaCompilationUtils {
 		return Java9LanguageUtils.isModuleElementKind(kind);
 	}
 
-	public static void addModuleElementKind(Collection<? super ElementKind> coll) {
-		Java9LanguageUtils.addModuleElementKind(coll);
+	public static boolean isRecordElementKind(ElementKind kind) {
+		return kind == ElementKind.RECORD;
+	}
+
+	public static boolean isRecordComponentElementKind(ElementKind kind) {
+		return kind == ElementKind.RECORD_COMPONENT;
+	}
+
+	public static ElementKind getModuleElementKind() {
+		return ElementKind.MODULE;
+	}
+
+	public static ElementKind getRecordElementKind() {
+		return ElementKind.RECORD;
+	}
+
+	public static ElementKind getRecordComponentElementKind() {
+		return ElementKind.RECORD_COMPONENT;
+	}
+
+	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
+		Java14LanguageUtils.addTreeKindToElementKindMapping(map);
 	}
 }

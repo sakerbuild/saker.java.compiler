@@ -1736,7 +1736,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 						TypeSignature::signatureEquals)) {
 			result.accept(new ClassInheritanceABIChange(thiz));
 		}
-		if (thiz.getKind() != prev.getKind()) {
+		if (thiz.getKindIndex() != prev.getKindIndex()) {
 			result.accept(new ClassTypeChange(thiz));
 		}
 		if (!Objects.equals(thiz.getModifiers(), prev.getModifiers())) {

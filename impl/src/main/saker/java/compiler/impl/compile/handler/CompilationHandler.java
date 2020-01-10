@@ -73,6 +73,7 @@ import saker.java.compiler.impl.compile.handler.diagnostic.DiagnosticPositionTab
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
 import saker.java.compiler.impl.compile.handler.info.ClassFileData;
 import saker.java.compiler.impl.compile.handler.info.CompilationInfo;
+import saker.java.compiler.impl.compile.handler.info.GeneratedFileOrigin;
 import saker.java.compiler.impl.compile.handler.info.SourceFileData;
 import saker.java.compiler.impl.compile.handler.invoker.ProcessorDetails;
 import testing.saker.java.compiler.TestFlag;
@@ -380,12 +381,14 @@ public abstract class CompilationHandler {
 	}
 
 	public static void printDiagnosticEntry(DiagnosticEntry entry, DiagnosticLocation location) {
-		if (location.getPath() == null && entry.getMessage() == null) {
+		SakerPath path = location.getPath();
+		String message = entry.getMessage();
+		if (path == null && ObjectUtils.isNullOrEmpty(message)) {
 			//no useful information in this
 			return;
 		}
 		if (TestFlag.ENABLED) {
-			TestFlag.metric().javacDiagnosticReported(entry.getMessage(), entry.getWarningType());
+			TestFlag.metric().javacDiagnosticReported(message, entry.getWarningType());
 		}
 		final SakerLog printer;
 		switch (entry.getKind()) {
@@ -408,8 +411,8 @@ public abstract class CompilationHandler {
 				break;
 			}
 		}
-		if (location.getPath() != null) {
-			printer.path(location.getPath());
+		if (path != null) {
+			printer.path(path);
 		}
 		if (location.getLineNumber() >= 0) {
 			printer.line(location.getLineNumber());
@@ -418,11 +421,11 @@ public abstract class CompilationHandler {
 				printer.position(location.getLinePositionStart(), location.getLinePositionEnd() - 1);
 			}
 		}
-		if (entry.getOrigin() != null) {
-			printer.println(
-					"(" + entry.getOrigin().getProcessorDetails().getProcessorName() + "): " + entry.getMessage());
+		GeneratedFileOrigin origin = entry.getOrigin();
+		if (origin != null) {
+			printer.println("(" + origin.getProcessorDetails().getProcessorName() + "): " + message);
 		} else {
-			printer.println(entry.getMessage());
+			printer.println(message);
 		}
 	}
 

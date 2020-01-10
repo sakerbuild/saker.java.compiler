@@ -32,6 +32,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
@@ -142,18 +143,33 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 		}
 		List<? extends ClassMemberSignature> members = signature.getMembers();
 		thisenclosedelements = JavaTaskUtils.cloneImmutableList(members, m -> {
-			if (m instanceof ClassSignature) {
-				IncrementalTypeElement gottype = elemTypes.getLocalPackagesTypesContainer()
-						.getTypeElement((ClassSignature) m);
-				return gottype;
-			}
-			if (m instanceof MethodSignature) {
-				return new IncrementalExecutableElement((MethodSignature) m, this, elemTypes);
-			}
-			if (m instanceof FieldSignature) {
-				FieldSignature fs = (FieldSignature) m;
-				return new IncrementalVariableElement(elemTypes, fs,
-						fs.isEnumConstant() ? ElementKind.ENUM_CONSTANT : ElementKind.FIELD, this);
+			switch (m.getKindIndex()) {
+				case KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
+				case KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE:
+				case KindCompatUtils.ELEMENTKIND_INDEX_CLASS:
+				case KindCompatUtils.ELEMENTKIND_INDEX_ENUM:
+				case KindCompatUtils.ELEMENTKIND_INDEX_RECORD: {
+					IncrementalTypeElement gottype = elemTypes.getLocalPackagesTypesContainer()
+							.getTypeElement((ClassSignature) m);
+					return gottype;
+				}
+				case KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
+				case KindCompatUtils.ELEMENTKIND_INDEX_METHOD: {
+					return new IncrementalExecutableElement((MethodSignature) m, this, elemTypes);
+				}
+				case KindCompatUtils.ELEMENTKIND_INDEX_FIELD:
+				case KindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT: {
+					FieldSignature fs = (FieldSignature) m;
+					return new IncrementalVariableElement(elemTypes, fs,
+							fs.isEnumConstant() ? ElementKind.ENUM_CONSTANT : ElementKind.FIELD, this);
+				}
+				case KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
+					//TODO support record component element
+					throw new UnsupportedOperationException("cannot create record component element");
+				}
+				default: {
+					break;
+				}
 			}
 			throw new IllegalArgumentException(m.toString());
 		});

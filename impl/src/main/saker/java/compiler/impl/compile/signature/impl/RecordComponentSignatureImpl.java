@@ -1,18 +1,3 @@
-/*
- * Copyright (C) 2020 Bence Sipka
- *
- * This program is free software: you can redistribute it and/or modify 
- * it under the terms of the GNU General Public License as published by 
- * the Free Software Foundation, version 3.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package saker.java.compiler.impl.compile.signature.impl;
 
 import java.io.Externalizable;
@@ -25,48 +10,53 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
+import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
-import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
+import saker.java.compiler.impl.util.ImmutableModifierSet;
 
-public class SimpleEnumConstantFieldSignature implements FieldSignature, Externalizable {
+public class RecordComponentSignatureImpl implements FieldSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
+	protected short modifierFlags;
 	protected TypeSignature type;
 	protected String name;
+	protected String docComment;
 
 	/**
 	 * For {@link Externalizable}.
 	 */
-	public SimpleEnumConstantFieldSignature() {
+	public RecordComponentSignatureImpl() {
 	}
 
-	public SimpleEnumConstantFieldSignature(TypeSignature type, String name) {
+	public RecordComponentSignatureImpl(Set<Modifier> modifiers, TypeSignature type, String name, String docComment) {
+		this.modifierFlags = ImmutableModifierSet.getFlag(modifiers);
 		this.type = type;
 		this.name = name;
+		this.docComment = docComment;
 	}
 
 	@Override
-	public final String getSimpleName() {
+	public String getSimpleName() {
 		return name;
 	}
 
 	@Override
-	public final Set<Modifier> getModifiers() {
-		return IncrementalElementsTypes.MODIFIERS_PUBLIC_STATIC_FINAL;
+	public Set<Modifier> getModifiers() {
+		return ImmutableModifierSet.forFlags(modifierFlags);
 	}
 
 	@Override
-	public final ElementKind getKind() {
-		return ElementKind.ENUM_CONSTANT;
+	public ElementKind getKind() {
+		return KindCompatUtils.getElementKind(getKindIndex());
 	}
 
 	@Override
-	public final byte getKindIndex() {
-		return KindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT;
+	public byte getKindIndex() {
+		return KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT;
 	}
 
 	@Override
@@ -76,11 +66,11 @@ public class SimpleEnumConstantFieldSignature implements FieldSignature, Externa
 
 	@Override
 	public String getDocComment() {
-		return null;
+		return docComment;
 	}
 
 	@Override
-	public final TypeSignature getTypeSignature() {
+	public TypeSignature getTypeSignature() {
 		return type;
 	}
 
@@ -91,24 +81,34 @@ public class SimpleEnumConstantFieldSignature implements FieldSignature, Externa
 
 	@Override
 	public boolean isEnumConstant() {
-		return true;
+		return false;
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeUTF(name);
+		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
 		out.writeObject(type);
+		out.writeUTF(name);
+		out.writeObject(docComment);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		name = in.readUTF();
+		modifierFlags = ImmutableModifierSet.readExternalFlag(in);
 		type = (TypeSignature) in.readObject();
+		name = in.readUTF();
+		docComment = (String) in.readObject();
 	}
 
 	@Override
-	public final int hashCode() {
-		return getSimpleName().hashCode();
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((docComment == null) ? 0 : docComment.hashCode());
+		result = prime * result + modifierFlags;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		return result;
 	}
 
 	@Override
@@ -119,7 +119,14 @@ public class SimpleEnumConstantFieldSignature implements FieldSignature, Externa
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SimpleEnumConstantFieldSignature other = (SimpleEnumConstantFieldSignature) obj;
+		RecordComponentSignatureImpl other = (RecordComponentSignatureImpl) obj;
+		if (docComment == null) {
+			if (other.docComment != null)
+				return false;
+		} else if (!docComment.equals(other.docComment))
+			return false;
+		if (modifierFlags != other.modifierFlags)
+			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
@@ -133,4 +140,8 @@ public class SimpleEnumConstantFieldSignature implements FieldSignature, Externa
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return JavaUtil.modifiersToStringWithSpace(getModifiers()) + type + " " + name;
+	}
 }
