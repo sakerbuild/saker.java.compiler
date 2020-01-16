@@ -1,6 +1,6 @@
 # saker.java.compiler
 
-![Build status](https://img.shields.io/azure-devops/build/sakerbuild/f1251dbc-3ee1-4e43-a095-0231770283de/14/master)
+![Build status](https://img.shields.io/azure-devops/build/sakerbuild/f1251dbc-3ee1-4e43-a095-0231770283de/14/master) [![Latest version](https://mirror.nest.saker.build/badges/saker.java.compiler/version.svg)](https://nest.saker.build/package/saker.java.compiler "saker.java.compiler | saker.nest")
 
 Incremental Java compiler support for the [saker.build system](https://saker.build). The project contains the implementation of performing incremental Java compilation during builds with the saker.build system. The implementation performs deep analysis of the compiled source files and can perfectly determine the dependencies of each class, therefore providing minimal rebuilds every time.
 

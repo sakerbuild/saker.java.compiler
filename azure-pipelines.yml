@@ -4,6 +4,7 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+<<<<<<< HEAD
 jobs:
 - job: JDK8
   steps:
@@ -127,3 +128,21 @@ jobs:
     displayName: 'Setup JDKs'
   - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
     displayName: 'Test JDK 14'
+=======
+steps:
+- script: curl -s https://api.nest.saker.build/bundle/download/saker.build-v0.8.0 -o saker.build.jar
+  displayName: 'Download saker.build'
+- script: |
+    set -e
+    curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+    echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+    echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+    echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+    echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+    wait < <(jobs -p)
+  displayName: 'Setup JDKs'
+- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
+  displayName: 'Test'
+- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" exportall
+  displayName: 'Export'
+>>>>>>> refs/heads/master
