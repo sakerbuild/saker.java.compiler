@@ -486,7 +486,7 @@ test(
 		],
 		TestClassParameters: {
 			**: {
-				RepositoryJarPath: nest.bundle.localize("saker.nest-test-v{ static(VERSION_saker.build) }")[BundleLocalPaths][0],
+				RepositoryJarPath: nest.bundle.localize("saker.nest-test-v{ static(VERSION_saker.nest) }")[BundleLocalPaths][0],
 				RepositoryParameterBundles: "{
 						foreach $path in $exportall[bundlepaths]: "{ std.file.mirror($path) };"
 					};{
@@ -495,7 +495,7 @@ test(
 			}
 		},
 		TestInvokerParameters: {
-			SakerJarPath: nest.bundle.localize("saker.nest-test-saker.build-v{ static(VERSION_saker.build) }")[BundleLocalPaths][0],
+			SakerJarPath: std.file.mirror($testapi[instrumentedjar]),
 			TimeoutMillis: 120000,
 			TestsBaseBuildDirectory: std.file.mirror.path(std.file.place(test/build)),
 		},
@@ -597,14 +597,19 @@ _testapicompile(
 	in enabled = false,
 	out enabled,
 	out javac,
+	out instrumentedjar,
 ){
+	$instrumentedjar = nest.test.instrument(
+		nest.bundle.download("saker.build-test-v{ static(VERSION_saker.build) }")[BundlePaths][0],
+		NestVersion: static(VERSION_saker.nest),
+	)
 	$javac = saker.java.compile(
 		SourceDirectories: [
 			testapi/api/common, 
 			"testapi/api/{ $enabled ? enabled : disabled }",
 		],
 		ClassPath: [
-			saker.java.classpath.bundle("saker.nest-test-saker.build-v{ static(VERSION_saker.build) }"),
+			$instrumentedjar,
 		],
 		Identifier: "saker.java.compiler-testapi-{ $enabled ? enabled : disabled }",
 		CompilerOptions: global(TOOLS_OPTIONS),

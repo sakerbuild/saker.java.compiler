@@ -4,19 +4,126 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-- script: curl -s https://api.nest.saker.build/bundle/download/saker.build-v0.8.0 -o saker.build.jar
-  displayName: 'Download saker.build'
-- script: |
-    set -e
-    curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
-    echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
-    echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
-    echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
-    echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
-    wait < <(jobs -p)
-  displayName: 'Setup JDKs'
-- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" test
-  displayName: 'Test'
-- script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64)" exportall
-  displayName: 'Export'
+jobs:
+- job: JDK8
+  steps:
+  - script: curl https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
+    displayName: 'Download saker.build'
+  - script: |
+      set -e
+      curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+      echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
+      wait < <(jobs -p)
+    displayName: 'Setup JDKs'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+    displayName: 'Test JDK 8'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" exportall
+    displayName: 'Export'
+
+- job: Test JDK9
+  steps:
+  - script: curl https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
+    displayName: 'Download saker.build'
+  - script: |
+      set -e
+      curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+      echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
+      wait < <(jobs -p)
+    displayName: 'Setup JDKs'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+    displayName: 'Test JDK 9'
+
+- job: Test JDK10
+  steps:
+  - script: curl https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
+    displayName: 'Download saker.build'
+  - script: |
+      set -e
+      curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+      echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 10)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
+      wait < <(jobs -p)
+    displayName: 'Setup JDKs'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_10_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+    displayName: 'Test JDK 10'
+
+- job: Test JDK11
+  steps:
+  - script: curl https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
+    displayName: 'Download saker.build'
+  - script: |
+      set -e
+      curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+      echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 11)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
+      wait < <(jobs -p)
+    displayName: 'Setup JDKs'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_11_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+    displayName: 'Test JDK 11'
+
+- job: Test JDK12
+  steps:
+  - script: curl https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
+    displayName: 'Download saker.build'
+  - script: |
+      set -e
+      curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+      echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
+      wait < <(jobs -p)
+    displayName: 'Setup JDKs'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+    displayName: 'Test JDK 12'
+
+- job: Test JDK13
+  steps:
+  - script: curl https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
+    displayName: 'Download saker.build'
+  - script: |
+      set -e
+      curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+      echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
+      wait < <(jobs -p)
+    displayName: 'Setup JDKs'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+    displayName: 'Test JDK 13'
+
+- job: Test JDK14
+  steps:
+  - script: curl https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
+    displayName: 'Download saker.build'
+  - script: |
+      set -e
+      curl -s https://gist.githubusercontent.com/Sipkab/f71ecb5e2167a2b0fced6736d703b8a5/raw/35ab3a1d94a32a1183a05cdb2498943937326993/azure_ubuntu_jdksetup.sh -o /tmp/azure_ubuntu_jdksetup.sh
+      echo "##vso[task.setvariable variable=JAVA_HOME_8_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 8)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_9_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 9)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_12_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 12)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 13)" &
+      echo "##vso[task.setvariable variable=JAVA_HOME_13_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
+      wait < <(jobs -p)
+    displayName: 'Setup JDKs'
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+    displayName: 'Test JDK 14'
