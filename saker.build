@@ -470,7 +470,7 @@ test(
 		],
 		TestClassParameters: {
 			**: {
-				RepositoryJarPath: nest.bundle.localize("saker.nest-test-v{ static(VERSION_saker.build) }")[BundleLocalPaths][0],
+				RepositoryJarPath: nest.bundle.localize("saker.nest-test-v{ static(VERSION_saker.nest) }")[BundleLocalPaths][0],
 				RepositoryParameterBundles: "{
 						foreach $path in $exportall[bundlepaths]: "{ std.file.mirror($path) };"
 					};{
