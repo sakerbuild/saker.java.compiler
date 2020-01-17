@@ -61,7 +61,7 @@ public class IncrementalExecutableElement extends IncrementalElement<MethodSigna
 	private static final AtomicReferenceFieldUpdater<IncrementalExecutableElement, List> ARFU_thrownTypes = AtomicReferenceFieldUpdater
 			.newUpdater(IncrementalExecutableElement.class, List.class, "thrownTypes");
 
-	private IncrementalTypeElement enclosingElement;
+	private IncrementalElement<?> enclosingElement;
 
 	private volatile transient TypeMirror returnType;
 	private volatile transient TypeMirror receiverType;
@@ -70,7 +70,7 @@ public class IncrementalExecutableElement extends IncrementalElement<MethodSigna
 	private volatile transient List<IncrementalMethodParameterElement> parameters;
 	private volatile transient List<TypeMirror> thrownTypes;
 
-	public IncrementalExecutableElement(MethodSignature signature, IncrementalTypeElement enclosingElement,
+	public IncrementalExecutableElement(MethodSignature signature, IncrementalElement<?> enclosingElement,
 			IncrementalElementsTypesBase elemTypes) {
 		super(elemTypes, signature);
 		this.enclosingElement = enclosingElement;
@@ -116,7 +116,7 @@ public class IncrementalExecutableElement extends IncrementalElement<MethodSigna
 	}
 
 	@Override
-	public IncrementalTypeElement getEnclosingElement() {
+	public IncrementalElement<?> getEnclosingElement() {
 		return enclosingElement;
 	}
 

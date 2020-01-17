@@ -18,7 +18,10 @@ import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalEle
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.DocumentedIncrementalElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalElement;
+import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalExecutableElement;
+import saker.java.compiler.impl.compile.signature.impl.FullMethodSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
+import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
 public class IncrementalRecordComponentElement extends IncrementalElement<FieldSignature>
 		implements RecordComponentElement, DocumentedIncrementalElement<FieldSignature> {
@@ -28,9 +31,14 @@ public class IncrementalRecordComponentElement extends IncrementalElement<FieldS
 	private volatile TypeMirror asType;
 
 	private IncrementalElement<?> enclosingElement;
+	private ExecutableElement accessor;
 
 	public IncrementalRecordComponentElement(IncrementalElementsTypesBase elemTypes, FieldSignature signature) {
 		super(elemTypes, signature);
+		accessor = new IncrementalExecutableElement(FullMethodSignature.create(signature.getSimpleName(),
+				IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null, signature.getTypeSignature(), null,
+				ElementKind.METHOD, null, null, false, null), this, elemTypes);
+		;
 	}
 
 	@Override
@@ -53,13 +61,12 @@ public class IncrementalRecordComponentElement extends IncrementalElement<FieldS
 
 	@Override
 	public ExecutableElement getAccessor() {
-		//TODO getAccessor
-		throw new UnsupportedOperationException();
+		return accessor;
 	}
 
 	@Override
 	public Set<Modifier> getModifiers() {
-		return signature.getModifiers();
+		return IncrementalElementsTypes.MODIFIERS_PUBLIC;
 	}
 
 	@Override
@@ -74,7 +81,6 @@ public class IncrementalRecordComponentElement extends IncrementalElement<FieldS
 
 	@Override
 	public List<? extends Element> getEnclosedElements() {
-		//TODO is the accessor an enclosed element?
 		return Collections.emptyList();
 	}
 

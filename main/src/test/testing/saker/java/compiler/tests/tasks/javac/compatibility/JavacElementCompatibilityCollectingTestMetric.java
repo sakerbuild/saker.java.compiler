@@ -16,6 +16,8 @@
 package testing.saker.java.compiler.tests.tasks.javac.compatibility;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -188,6 +190,9 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 
 	private void testSameAnnotationsQuery(AnnotatedConstruct ac, AnnotatedConstruct javacac,
 			Class<? extends Annotation> annottype) {
+		if((ac == null) != (javacac == null)) {
+			throw new ElementDifferenceException(ac + " - " + javacac, ac, javacac);
+		}
 		Annotation i = ac.getAnnotation(annottype);
 		Annotation javaci = javacac.getAnnotation(annottype);
 		if (!Objects.equals(i, javaci)) {
@@ -349,6 +354,16 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 		compareEquals(isfunc, p.javacElems.isFunctionalInterface(javace));
 		compareEquals(isfunc, e.getAnnotation(FunctionalInterface.class) != null);
 	}
+	
+	protected static List<Element> elementKindNameFilter(List<? extends Element> elems, String kindname) {
+		ArrayList<Element> result = new ArrayList<>();
+		for (Element e : elems) {
+			if (e.getKind().name().equals(kindname)) {
+				result.add(e);
+			}
+		}
+		return result;
+	}
 
 	private class ElementComparingVisitor implements ElementVisitor<Void, Utils> {
 		private Element javacElem;
@@ -412,6 +427,10 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 			compareElements(ElementFilter.fieldsIn(eenc), ElementFilter.fieldsIn(javacenc), p);
 			compareElements(ElementFilter.packagesIn(eenc), ElementFilter.packagesIn(javacenc), p);
 			compareElements(ElementFilter.typesIn(eenc), ElementFilter.typesIn(javacenc), p);
+			if ("RECORD".equals(e.getKind().name())) {
+				compareElements(elementKindNameFilter(eenc, "RECORD_COMPONENT"),
+						elementKindNameFilter(javacenc, "RECORD_COMPONENT"), p);	
+			}
 
 			compareTypes(e.getInterfaces(), javace.getInterfaces(), p);
 			compareTypes(e.getSuperclass(), javace.getSuperclass(), p);
@@ -461,7 +480,20 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 
 		@Override
 		public Void visitUnknown(Element e, Utils p) {
+			if ("RECORD_COMPONENT".contentEquals(e.getKind().name())) {
+				compareElements(getRecordComponentElementAccessor(e), getRecordComponentElementAccessor(javacElem), p);
+				compareElements(e.getEnclosedElements(), javacElem.getEnclosedElements(), p);
+				return null;
+			}
 			throw new ElementDifferenceException(e, javacElem);
+		}
+
+		private ExecutableElement getRecordComponentElementAccessor(Element e) {
+			try {
+				return (ExecutableElement) e.getClass().getMethod("getAccessor").invoke(e);
+			} catch (Exception e1) {
+				throw new ElementDifferenceException("Failed to get record component accessor: " + e, e1);
+			}
 		}
 	}
 
