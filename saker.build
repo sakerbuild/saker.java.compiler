@@ -1,4 +1,4 @@
-global(VERSION_saker.java.compiler) = "0.8.0"
+global(VERSION_saker.java.compiler) = "0.8.2"
 
 global(TOOLS_OPTIONS) = [
 	{
@@ -83,6 +83,7 @@ global(saker.java.compiler_DEPENDENCIES) = [
 	nest.repository.support-api,
 	saker.standard-api,
 	saker.compiler.utils,
+	org.objectweb.asm-v7.3.1,
 ]
 
 static(VERSION_saker.build) = nest.dependency.resolve(

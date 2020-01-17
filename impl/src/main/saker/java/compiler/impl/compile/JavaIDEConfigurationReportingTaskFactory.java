@@ -369,12 +369,12 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 				((FileLocation) docresult).accept(new FileLocationVisitor() {
 					@Override
 					public void visit(ExecutionFileLocation loc) {
-						cpbuilder.setSourceAttachmentPath(loc.getPath().toString());
+						cpbuilder.setDocumentationAttachmentPath(loc.getPath().toString());
 					}
 
 					@Override
 					public void visit(LocalFileLocation loc) {
-						cpbuilder.setSourceAttachmentLocalPath(loc.getLocalPath().toString());
+						cpbuilder.setDocumentationAttachmentLocalPath(loc.getLocalPath().toString());
 					}
 				});
 			}
