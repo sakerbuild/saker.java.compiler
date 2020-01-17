@@ -38,7 +38,7 @@ jobs:
       echo "##vso[task.setvariable variable=JAVA_HOME_14_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
       wait < <(jobs -p)
     displayName: 'Setup JDKs'
-  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" testjava9
     displayName: 'Test JDK 9'
 
 - job: test_jdk10
@@ -56,7 +56,7 @@ jobs:
       echo "##vso[task.setvariable variable=JAVA_HOME_14_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
       wait < <(jobs -p)
     displayName: 'Setup JDKs'
-  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_10_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_10_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" testjava10
     displayName: 'Test JDK 10'
 
 - job: test_jdk11
@@ -74,7 +74,7 @@ jobs:
       echo "##vso[task.setvariable variable=JAVA_HOME_14_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
       wait < <(jobs -p)
     displayName: 'Setup JDKs'
-  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_11_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_11_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" testjava11
     displayName: 'Test JDK 11'
 
 - job: test_jdk12
@@ -91,7 +91,7 @@ jobs:
       echo "##vso[task.setvariable variable=JAVA_HOME_14_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
       wait < <(jobs -p)
     displayName: 'Setup JDKs'
-  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" testjava12
     displayName: 'Test JDK 12'
 
 - job: test_jdk13
@@ -108,7 +108,7 @@ jobs:
       echo "##vso[task.setvariable variable=JAVA_HOME_14_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
       wait < <(jobs -p)
     displayName: 'Setup JDKs'
-  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" testjava13
     displayName: 'Test JDK 13'
 
 - job: test_jdk14
@@ -125,5 +125,5 @@ jobs:
       echo "##vso[task.setvariable variable=JAVA_HOME_14_X64]$(bash /tmp/azure_ubuntu_jdksetup.sh 14)" &
       wait < <(jobs -p)
     displayName: 'Setup JDKs'
-  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" test
+  - script: java -jar saker.build.jar -bd build "-EUsaker.java.jre.install.locations=$(JAVA_HOME_8_X64);$(JAVA_HOME_9_X64);$(JAVA_HOME_12_X64);$(JAVA_HOME_13_X64);$(JAVA_HOME_14_X64)" testjava14
     displayName: 'Test JDK 14'
