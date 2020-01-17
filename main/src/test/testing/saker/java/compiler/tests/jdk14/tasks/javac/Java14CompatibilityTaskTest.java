@@ -13,19 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package testing.saker.java.compiler.tests.only.jdk13.tasks.javac;
+package testing.saker.java.compiler.tests.jdk14.tasks.javac;
 
-import saker.build.util.java.JavaTools;
 import testing.saker.SakerTest;
-import testing.saker.java.compiler.JavaCompilerVariablesMetricEnvironmentTaskTestCase;
+import testing.saker.java.compiler.tests.tasks.javac.compatibility.JavacCompatibilityTestCase;
 
 @SakerTest
-public class JDK13SourceFeaturesTaskTest extends JavaCompilerVariablesMetricEnvironmentTaskTestCase {
+public class Java14CompatibilityTaskTest extends JavacCompatibilityTestCase {
 	@Override
 	protected void runNestTaskTestImpl() throws Throwable {
-		assertEquals(JavaTools.getCurrentJavaMajorVersion(), 13);
-
 		runScriptTask("build");
-		assertEquals(getMetric().getCompiledJavacPasses(), setOf("src"));
 	}
 }

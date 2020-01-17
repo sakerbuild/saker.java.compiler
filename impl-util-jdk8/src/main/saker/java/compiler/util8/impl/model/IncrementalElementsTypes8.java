@@ -78,6 +78,7 @@ import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
+import saker.build.thirdparty.saker.util.function.LazySupplier;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compat.element.ModuleElementCompat;
@@ -223,6 +224,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	private static final String JAVA_LANG_ENUM = "java.lang.Enum";
 	private static final String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
 	private static final String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
+	private static final String JAVA_LANG_RECORD = "java.lang.Record";
 
 	public static final String CONSTRUCTOR_METHOD_NAME = "<init>";
 
@@ -265,6 +267,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			Modifier.PROTECTED);
 
 	public static final Set<Modifier> MODIFIERS_PUBLIC = ImmutableModifierSet.of(Modifier.PUBLIC);
+	public static final Set<Modifier> MODIFIERS_PUBLIC_FINAL = ImmutableModifierSet.of(Modifier.PUBLIC, Modifier.FINAL);
 	public static final Set<Modifier> MODIFIERS_PUBLIC_ABSTRACT = ImmutableModifierSet.of(Modifier.PUBLIC,
 			Modifier.ABSTRACT);
 	public static final Set<Modifier> MODIFIERS_PROTECTED = ImmutableModifierSet.of(Modifier.PROTECTED);
@@ -391,6 +394,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	private final TypeElement javaLangEnumElement;
 	private final TypeElement javaIoSerializableElement;
 	private final TypeElement javaLangCloneableElement;
+	private final Supplier<TypeElement> javaLangRecordElementSupplier;
 
 	private volatile transient List<TypeMirror> primitiveArrayDirectSuperTypes;
 
@@ -411,6 +415,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		this.javaLangEnumElement = getTypeElementFromRealElements(JAVA_LANG_ENUM);
 		this.javaIoSerializableElement = getTypeElementFromRealElements(JAVA_IO_SERIALIZABLE);
 		this.javaLangCloneableElement = getTypeElementFromRealElements(JAVA_LANG_CLONEABLE);
+		this.javaLangRecordElementSupplier = LazySupplier.of(() -> getTypeElementFromRealElements(JAVA_LANG_RECORD));
 	}
 
 	public void setDocCommentTrackerThreadLocal(Set<? super DocumentedElement<?>> elements) {
@@ -737,6 +742,11 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	@Override
 	public DeclaredType getJavaLangObjectTypeMirror() {
 		return (DeclaredType) javaLangObjectElement.asType();
+	}
+	
+	@Override
+	public DeclaredType getJavaLangRecordTypeMirror() {
+		return (DeclaredType) javaLangRecordElementSupplier.get().asType();
 	}
 
 	@Override
@@ -3900,6 +3910,12 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		}
 	}
 
+	@Override
+	public IncrementalElement<?> createRecordComponentElement(FieldSignature m) {
+		//TODO support in a way that delays this exception? can be useful when cross compiling
+		throw new UnsupportedOperationException("cannot create record component element");
+	}
+	
 	@Override
 	public ResolutionScope createResolutionScope(Element resolutionelement) {
 		if (resolutionelement == null) {

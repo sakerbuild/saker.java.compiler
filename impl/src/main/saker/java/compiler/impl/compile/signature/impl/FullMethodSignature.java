@@ -109,10 +109,10 @@ public final class FullMethodSignature extends MethodSignatureBase {
 			String docComment) {
 		super(modifiers, parameters);
 		this.name = name;
-		this.throwsTypes = throwsTypes;
+		this.throwsTypes = throwsTypes == null ? Collections.emptyList() : throwsTypes;
 		this.returnType = returnType;
 		this.elementKindIndex = KindCompatUtils.getElementKindIndex(methodKind);
-		this.typeParameters = typeParameters;
+		this.typeParameters = typeParameters == null ? Collections.emptyList() : typeParameters;
 		this.receiverParameter = receiverParameter;
 		this.varArg = varArg;
 		this.docComment = docComment;
@@ -134,6 +134,9 @@ public final class FullMethodSignature extends MethodSignatureBase {
 
 	@Override
 	public Collection<? extends AnnotationSignature> getAnnotations() {
+		if (returnType == null) {
+			return Collections.emptySet();
+		}
 		return returnType.getAnnotations();
 	}
 

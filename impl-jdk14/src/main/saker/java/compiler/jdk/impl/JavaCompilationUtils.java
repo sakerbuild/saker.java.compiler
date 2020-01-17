@@ -15,7 +15,6 @@
  */
 package saker.java.compiler.jdk.impl;
 
-import java.util.Collection;
 import java.util.Map;
 
 import javax.lang.model.element.Element;

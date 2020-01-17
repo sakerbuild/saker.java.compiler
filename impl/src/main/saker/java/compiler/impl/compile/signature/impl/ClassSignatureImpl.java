@@ -18,6 +18,7 @@ package saker.java.compiler.impl.compile.signature.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +27,9 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
+import javax.lang.model.type.TypeKind;
 
+import saker.build.scripting.model.info.TypeInformationKind;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
@@ -34,14 +37,17 @@ import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.ArrayTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.PrimitiveTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
+import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
+import saker.java.compiler.impl.signature.type.PrimitiveTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
@@ -141,31 +147,69 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	}
 
 	public static void addImplicitMembers(List<ClassMemberSignature> result, ClassSignature thiz) {
-		ElementKind kind = thiz.getKind();
-		if (kind.isInterface()) {
+		byte kindidx = thiz.getKindIndex();
+		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE
+				|| kindidx == KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE) {
 			return;
+		}
+		
+		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+			int i = 0;
+			result.add(i++,
+					FullMethodSignature.create("toString", IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null,
+							CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null,
+							null, false, null));
+			result.add(i++,
+					FullMethodSignature.create("hashCode", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null, null,
+							PrimitiveTypeSignatureImpl.create(TypeKind.INT), null, ElementKind.METHOD, null, null,
+							false, null));
+			result.add(i++,
+					FullMethodSignature.create("equals", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL,
+							Collections.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
+									CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT, "o")),
+							null, PrimitiveTypeSignatureImpl.create(TypeKind.BOOLEAN), null, ElementKind.METHOD, null,
+							null, false, null));
+			for (FieldSignature f : thiz.getFields()) {
+				result.add(i++,
+						FullMethodSignature.create(f.getSimpleName(), IncrementalElementsTypes.MODIFIERS_PUBLIC, null,
+								null, f.getTypeSignature(), null, ElementKind.METHOD,
+								null, null, false, null));
+			}
 		}
 
 		if (!hasAnyConstructor(result)) {
-			Set<Modifier> cmodifiers;
-			Set<Modifier> thismodifiers = thiz.getModifiers();
-			if (kind == ElementKind.ENUM) {
-				cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
-			} else {
-				if (thismodifiers.contains(Modifier.PUBLIC)) {
-					cmodifiers = IncrementalElementsTypes.MODIFIERS_PUBLIC;
-				} else if (thismodifiers.contains(Modifier.PRIVATE)) {
-					cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
-				} else if (thismodifiers.contains(Modifier.PROTECTED)) {
-					cmodifiers = IncrementalElementsTypes.MODIFIERS_PROTECTED;
-				} else {
-					cmodifiers = Collections.emptySet();
+			if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+				List<MethodParameterSignature> parameters = new ArrayList<>();
+				for (FieldSignature f : thiz.getFields()) {
+					parameters.add(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
+							f.getTypeSignature(), f.getSimpleName()));
 				}
+				result.add(0,
+						FullMethodSignature.create(IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME,
+								IncrementalElementsTypes.MODIFIERS_PUBLIC, parameters, null, null, null,
+								ElementKind.CONSTRUCTOR, null, null, false, null));
+			} else {
+
+				Set<Modifier> cmodifiers;
+				Set<Modifier> thismodifiers = thiz.getModifiers();
+				if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
+					cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
+				} else {
+					if (thismodifiers.contains(Modifier.PUBLIC)) {
+						cmodifiers = IncrementalElementsTypes.MODIFIERS_PUBLIC;
+					} else if (thismodifiers.contains(Modifier.PRIVATE)) {
+						cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
+					} else if (thismodifiers.contains(Modifier.PROTECTED)) {
+						cmodifiers = IncrementalElementsTypes.MODIFIERS_PROTECTED;
+					} else {
+						cmodifiers = Collections.emptySet();
+					}
+				}
+				result.add(0, FullMethodSignature.createDefaultConstructor(cmodifiers));
 			}
-			result.add(0, FullMethodSignature.createDefaultConstructor(cmodifiers));
 		}
 
-		if (kind == ElementKind.ENUM) {
+		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
 			//we dont need to check if methods exist, as declaring them in an enum results in compilation error
 			TypeSignature thistypesig = thiz.getTypeSignature();
 

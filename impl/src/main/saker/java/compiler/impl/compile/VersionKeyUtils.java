@@ -30,6 +30,7 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.ModuleVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
 import saker.build.thirdparty.saker.util.ArrayUtils;
@@ -57,18 +58,23 @@ public class VersionKeyUtils {
 	public static boolean updateAbiHashOfClassBytes(ByteArrayRegion classbytes, MessageDigest hasher) {
 		try {
 			ClassReader cr;
+			AbiHasherClassVisitor abivisitor;
 			try {
 				cr = new ClassReader(classbytes.getArray(), classbytes.getOffset(), classbytes.getLength());
+				abivisitor = new AbiHasherClassVisitor(hasher);
 			} catch (RuntimeException e) {
 				// it could be that ASM doesn't support the class file version yet.
 				// in this case it throws IllegalArgumentException
 				// however, it may be modified in the future to a different kind of exceptions
 				// and if the class reader fails for any reason, we should fall back
 				// in this case we use all bytes of the class to update the ABI hash
+				
+				// ASM 7.3.1 can also incorrectly require using --enable-preview even if it is used.
+				//fall back to full hash
+				
 				hasher.update(classbytes.getArray(), classbytes.getOffset(), classbytes.getLength());
 				return true;
 			}
-			AbiHasherClassVisitor abivisitor = new AbiHasherClassVisitor(hasher);
 			cr.accept(abivisitor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 		} catch (NotAbiClassException e) {
 			return false;
@@ -94,10 +100,10 @@ public class VersionKeyUtils {
 		}
 		if (array.length == 2) {
 			if (array[0].compareTo(array[1]) <= 0) {
-				//already sorted
+				// already sorted
 				return array;
 			}
-			//swapped the items
+			// swapped the items
 			return new String[] { array[1], array[0] };
 		}
 		String[] c = array.clone();
@@ -211,8 +217,17 @@ public class VersionKeyUtils {
 		private StringBuilder sb = new StringBuilder();
 
 		public AbiHasherClassVisitor(MessageDigest digest) {
-			super(Opcodes.ASM7);
+			super(Opcodes.ASM8_EXPERIMENTAL);
 			this.digest = digest;
+		}
+
+		@Override
+		public RecordComponentVisitor visitRecordComponentExperimental(int access, String name, String descriptor,
+				String signature) {
+			return new RecordComponentVisitor(api,
+					super.visitRecordComponentExperimental(access, name, descriptor, signature)) {
+				// TODO record API hash
+			};
 		}
 
 		@Override
@@ -267,13 +282,13 @@ public class VersionKeyUtils {
 
 		@Override
 		public void visitOuterClass(String owner, String name, String descriptor) {
-			//if the class is a local or anonymous class
+			// if the class is a local or anonymous class
 			throw NotAbiClassException.INSTANCE;
 		}
 
 		@Override
 		public void visitInnerClass(String name, String outerName, String innerName, int access) {
-			//don't include the class in the ABI if it is an inner private class
+			// don't include the class in the ABI if it is an inner private class
 			if (name.equals(this.className)) {
 				if (innerName == null) {
 					throw NotAbiClassException.INSTANCE;

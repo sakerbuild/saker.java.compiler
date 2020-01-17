@@ -1072,7 +1072,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		String name = cache.string(tree.getSimpleName());
 		ElementKind kind = treeKindToElementKind(tree.getKind());
 		Set<Modifier> modifiers = getCorrectedClassModifiers(tree, modifierstree, currentnestingkind,
-				enclosingclasssignature);
+				enclosingclasssignature, kind);
 
 		TypeSignature supertypesignature = extendstree == null ? null : typeResolver.resolve(extendstree, context);
 		List<AnnotationSignature> annotationsignatures = getAnnotations(modifierstree.getAnnotations(), context);
@@ -1111,7 +1111,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 	}
 
 	private static Set<Modifier> getCorrectedClassModifiers(ClassTree tree, ModifiersTree classmodifiers,
-			NestingKind currentnestingkind, ClassSignature enclosingclasssignature) {
+			NestingKind currentnestingkind, ClassSignature enclosingclasssignature, ElementKind kind) {
 		//if the outer class is an interface or @interface, the inner class is automatically marked as static
 		//enums cannot have any inner classes
 		//if the outer class is a class, no additional modifiers are added to anything
@@ -1143,6 +1143,9 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				return classmodifierflags;
 			}
 			default: {
+				if (JavaCompilationUtils.isRecordElementKind(kind)) {
+					return ImmutableModifierSet.get(classmodifiers.getFlags()).added(Modifier.FINAL);
+				}
 				return classmodifiers.getFlags();
 			}
 		}

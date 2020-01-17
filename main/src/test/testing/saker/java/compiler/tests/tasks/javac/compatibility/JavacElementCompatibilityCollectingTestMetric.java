@@ -212,6 +212,9 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 	}
 
 	protected void compareElements(List<? extends Element> e, List<? extends Element> javace, Utils utils) {
+		if ((e == null) != (javace == null)) {
+			throw new ElementDifferenceException(e + " - " + javace);
+		}
 		if (e.size() != javace.size()) {
 			throw new ElementDifferenceException(e + " - " + javace);
 		}
@@ -237,6 +240,9 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 	}
 
 	protected void compareTypes(List<? extends TypeMirror> t, List<? extends TypeMirror> javact, Utils utils) {
+		if ((t == null) != (javact == null)) {
+			throw new ElementDifferenceException(t + " - " + javact);
+		}
 		if (t.size() != javact.size()) {
 			throw new ElementDifferenceException(t + " - " + javact);
 		}
