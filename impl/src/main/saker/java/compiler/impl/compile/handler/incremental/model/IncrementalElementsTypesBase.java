@@ -35,6 +35,7 @@ import javax.lang.model.util.Elements;
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalAnnotationMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalElement;
+import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.mirror.ForwardingDeclaredType;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalDeclaredType;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
@@ -155,5 +156,5 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 
 	public ResolutionScope createResolutionScope(Element resolutionelement);
 
-	public IncrementalElement<?> createRecordComponentElement(FieldSignature m);
+	public IncrementalElement<?> createRecordComponentElement(IncrementalTypeElement recordtype, FieldSignature m);
 }

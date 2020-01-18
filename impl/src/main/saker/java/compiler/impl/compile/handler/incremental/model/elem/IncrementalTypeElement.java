@@ -17,7 +17,9 @@ package saker.java.compiler.impl.compile.handler.incremental.model.elem;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -40,9 +42,12 @@ import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeElem
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalDeclaredType;
+import saker.java.compiler.impl.compile.signature.impl.FullMethodSignature;
+import saker.java.compiler.impl.compile.signature.impl.MethodParameterSignatureImpl;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
+import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -139,6 +144,45 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 		return null;
 	}
 
+	private boolean isAllTypesSame(List<TypeMirror> types, List<TypeMirror> otypes) {
+		Iterator<TypeMirror> it = types.iterator();
+		Iterator<TypeMirror> oit = otypes.iterator();
+		while (it.hasNext()) {
+			if (!oit.hasNext()) {
+				return false;
+			}
+			TypeMirror tm = it.next();
+			TypeMirror otm = oit.next();
+			if (!elemTypes.isSameType(tm, otm)) {
+				return false;
+			}
+		}
+		if (oit.hasNext()) {
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean hasConstructorWithParameterCanonicalNames(List<TypeMirror> paramcanonicalnames) {
+		int paramcount = paramcanonicalnames.size();
+		for (MethodSignature c : signature.getConstructors()) {
+			List<? extends MethodParameterSignature> params = c.getParameters();
+			if (params.size() != paramcount) {
+				continue;
+			}
+			List<TypeMirror> names = new ArrayList<>(paramcount);
+			for (MethodParameterSignature p : params) {
+				//TODO the enclosing element here should be the executable element of the constructor
+				names.add(elemTypes.getTypeMirror(p.getTypeSignature(), this));
+			}
+			
+			if(isAllTypesSame(paramcanonicalnames, names)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	@Override
 	public List<? extends IncrementalElement<?>> getEnclosedElements() {
 		List<IncrementalElement<?>> thisenclosedelements = enclosedElements;
@@ -162,7 +206,8 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 					}
 					case KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
 					case KindCompatUtils.ELEMENTKIND_INDEX_METHOD: {
-						thisenclosedelements.add(new IncrementalExecutableElement((MethodSignature) m, this, elemTypes));
+						IncrementalExecutableElement constructorelem = new IncrementalExecutableElement((MethodSignature) m, this, elemTypes);
+						thisenclosedelements.add(constructorelem);
 						break;
 					}
 					case KindCompatUtils.ELEMENTKIND_INDEX_FIELD:
@@ -175,13 +220,32 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 					case KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
 						FieldSignature fs = (FieldSignature) m;
 						thisenclosedelements.add(new IncrementalVariableElement(elemTypes, fs, ElementKind.FIELD, this));
-						thisenclosedelements.add(elemTypes.createRecordComponentElement(fs));
+						thisenclosedelements.add(elemTypes.createRecordComponentElement(this, fs));
 						break;
 					}
 					default: {
 						throw new IllegalArgumentException(m.toString());
 					}
 				}
+			}
+		}
+		if (signature.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+			// handle implicit constructor, add only if not already declared
+			Collection<? extends FieldSignature> fields = signature.getFields();
+			List<MethodParameterSignature> paramsignatures = new ArrayList<>(fields.size());
+			int fieldcount = fields.size();
+			List<TypeMirror> paramcanonicalnames = new ArrayList<>(fieldcount);
+			for (FieldSignature f : fields) {
+				paramsignatures.add(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
+						f.getTypeSignature(), f.getSimpleName()));
+				paramcanonicalnames.add(elemTypes.getTypeMirror(f.getTypeSignature(), this));
+			}
+			if (!hasConstructorWithParameterCanonicalNames(paramcanonicalnames)) {
+				thisenclosedelements.add(new IncrementalExecutableElement(
+						FullMethodSignature.create(IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME,
+								IncrementalElementsTypes.MODIFIERS_PUBLIC, paramsignatures, null, null, null,
+								ElementKind.CONSTRUCTOR, null, null, false, null),
+						this, elemTypes));
 			}
 		}
 		thisenclosedelements = ImmutableUtils.unmodifiableList(thisenclosedelements);

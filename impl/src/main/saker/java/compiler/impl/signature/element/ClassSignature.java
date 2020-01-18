@@ -88,6 +88,11 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 				.collect(Collectors.toList());
 	}
 
+	public default Collection<? extends MethodSignature> getConstructors() {
+		return getMembers().stream().filter(m -> m.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR)
+				.map(m -> (MethodSignature) m).collect(Collectors.toList());
+	}
+
 	public default Collection<? extends FieldSignature> getFields() {
 		return getMembers().stream().filter(m -> m instanceof FieldSignature).map(m -> (FieldSignature) m)
 				.collect(Collectors.toList());

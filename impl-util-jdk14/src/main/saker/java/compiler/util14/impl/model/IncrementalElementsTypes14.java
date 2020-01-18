@@ -3,6 +3,7 @@ package saker.java.compiler.util14.impl.model;
 import javax.lang.model.util.Elements;
 
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalElement;
+import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.util14.impl.model.elem.IncrementalRecordComponentElement;
@@ -15,8 +16,8 @@ public class IncrementalElementsTypes14 extends IncrementalElementsTypes9 {
 	}
 	
 	@Override
-	public IncrementalElement<?> createRecordComponentElement(FieldSignature m) {
-		return new IncrementalRecordComponentElement(this, m);
+	public IncrementalElement<?> createRecordComponentElement(IncrementalTypeElement recordtype, FieldSignature m) {
+		return new IncrementalRecordComponentElement(this, recordtype, m);
 	}
 
 }

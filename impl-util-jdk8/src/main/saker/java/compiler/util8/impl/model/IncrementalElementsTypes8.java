@@ -3911,7 +3911,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	@Override
-	public IncrementalElement<?> createRecordComponentElement(FieldSignature m) {
+	public IncrementalElement<?> createRecordComponentElement(IncrementalTypeElement recordtype, FieldSignature m) {
 		//TODO support in a way that delays this exception? can be useful when cross compiling
 		throw new UnsupportedOperationException("cannot create record component element");
 	}
@@ -3990,6 +3990,12 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			}
 
 			default: {
+				if (JavaCompilationUtils.isRecordComponentElementKind(kind)) {
+					return createTypeHeaderResolutionScope((TypeElement) resolutionelement.getEnclosingElement());
+				}
+				if (JavaCompilationUtils.isRecordElementKind(kind)) {
+					return createTypeHeaderResolutionScope((TypeElement) resolutionelement);
+				}
 				//unrecognized element type for resolution
 				return null;
 			}

@@ -175,21 +175,20 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 								null, f.getTypeSignature(), null, ElementKind.METHOD,
 								null, null, false, null));
 			}
+//			List<MethodParameterSignature> constructorparameters = new ArrayList<>();
+//			for (FieldSignature f : thiz.getFields()) {
+//				constructorparameters.add(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
+//						f.getTypeSignature(), f.getSimpleName()));
+//			}
+//			result.add(FullMethodSignature.create(IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME,
+//					IncrementalElementsTypes.MODIFIERS_PUBLIC, constructorparameters, null, null, null,
+//					ElementKind.CONSTRUCTOR, null, null, false, null));
 		}
 
 		if (!hasAnyConstructor(result)) {
 			if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
-				List<MethodParameterSignature> parameters = new ArrayList<>();
-				for (FieldSignature f : thiz.getFields()) {
-					parameters.add(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
-							f.getTypeSignature(), f.getSimpleName()));
-				}
-				result.add(0,
-						FullMethodSignature.create(IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME,
-								IncrementalElementsTypes.MODIFIERS_PUBLIC, parameters, null, null, null,
-								ElementKind.CONSTRUCTOR, null, null, false, null));
+				
 			} else {
-
 				Set<Modifier> cmodifiers;
 				Set<Modifier> thismodifiers = thiz.getModifiers();
 				if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) {

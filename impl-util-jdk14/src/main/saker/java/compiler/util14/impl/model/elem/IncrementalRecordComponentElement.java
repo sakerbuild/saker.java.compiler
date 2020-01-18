@@ -19,6 +19,7 @@ import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalNam
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.DocumentedIncrementalElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalExecutableElement;
+import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
 import saker.java.compiler.impl.compile.signature.impl.FullMethodSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
@@ -33,12 +34,12 @@ public class IncrementalRecordComponentElement extends IncrementalElement<FieldS
 	private IncrementalElement<?> enclosingElement;
 	private ExecutableElement accessor;
 
-	public IncrementalRecordComponentElement(IncrementalElementsTypesBase elemTypes, FieldSignature signature) {
+	public IncrementalRecordComponentElement(IncrementalElementsTypesBase elemTypes, IncrementalTypeElement enclosingElement, FieldSignature signature) {
 		super(elemTypes, signature);
 		accessor = new IncrementalExecutableElement(FullMethodSignature.create(signature.getSimpleName(),
 				IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null, signature.getTypeSignature(), null,
-				ElementKind.METHOD, null, null, false, null), this, elemTypes);
-		;
+				ElementKind.METHOD, null, null, false, null), enclosingElement, elemTypes);
+		this.enclosingElement = enclosingElement;
 	}
 
 	@Override
