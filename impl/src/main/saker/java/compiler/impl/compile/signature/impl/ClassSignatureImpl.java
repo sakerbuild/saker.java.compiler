@@ -18,7 +18,6 @@ package saker.java.compiler.impl.compile.signature.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +28,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.type.TypeKind;
 
-import saker.build.scripting.model.info.TypeInformationKind;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
@@ -47,7 +45,6 @@ import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
-import saker.java.compiler.impl.signature.type.PrimitiveTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
@@ -146,43 +143,52 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 		return false;
 	}
 
+	private static boolean hasSimpleNoArgMethodWithName(String name, List<? extends ClassMemberSignature> members) {
+		for (ClassMemberSignature m : members) {
+			if (m.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
+				continue;
+			}
+			if (!name.equals(m.getSimpleName())) {
+				continue;
+			}
+			MethodSignature ms = (MethodSignature) m;
+			if (ms.getParameterCount() != 0) {
+				continue;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	public static void addImplicitMembers(List<ClassMemberSignature> result, ClassSignature thiz) {
 		byte kindidx = thiz.getKindIndex();
 		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE
 				|| kindidx == KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE) {
 			return;
 		}
-		
+
 		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
-			int i = 0;
-			result.add(i++,
-					FullMethodSignature.create("toString", IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null,
-							CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null,
-							null, false, null));
-			result.add(i++,
-					FullMethodSignature.create("hashCode", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null, null,
-							PrimitiveTypeSignatureImpl.create(TypeKind.INT), null, ElementKind.METHOD, null, null,
-							false, null));
-			result.add(i++,
-					FullMethodSignature.create("equals", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL,
-							Collections.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
-									CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT, "o")),
-							null, PrimitiveTypeSignatureImpl.create(TypeKind.BOOLEAN), null, ElementKind.METHOD, null,
-							null, false, null));
-			for (FieldSignature f : thiz.getFields()) {
-				result.add(i++,
-						FullMethodSignature.create(f.getSimpleName(), IncrementalElementsTypes.MODIFIERS_PUBLIC, null,
-								null, f.getTypeSignature(), null, ElementKind.METHOD,
-								null, null, false, null));
+			if (!hasSimpleNoArgMethodWithName("toString", result)) {
+				result.add(FullMethodSignature.create("toString", IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null,
+						CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null, null,
+						false, null));
 			}
-//			List<MethodParameterSignature> constructorparameters = new ArrayList<>();
-//			for (FieldSignature f : thiz.getFields()) {
-//				constructorparameters.add(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
-//						f.getTypeSignature(), f.getSimpleName()));
-//			}
-//			result.add(FullMethodSignature.create(IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME,
-//					IncrementalElementsTypes.MODIFIERS_PUBLIC, constructorparameters, null, null, null,
-//					ElementKind.CONSTRUCTOR, null, null, false, null));
+			if (!hasSimpleNoArgMethodWithName("hashCode", result)) {
+				result.add(FullMethodSignature.create("hashCode", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null,
+						null, PrimitiveTypeSignatureImpl.create(TypeKind.INT), null, ElementKind.METHOD, null, null, false,
+						null));
+			}
+			result.add(FullMethodSignature.create("equals", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL,
+					Collections.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
+							CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT, "o")),
+					null, PrimitiveTypeSignatureImpl.create(TypeKind.BOOLEAN), null, ElementKind.METHOD, null, null,
+					false, null));
+			for (FieldSignature f : thiz.getFields()) {
+				if (!hasSimpleNoArgMethodWithName(f.getSimpleName(), result)) {
+					result.add(FullMethodSignature.create(f.getSimpleName(), IncrementalElementsTypes.MODIFIERS_PUBLIC,
+							null, null, f.getTypeSignature(), null, ElementKind.METHOD, null, null, false, null));
+				}
+			}
 		}
 
 		if (!hasAnyConstructor(result)) {

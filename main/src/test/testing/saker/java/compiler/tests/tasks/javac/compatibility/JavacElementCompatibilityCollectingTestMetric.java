@@ -16,7 +16,6 @@
 package testing.saker.java.compiler.tests.tasks.javac.compatibility;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -372,6 +371,21 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 			this.javacElem = javacElem;
 		}
 
+		public void compareEnclosingElements(Element e, Utils p) {
+			Element enc = e.getEnclosingElement();
+			Element javacenc = javacElem.getEnclosingElement();
+			if ((enc == null) != (javacenc == null)) {
+				throw new ElementDifferenceException("Different enclosing elements.", e, javacElem);
+			}
+			if (enc == null) {
+				return;
+			}
+			if (!enc.getSimpleName().contentEquals(javacenc.getSimpleName())) {
+				throw new ElementDifferenceException("Different enclosing elements. " + enc + " - " + javacenc, e,
+						javacElem);
+			}
+		}
+		
 		@Override
 		public Void visit(Element e, Utils p) {
 			try {
@@ -380,6 +394,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 				}
 				compare(e.getSimpleName(), javacElem.getSimpleName());
 				compareTypes(e.asType(), javacElem.asType(), p);
+				compareEnclosingElements(e, p);
 				//do not compare doc comments, as the are stripped after generate...
 //				compareEquals(p.elems.getDocComment(e), p.javacElems.getDocComment(javacElem));
 				compareEquals(p.elems.isDeprecated(e), p.javacElems.isDeprecated(javacElem));
@@ -744,5 +759,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 		}
 		throw new ElementDifferenceException("Element not found", e);
 	}
+
+	
 
 }

@@ -25,6 +25,14 @@ public interface MethodSignature extends ClassMemberSignature, ParameterizedSign
 	public TypeSignature getReturnType();
 
 	public List<? extends MethodParameterSignature> getParameters();
+	
+	public default int getParameterCount() {
+		List<? extends MethodParameterSignature> params = getParameters();
+		if (params == null) {
+			return 0;
+		}
+		return params.size();
+	}
 
 	public List<? extends TypeSignature> getThrowingTypes();
 

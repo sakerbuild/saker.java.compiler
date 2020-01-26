@@ -30,6 +30,7 @@ import javax.lang.model.type.TypeMirror;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalTypeVariable;
@@ -85,6 +86,11 @@ public class IncrementalTypeParameterElement extends IncrementalElement<TypePara
 		return this.asType;
 	}
 
+	@Override
+	public byte getKindIndex() {
+		return KindCompatUtils.ELEMENTKIND_INDEX_TYPE_PARAMETER;
+	}
+	
 	@Override
 	public ElementKind getKind() {
 		return ElementKind.TYPE_PARAMETER;

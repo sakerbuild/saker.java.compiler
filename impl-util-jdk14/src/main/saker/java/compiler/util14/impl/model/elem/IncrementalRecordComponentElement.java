@@ -14,6 +14,7 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.RecordComponentElement;
 import javax.lang.model.type.TypeMirror;
 
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.DocumentedIncrementalElement;
@@ -55,6 +56,11 @@ public class IncrementalRecordComponentElement extends IncrementalElement<FieldS
 		return this.asType;
 	}
 
+	@Override
+	public byte getKindIndex() {
+		return KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT;
+	}
+	
 	@Override
 	public ElementKind getKind() {
 		return ElementKind.RECORD_COMPONENT;

@@ -40,6 +40,40 @@ record ObjFieldQualifiedConstructor(Main qm) {
 	}
 }
 
+record Methods(int i) {
+	public void method() {
+	}
+	
+	public int methodI() {
+		return this.i;
+	}
+	public int i() {
+		return this.i * 2;
+	}
+}
+
+record CustomHashcode(int i) {
+	public int hashCode() {
+		return 3;
+	}
+}
+record CustomToString(int i) {
+	public String toString() {
+		return "abc_" + i;
+	}
+}
+
+record CustomEquals1(int i) {
+	public boolean equals(Object o) {
+		return false;
+	}
+}
+record CustomEquals2(int i) {
+	public boolean equals(java.lang.Object o) {
+		return false;
+	}
+}
+
 //compilation failure, canonical constructor must be public
 //record NonPublicEmptyRecord() {
 //	NonPublicEmptyRecord() {}

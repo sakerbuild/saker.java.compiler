@@ -95,7 +95,8 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 	@Override
 	public void invalidate() {
 		super.invalidate();
-		//fine to use direct assignment as this will not be called from multi-threaded code
+		// fine to use direct assignment as this will not be called from multi-threaded
+		// code
 		this.typeParameters = null;
 		this.enclosedElements = null;
 		this.asType = null;
@@ -112,7 +113,8 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 		}
 		IncrementalDeclaredType ntype = new IncrementalDeclaredType(elemTypes, signature.getTypeSignature(), this,
 				this);
-		//disable TYPE_USE annotations as this is not really a "type use". Javac doesnt give this either.
+		// disable TYPE_USE annotations as this is not really a "type use". Javac doesnt
+		// give this either.
 		ntype.setElementTypes(Collections.emptySet());
 		if (ARFU_asType.compareAndSet(this, null, ntype)) {
 			return ntype;
@@ -144,9 +146,9 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 		return null;
 	}
 
-	private boolean isAllTypesSame(List<TypeMirror> types, List<TypeMirror> otypes) {
-		Iterator<TypeMirror> it = types.iterator();
-		Iterator<TypeMirror> oit = otypes.iterator();
+	private boolean isAllTypesSame(List<? extends TypeMirror> types, List<? extends TypeMirror> otypes) {
+		Iterator<? extends TypeMirror> it = types.iterator();
+		Iterator<? extends TypeMirror> oit = otypes.iterator();
 		while (it.hasNext()) {
 			if (!oit.hasNext()) {
 				return false;
@@ -162,27 +164,33 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 		}
 		return true;
 	}
-	
-	private boolean hasConstructorWithParameterCanonicalNames(List<TypeMirror> paramcanonicalnames) {
-		int paramcount = paramcanonicalnames.size();
-		for (MethodSignature c : signature.getConstructors()) {
-			List<? extends MethodParameterSignature> params = c.getParameters();
-			if (params.size() != paramcount) {
+
+	private boolean hasCanonicalConstructorWithParameterTypes(List<TypeMirror> paramtypes,
+			List<? extends IncrementalElement<?>> elements) {
+		int paramcount = paramtypes.size();
+		for (IncrementalElement<?> e : elements) {
+			if (e.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR) {
 				continue;
 			}
-			List<TypeMirror> names = new ArrayList<>(paramcount);
-			for (MethodParameterSignature p : params) {
-				//TODO the enclosing element here should be the executable element of the constructor
-				names.add(elemTypes.getTypeMirror(p.getTypeSignature(), this));
+			MethodSignature ms = (MethodSignature) e.getSignature();
+			if (ms.getParameterCount() != paramcount) {
+				continue;
+			}
+			List<TypeMirror> eparamtypes = new ArrayList<>(paramcount);
+			for (MethodParameterSignature p : ms.getParameters()) {
+				//it is okay to use this as the enclosing element
+				// as the canonical constructors of a record cannot declare type
+				// variables
+				eparamtypes.add(elemTypes.getTypeMirror(p.getTypeSignature(), this));
 			}
 			
-			if(isAllTypesSame(paramcanonicalnames, names)) {
+			if (isAllTypesSame(eparamtypes, paramtypes)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	@Override
 	public List<? extends IncrementalElement<?>> getEnclosedElements() {
 		List<IncrementalElement<?>> thisenclosedelements = enclosedElements;
@@ -206,7 +214,8 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 					}
 					case KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
 					case KindCompatUtils.ELEMENTKIND_INDEX_METHOD: {
-						IncrementalExecutableElement constructorelem = new IncrementalExecutableElement((MethodSignature) m, this, elemTypes);
+						IncrementalExecutableElement constructorelem = new IncrementalExecutableElement(
+								(MethodSignature) m, this, elemTypes);
 						thisenclosedelements.add(constructorelem);
 						break;
 					}
@@ -219,7 +228,8 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 					}
 					case KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
 						FieldSignature fs = (FieldSignature) m;
-						thisenclosedelements.add(new IncrementalVariableElement(elemTypes, fs, ElementKind.FIELD, this));
+						thisenclosedelements
+								.add(new IncrementalVariableElement(elemTypes, fs, ElementKind.FIELD, this));
 						thisenclosedelements.add(elemTypes.createRecordComponentElement(this, fs));
 						break;
 					}
@@ -234,13 +244,13 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 			Collection<? extends FieldSignature> fields = signature.getFields();
 			List<MethodParameterSignature> paramsignatures = new ArrayList<>(fields.size());
 			int fieldcount = fields.size();
-			List<TypeMirror> paramcanonicalnames = new ArrayList<>(fieldcount);
+			List<TypeMirror> paramtypes = new ArrayList<>(fieldcount);
 			for (FieldSignature f : fields) {
 				paramsignatures.add(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
 						f.getTypeSignature(), f.getSimpleName()));
-				paramcanonicalnames.add(elemTypes.getTypeMirror(f.getTypeSignature(), this));
+				paramtypes.add(elemTypes.getTypeMirror(f.getTypeSignature(), this));
 			}
-			if (!hasConstructorWithParameterCanonicalNames(paramcanonicalnames)) {
+			if (!hasCanonicalConstructorWithParameterTypes(paramtypes, thisenclosedelements)) {
 				thisenclosedelements.add(new IncrementalExecutableElement(
 						FullMethodSignature.create(IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME,
 								IncrementalElementsTypes.MODIFIERS_PUBLIC, paramsignatures, null, null, null,
@@ -248,9 +258,9 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 						this, elemTypes));
 			}
 		}
-		thisenclosedelements = ImmutableUtils.unmodifiableList(thisenclosedelements);
-		if (ARFU_enclosedElements.compareAndSet(this, null, thisenclosedelements)) {
-			return thisenclosedelements;
+		List<IncrementalElement<?>> immutableenclosedelements = ImmutableUtils.unmodifiableList(thisenclosedelements);
+		if (ARFU_enclosedElements.compareAndSet(this, null, immutableenclosedelements)) {
+			return immutableenclosedelements;
 		}
 		return this.enclosedElements;
 	}

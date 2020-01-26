@@ -80,6 +80,11 @@ public class IncrementalExecutableElement extends IncrementalElement<MethodSigna
 			elementTypes = IncrementalElementsTypes.ELEMENT_TYPE_METHOD;
 		}
 	}
+	
+	@Override
+	public byte getKindIndex() {
+		return signature.getKindIndex();
+	}
 
 	@Override
 	public void invalidate() {

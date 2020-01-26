@@ -19,6 +19,7 @@ import java.util.Collection;
 
 import javax.lang.model.element.Element;
 
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalAnnotatedConstruct;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
@@ -34,6 +35,10 @@ public abstract class IncrementalElement<Sig extends AnnotatedSignature> extends
 		this.signature = signature;
 	}
 
+	public byte getKindIndex() {
+		return KindCompatUtils.getElementKindIndex(getKind());
+	}
+	
 	@Override
 	protected Collection<? extends AnnotationSignature> getSignatureAnnotations() {
 		return signature.getAnnotations();
