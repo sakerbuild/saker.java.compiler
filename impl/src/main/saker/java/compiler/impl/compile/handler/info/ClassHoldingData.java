@@ -79,7 +79,7 @@ public interface ClassHoldingData extends ClassGenerationInfo, RealizedSignature
 	public static void collectAllClassBinaryNames(Set<String> result, Iterable<? extends ClassSignature> classes) {
 		for (ClassSignature c : classes) {
 			result.add(c.getBinaryName());
-			collectAllClassBinaryNames(result, c.getEnclosedClasses());
+			collectAllClassBinaryNames(result, c.getEnclosedTypes());
 		}
 	}
 
@@ -87,7 +87,7 @@ public interface ClassHoldingData extends ClassGenerationInfo, RealizedSignature
 			Collection<? extends ClassSignature> classes) {
 		for (ClassSignature c : classes) {
 			result.put(c.getBinaryName(), c);
-			collectAllClassBinaryNames(result, c.getEnclosedClasses());
+			collectAllClassBinaryNames(result, c.getEnclosedTypes());
 		}
 	}
 

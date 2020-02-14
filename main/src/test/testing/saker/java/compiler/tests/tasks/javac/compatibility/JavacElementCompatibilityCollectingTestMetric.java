@@ -189,7 +189,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 
 	private void testSameAnnotationsQuery(AnnotatedConstruct ac, AnnotatedConstruct javacac,
 			Class<? extends Annotation> annottype) {
-		if((ac == null) != (javacac == null)) {
+		if ((ac == null) != (javacac == null)) {
 			throw new ElementDifferenceException(ac + " - " + javacac, ac, javacac);
 		}
 		Annotation i = ac.getAnnotation(annottype);
@@ -353,7 +353,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 		compareEquals(isfunc, p.javacElems.isFunctionalInterface(javace));
 		compareEquals(isfunc, e.getAnnotation(FunctionalInterface.class) != null);
 	}
-	
+
 	protected static List<Element> elementKindNameFilter(List<? extends Element> elems, String kindname) {
 		ArrayList<Element> result = new ArrayList<>();
 		for (Element e : elems) {
@@ -385,7 +385,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 						javacElem);
 			}
 		}
-		
+
 		@Override
 		public Void visit(Element e, Utils p) {
 			try {
@@ -444,7 +444,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 			compareElements(ElementFilter.typesIn(eenc), ElementFilter.typesIn(javacenc), p);
 			if ("RECORD".equals(e.getKind().name())) {
 				compareElements(elementKindNameFilter(eenc, "RECORD_COMPONENT"),
-						elementKindNameFilter(javacenc, "RECORD_COMPONENT"), p);	
+						elementKindNameFilter(javacenc, "RECORD_COMPONENT"), p);
 			}
 
 			compareTypes(e.getInterfaces(), javace.getInterfaces(), p);
@@ -759,7 +759,5 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 		}
 		throw new ElementDifferenceException("Element not found", e);
 	}
-
-	
 
 }

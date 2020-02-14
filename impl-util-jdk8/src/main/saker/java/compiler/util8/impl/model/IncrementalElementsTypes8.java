@@ -743,7 +743,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	public DeclaredType getJavaLangObjectTypeMirror() {
 		return (DeclaredType) javaLangObjectElement.asType();
 	}
-	
+
 	@Override
 	public DeclaredType getJavaLangRecordTypeMirror() {
 		return (DeclaredType) javaLangRecordElementSupplier.get().asType();
@@ -3915,7 +3915,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		//TODO support in a way that delays this exception? can be useful when cross compiling
 		throw new UnsupportedOperationException("cannot create record component element");
 	}
-	
+
 	@Override
 	public ResolutionScope createResolutionScope(Element resolutionelement) {
 		if (resolutionelement == null) {
@@ -4361,6 +4361,18 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	public static TypeElement findDirectlyEnclosedType(TypeElement type, String typesimplename) {
+		if (type instanceof IncrementalTypeElement) {
+			//handle this specially as getting the enclosing elements may cause stackoverflows with records
+			IncrementalTypeElement ite = (IncrementalTypeElement) type;
+			for (ClassSignature c : ite.getSignature().getEnclosedTypes()) {
+				if (!c.getSimpleName().equals(typesimplename)) {
+					continue;
+				}
+				//found a type that matches the name
+				return ite.getIncrementalElementsTypes().getLocalPackagesTypesContainer().getTypeElement(c);
+			}
+			return null;
+		}
 		for (Element elem : type.getEnclosedElements()) {
 			ElementKind kind = elem.getKind();
 			if (kind == null || !(kind.isClass() || kind.isInterface())) {

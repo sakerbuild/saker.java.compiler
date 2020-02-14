@@ -98,7 +98,7 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 				.collect(Collectors.toList());
 	}
 
-	public default Collection<? extends ClassSignature> getEnclosedClasses() {
+	public default Collection<? extends ClassSignature> getEnclosedTypes() {
 		return getMembers().stream().filter(m -> m instanceof ClassSignature).map(m -> (ClassSignature) m)
 				.collect(Collectors.toList());
 	}

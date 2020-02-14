@@ -4,9 +4,6 @@ saker.compiler.utils-api
 	classpath: [0)
 nest.repository.support-api
 	classpath: [0)
-org.objectweb.asm
-	classpath: 7.3.1
-		private: true
 
 saker.java.compiler-impl-jdk8
 	classpath: [this]

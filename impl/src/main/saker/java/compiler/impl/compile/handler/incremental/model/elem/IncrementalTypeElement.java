@@ -42,8 +42,11 @@ import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeElem
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalDeclaredType;
+import saker.java.compiler.impl.compile.signature.impl.ClassSignatureImpl;
 import saker.java.compiler.impl.compile.signature.impl.FullMethodSignature;
 import saker.java.compiler.impl.compile.signature.impl.MethodParameterSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.PrimitiveTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
@@ -56,6 +59,20 @@ import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
 public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 		implements CommonTypeElement, DocumentedIncrementalElement<ClassSignature> {
+
+	private static final MethodSignature RECORD_IMPLICIT_HASHCODE_SIGNATURE = FullMethodSignature.create("hashCode",
+			IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null, null,
+			PrimitiveTypeSignatureImpl.create(TypeKind.INT), null, ElementKind.METHOD, null, null, false, null);
+	private static final MethodSignature RECORD_IMLICIT_TOSTRING_SIGNATURE = FullMethodSignature.create("toString",
+			IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null, CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING,
+			null, ElementKind.METHOD, null, null, false, null);
+	private static final MethodSignature RECORD_IMLICIT_EQUALS_SIGNATURE = FullMethodSignature.create("equals",
+			IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL,
+			Collections.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
+					CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT, "o")),
+			null, PrimitiveTypeSignatureImpl.create(TypeKind.BOOLEAN), null, ElementKind.METHOD, null, null, false,
+			null);
+
 	private static final AtomicReferenceFieldUpdater<IncrementalTypeElement, TypeMirror> ARFU_asType = AtomicReferenceFieldUpdater
 			.newUpdater(IncrementalTypeElement.class, TypeMirror.class, "asType");
 	private static final AtomicReferenceFieldUpdater<IncrementalTypeElement, TypeMirror> ARFU_superClass = AtomicReferenceFieldUpdater
@@ -183,7 +200,7 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 				// variables
 				eparamtypes.add(elemTypes.getTypeMirror(p.getTypeSignature(), this));
 			}
-			
+
 			if (isAllTypesSame(eparamtypes, paramtypes)) {
 				return true;
 			}
@@ -257,12 +274,55 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 								ElementKind.CONSTRUCTOR, null, null, false, null),
 						this, elemTypes));
 			}
+
+			//handle implicit members
+			if (!ClassSignatureImpl.hasSimpleNoArgMethodWithName("toString", members)) {
+				thisenclosedelements
+						.add(new IncrementalExecutableElement(RECORD_IMLICIT_TOSTRING_SIGNATURE, this, elemTypes));
+			}
+			if (!ClassSignatureImpl.hasSimpleNoArgMethodWithName("hashCode", members)) {
+				thisenclosedelements
+						.add(new IncrementalExecutableElement(RECORD_IMPLICIT_HASHCODE_SIGNATURE, this, elemTypes));
+			}
+			if (getEqualsMethod(thisenclosedelements) == null) {
+				thisenclosedelements
+						.add(new IncrementalExecutableElement(RECORD_IMLICIT_EQUALS_SIGNATURE, this, elemTypes));
+			}
+			for (FieldSignature f : fields) {
+				if (!ClassSignatureImpl.hasSimpleNoArgMethodWithName(f.getSimpleName(), members)) {
+					MethodSignature msignature = FullMethodSignature.create(f.getSimpleName(),
+							IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null, f.getTypeSignature(), null,
+							ElementKind.METHOD, null, null, false, null);
+					thisenclosedelements.add(new IncrementalExecutableElement(msignature, this, elemTypes));
+				}
+			}
 		}
 		List<IncrementalElement<?>> immutableenclosedelements = ImmutableUtils.unmodifiableList(thisenclosedelements);
 		if (ARFU_enclosedElements.compareAndSet(this, null, immutableenclosedelements)) {
 			return immutableenclosedelements;
 		}
 		return this.enclosedElements;
+	}
+
+	private IncrementalElement<?> getEqualsMethod(List<IncrementalElement<?>> thisenclosedelements) {
+		for (IncrementalElement<?> e : thisenclosedelements) {
+			if (e.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
+				continue;
+			}
+			MethodSignature s = (MethodSignature) e.getSignature();
+			if (!"equals".equals(s.getSimpleName())) {
+				continue;
+			}
+			if (s.getParameterCount() != 1) {
+				continue;
+			}
+			MethodParameterSignature paramsignature = s.getParameters().get(0);
+			TypeMirror paramte = elemTypes.getTypeMirror(paramsignature.getTypeSignature(), e);
+			if (elemTypes.isSameType(paramte, elemTypes.getJavaLangObjectTypeMirror())) {
+				return e;
+			}
+		}
+		return null;
 	}
 
 	@Override

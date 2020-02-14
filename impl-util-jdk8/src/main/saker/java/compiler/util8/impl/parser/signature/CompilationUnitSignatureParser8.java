@@ -446,7 +446,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		return "String".equals(typestr) || "java.lang.String".equals(typestr);
 	}
 
-	public static boolean shouldIncludeConstantValue(VariableTree tree, byte declaringkindindex, ParseContext context) {
+	private static boolean shouldIncludeConstantValue(VariableTree tree, byte declaringkindindex, ParseContext context) {
 		if (tree.getInitializer() == null || !isConstantType(tree.getType(), context)) {
 			return false;
 		}
@@ -458,6 +458,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				|| declaringkindindex == KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE) {
 			return true;
 		}
+		//Don't check the presence of STATIC modifier, as the constants are present even for instance variables
 		return (declaringkindindex == KindCompatUtils.ELEMENTKIND_INDEX_CLASS
 				|| declaringkindindex == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) && modifiers.contains(Modifier.FINAL);
 	}

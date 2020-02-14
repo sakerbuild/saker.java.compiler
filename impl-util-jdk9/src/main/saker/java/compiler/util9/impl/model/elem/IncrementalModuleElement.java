@@ -164,7 +164,7 @@ public class IncrementalModuleElement extends IncrementalElement<ModuleSignature
 			return v;
 		});
 		result.setEnclosingElement(encpackage);
-		for (ClassSignature ec : c.getEnclosedClasses()) {
+		for (ClassSignature ec : c.getEnclosedTypes()) {
 			IncrementalTypeElement ecres = addParsedClass(ec);
 			ecres.setEnclosingElement(result);
 		}

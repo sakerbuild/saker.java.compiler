@@ -26,7 +26,6 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
-import javax.lang.model.type.TypeKind;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
@@ -35,13 +34,11 @@ import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.ArrayTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
-import saker.java.compiler.impl.compile.signature.type.impl.PrimitiveTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
-import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
@@ -143,7 +140,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 		return false;
 	}
 
-	private static boolean hasSimpleNoArgMethodWithName(String name, List<? extends ClassMemberSignature> members) {
+	public static boolean hasSimpleNoArgMethodWithName(String name, List<? extends ClassMemberSignature> members) {
 		for (ClassMemberSignature m : members) {
 			if (m.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
 				continue;
@@ -167,33 +164,12 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 			return;
 		}
 
-		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
-			if (!hasSimpleNoArgMethodWithName("toString", result)) {
-				result.add(FullMethodSignature.create("toString", IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null,
-						CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null, null,
-						false, null));
-			}
-			if (!hasSimpleNoArgMethodWithName("hashCode", result)) {
-				result.add(FullMethodSignature.create("hashCode", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null,
-						null, PrimitiveTypeSignatureImpl.create(TypeKind.INT), null, ElementKind.METHOD, null, null, false,
-						null));
-			}
-			result.add(FullMethodSignature.create("equals", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL,
-					Collections.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
-							CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT, "o")),
-					null, PrimitiveTypeSignatureImpl.create(TypeKind.BOOLEAN), null, ElementKind.METHOD, null, null,
-					false, null));
-			for (FieldSignature f : thiz.getFields()) {
-				if (!hasSimpleNoArgMethodWithName(f.getSimpleName(), result)) {
-					result.add(FullMethodSignature.create(f.getSimpleName(), IncrementalElementsTypes.MODIFIERS_PUBLIC,
-							null, null, f.getTypeSignature(), null, ElementKind.METHOD, null, null, false, null));
-				}
-			}
-		}
-
+		//Note: don't add implicit members for records here as we cannot detect duplicate equals(Object) method
+		//the implicit members are added in IncrementalTypeElement
+		
 		if (!hasAnyConstructor(result)) {
 			if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
-				
+				//don't add here, but in IncrementalTypeElement
 			} else {
 				Set<Modifier> cmodifiers;
 				Set<Modifier> thismodifiers = thiz.getModifiers();

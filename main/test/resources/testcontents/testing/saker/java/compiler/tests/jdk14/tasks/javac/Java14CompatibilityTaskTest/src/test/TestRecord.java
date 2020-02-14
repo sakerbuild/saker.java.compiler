@@ -64,12 +64,29 @@ record CustomToString(int i) {
 }
 
 record CustomEquals1(int i) {
-	public boolean equals(Object o) {
+	public boolean equals(Object other) {
 		return false;
 	}
 }
 record CustomEquals2(int i) {
-	public boolean equals(java.lang.Object o) {
+	public boolean equals(java.lang.Object other) {
+		return false;
+	}
+}
+
+record EqualsHashcode1(int i) {
+	public boolean equals(java.lang.Object other) {
+		return false;
+	}
+	public int hashCode() {
+		return 3;
+	}
+}
+record EqualsHashcode2(int i) {
+	public int hashCode() {
+		return 3;
+	}
+	public boolean equals(java.lang.Object other) {
 		return false;
 	}
 }

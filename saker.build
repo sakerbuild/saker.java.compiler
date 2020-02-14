@@ -83,7 +83,6 @@ global(saker.java.compiler_DEPENDENCIES) = [
 	nest.repository.support-api,
 	saker.standard-api,
 	saker.compiler.utils,
-	org.objectweb.asm-v7.3.1,
 ]
 
 static(VERSION_saker.build) = nest.dependency.resolve(
@@ -107,6 +106,7 @@ compile(
 		SourceDirectories: [
 			main/src/main/,
 			impl/src/main/,
+			impl/src/asm/,
 			api/src/main/,
 			"impl-{ $jdk }/src/main/",
 			"impl-util-{ $jdk }/src/main/",
@@ -261,6 +261,7 @@ export(
 					Directory: [
 						main/src/main/,
 						impl/src/main/,
+						impl/src/asm/,
 						api/src/main/,
 					],
 					Resources: **/*.java,

@@ -29,6 +29,21 @@ public class Main {
 	public static final java.lang.String CONST10 = "123";
 	public static final String CONST11 = "123" + 123;
 	public static final java.lang.String CONST12 = "123" + 123;
+	
+	//test instance constants as well
+	public final byte instance_CONST0 = 123;
+	public final byte instance_CONST1 = (int) 123 + 3;
+	public final short instance_CONST2 = 123;
+	public final int instance_CONST3 = 123;
+	public final long instance_CONST4 = 123;
+	public final float instance_CONST5 = 123;
+	public final double instance_CONST6 = 123;
+	public final boolean instance_CONST7 = true;
+	public final char instance_CONST8 = '\0' + 2;
+	public final String instance_CONST9 = "123";
+	public final java.lang.String instance_CONST10 = "123";
+	public final String instance_CONST11 = "123" + 123;
+	public final java.lang.String instance_CONST12 = "123" + 123;
 
 	/**
 	 * docdynamic
