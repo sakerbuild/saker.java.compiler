@@ -446,7 +446,8 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		return "String".equals(typestr) || "java.lang.String".equals(typestr);
 	}
 
-	private static boolean shouldIncludeConstantValue(VariableTree tree, byte declaringkindindex, ParseContext context) {
+	private static boolean shouldIncludeConstantValue(VariableTree tree, byte declaringkindindex,
+			ParseContext context) {
 		if (tree.getInitializer() == null || !isConstantType(tree.getType(), context)) {
 			return false;
 		}
@@ -539,6 +540,11 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		context.popSignaturePath(tree);
 
 		return sig;
+	}
+
+	private boolean isVariableEnumConstantInEnum(VariableTree tree, ParseContext context) {
+		return isEnumConstant(tree, tree.getModifiers().getFlags(), KindCompatUtils.ELEMENTKIND_INDEX_ENUM,
+				context.unit);
 	}
 
 	private boolean isEnumConstant(VariableTree tree, Set<Modifier> varmodifierflags, byte declaringkindindex,
@@ -1073,7 +1079,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		String name = cache.string(tree.getSimpleName());
 		ElementKind kind = treeKindToElementKind(tree.getKind());
 		Set<Modifier> modifiers = getCorrectedClassModifiers(tree, modifierstree, currentnestingkind,
-				enclosingclasssignature, kind);
+				enclosingclasssignature, kind, context);
 
 		TypeSignature supertypesignature = extendstree == null ? null : typeResolver.resolve(extendstree, context);
 		List<AnnotationSignature> annotationsignatures = getAnnotations(modifierstree.getAnnotations(), context);
@@ -1111,8 +1117,33 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		return classsignature;
 	}
 
-	private static Set<Modifier> getCorrectedClassModifiers(ClassTree tree, ModifiersTree classmodifiers,
-			NestingKind currentnestingkind, ClassSignature enclosingclasssignature, ElementKind kind) {
+	private boolean hasAnonymousEnumConstant(ClassTree tree, ParseContext context) {
+		for (Tree mt : tree.getMembers()) {
+			if (mt.getKind() != Kind.VARIABLE) {
+				continue;
+			}
+			VariableTree vt = (VariableTree) mt;
+			if (!isVariableEnumConstantInEnum(vt, context)) {
+				continue;
+			}
+			ExpressionTree initer = vt.getInitializer();
+			if (initer == null) {
+				continue;
+			}
+			if (initer.getKind() != Kind.NEW_CLASS) {
+				continue;
+			}
+			NewClassTree nct = (NewClassTree) initer;
+			if (nct.getClassBody() != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Set<Modifier> getCorrectedClassModifiers(ClassTree tree, ModifiersTree classmodifiers,
+			NestingKind currentnestingkind, ClassSignature enclosingclasssignature, ElementKind kind,
+			ParseContext context) {
 		//if the outer class is an interface or @interface, the inner class is automatically marked as static
 		//enums cannot have any inner classes
 		//if the outer class is a class, no additional modifiers are added to anything
@@ -1127,7 +1158,10 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 					//the inner types are also public on JDK9+
 					classmodifierflags = classmodifierflags.added(Modifier.PUBLIC);
 				}
-				//classmodifierflags.add(Modifier.FINAL);
+				//if the enum contains no anonymous inner class members, add final to it
+				if (!hasAnonymousEnumConstant(tree, context)) {
+					classmodifierflags = classmodifierflags.added(Modifier.FINAL);
+				}
 				return classmodifierflags;
 			}
 			case INTERFACE:

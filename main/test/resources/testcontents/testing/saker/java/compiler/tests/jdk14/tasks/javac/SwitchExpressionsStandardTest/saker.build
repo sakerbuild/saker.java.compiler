@@ -1,0 +1,3 @@
+saker.java.compile(
+	SourceDirectories: src,
+)

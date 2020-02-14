@@ -41,12 +41,13 @@ public class VersionKeyUtils8 {
 	public static final int ASM_API_VERSION = Opcodes.ASM7;
 
 	public static class AbiHasherClassVisitor8 extends ClassVisitor implements ClassFileHasher {
+		protected MessageDigest digest;
+
 		private String className;
-		private MessageDigest digest;
 		private NavigableSet<String> fields = new TreeSet<>();
 		private NavigableSet<String> methods = new TreeSet<>();
 		private String classStr;
-		private TreeSet<String> classAnnotations = new TreeSet<>();
+		private NavigableSet<String> classAnnotations = new TreeSet<>();
 		private String moduleStr;
 		private StringBuilder sb = new StringBuilder();
 
@@ -96,7 +97,7 @@ public class VersionKeyUtils8 {
 			sb.append('\r');
 			sb.append(name);
 			sb.append('\r');
-			sb.append(signature);
+			sb.append(ObjectUtils.nullDefault(signature, (String) null));
 			sb.append('\r');
 			sb.append(superName);
 			sb.append('\n');
@@ -291,12 +292,10 @@ public class VersionKeyUtils8 {
 			}
 			digest.update(classStr.getBytes(StandardCharsets.UTF_8));
 			for (String f : fields) {
-				byte[] b = f.getBytes(StandardCharsets.UTF_8);
-				digest.update(b);
+				digest.update(f.getBytes(StandardCharsets.UTF_8));
 			}
 			for (String m : methods) {
-				byte[] b = m.getBytes(StandardCharsets.UTF_8);
-				digest.update(b);
+				digest.update(m.getBytes(StandardCharsets.UTF_8));
 			}
 		}
 
@@ -307,12 +306,12 @@ public class VersionKeyUtils8 {
 	}
 
 	public static class AbiHasherAnnotationVisitor8 extends AnnotationVisitor {
-		private TreeSet<String> values = new TreeSet<>();
+		private NavigableSet<String> values = new TreeSet<>();
 		private StringBuilder sb = new StringBuilder();
-		private TreeSet<String> resultSet;
+		private NavigableSet<String> resultSet;
 		private String prefix;
 
-		public AbiHasherAnnotationVisitor8(int api, AnnotationVisitor annotationVisitor, TreeSet<String> result,
+		public AbiHasherAnnotationVisitor8(int api, AnnotationVisitor annotationVisitor, NavigableSet<String> result,
 				String prefix) {
 			super(api, annotationVisitor);
 			this.resultSet = result;
@@ -393,7 +392,7 @@ public class VersionKeyUtils8 {
 
 	public static class AbiHasherModuleVisitor8 extends ModuleVisitor {
 		private final AbiHasherClassVisitor8 hasher;
-		private TreeSet<String> phrases = new TreeSet<>();
+		private NavigableSet<String> phrases = new TreeSet<>();
 		private StringBuilder sb = new StringBuilder();
 
 		public AbiHasherModuleVisitor8(int api, ModuleVisitor moduleVisitor, AbiHasherClassVisitor8 hasher) {

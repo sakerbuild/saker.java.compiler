@@ -29,7 +29,7 @@ public class Main {
 	public static final java.lang.String CONST10 = "123";
 	public static final String CONST11 = "123" + 123;
 	public static final java.lang.String CONST12 = "123" + 123;
-	
+
 	//test instance constants as well
 	public final byte instance_CONST0 = 123;
 	public final byte instance_CONST1 = (int) 123 + 3;
@@ -212,4 +212,17 @@ class Paramed<T> {
 	}
 
 	public Paramed<TypeResolutions.Inner.In2>.Inner<Paramed<TypeResolutions.Inner.In2>.Inner<TypeResolutions.Inner>> x1;
+}
+
+enum EmptyEnum {
+	;
+}
+
+enum SingleEnum {
+	INSTANCE;
+}
+
+enum SingleAnonymEnum {
+	INSTANCE {
+	};
 }
