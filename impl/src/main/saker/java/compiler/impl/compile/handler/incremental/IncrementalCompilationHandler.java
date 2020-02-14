@@ -88,6 +88,7 @@ import saker.java.compiler.api.modulepath.SDKModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaTaskUtils.LocalDirectoryClassFilesExecutionProperty;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.RemoteJavaRMIProcess;
 import saker.java.compiler.impl.compile.ClassPathIDEConfigurationEntry;
 import saker.java.compiler.impl.compile.CompileFileTags;
@@ -123,11 +124,13 @@ import saker.java.compiler.impl.compile.signature.change.ClassModifierABIChange;
 import saker.java.compiler.impl.compile.signature.change.ClassRemovedABIChange;
 import saker.java.compiler.impl.compile.signature.change.ClassTypeChange;
 import saker.java.compiler.impl.compile.signature.change.ClassTypeParametersAbiChange;
+import saker.java.compiler.impl.compile.signature.change.member.ConstructorABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.FieldAddedABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.FieldInitializerABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.FieldRemovedABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.MethodAddedABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.MethodRemovedABIChange;
+import saker.java.compiler.impl.compile.signature.change.member.NamedMethodModifiedABIChange;
 import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
 import saker.java.compiler.impl.options.SimpleJavaSourceDirectoryOption;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
@@ -1771,17 +1774,34 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 			NavigableMap<String, Collection<MethodSignature>> prevmethods,
 			NavigableMap<String, ClassSignature> prevtypes, SignatureNameChecker parameterchecker, ClassSignature prev,
 			ClassSignature thiz, Consumer<AbiChange> result) {
+		boolean isrecord = thiz.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_RECORD
+				|| prev.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_RECORD;
 		ObjectUtils.iterateSortedMapEntries(prevfields, fields, (vname, prevsig, sig) -> {
 			if (prevsig == null) {
 				result.accept(new FieldAddedABIChange(thiz, sig));
+				if (isrecord) {
+					String cname = thiz.getCanonicalName();
+					result.accept(new ConstructorABIChange(cname));
+					result.accept(new NamedMethodModifiedABIChange(cname, vname));
+				}
 			} else {
 				if (sig == null) {
 					result.accept(new FieldRemovedABIChange(prev, prevsig));
+					if (isrecord) {
+						String cname = thiz.getCanonicalName();
+						result.accept(new ConstructorABIChange(cname));
+						result.accept(new NamedMethodModifiedABIChange(cname, vname));
+					}
 				} else {
 					if (sig.isInitializerChanged(prevsig)) {
 						if (!FieldSignature.isOnlyInitializerChanged(sig, prevsig)) {
 							result.accept(new FieldRemovedABIChange(prev, prevsig));
 							result.accept(new FieldAddedABIChange(thiz, sig));
+							if (isrecord) {
+								String cname = thiz.getCanonicalName();
+								result.accept(new ConstructorABIChange(cname));
+								result.accept(new NamedMethodModifiedABIChange(cname, vname));
+							}
 						} else {
 							result.accept(new FieldInitializerABIChange(thiz, sig));
 						}
@@ -1789,6 +1809,11 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 						if (!FieldSignature.signatureEquals(sig, prevsig)) {
 							result.accept(new FieldRemovedABIChange(prev, prevsig));
 							result.accept(new FieldAddedABIChange(thiz, sig));
+							if (isrecord) {
+								String cname = thiz.getCanonicalName();
+								result.accept(new ConstructorABIChange(cname));
+								result.accept(new NamedMethodModifiedABIChange(cname, vname));
+							}
 						}
 					}
 				}
