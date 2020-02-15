@@ -31,6 +31,7 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.ArrayTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
@@ -132,39 +133,64 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 	protected static boolean hasAnyConstructor(List<? extends ClassMemberSignature> members) {
 		for (ClassMemberSignature mem : members) {
-			if (mem.getKind() == ElementKind.CONSTRUCTOR) {
+			if (mem.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR) {
 				return true;
 			}
 		}
 		return false;
 	}
 
+	public static boolean hasSimpleNoArgMethodWithName(String name, List<? extends ClassMemberSignature> members) {
+		for (ClassMemberSignature m : members) {
+			if (m.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
+				continue;
+			}
+			if (!name.equals(m.getSimpleName())) {
+				continue;
+			}
+			MethodSignature ms = (MethodSignature) m;
+			if (ms.getParameterCount() != 0) {
+				continue;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	public static void addImplicitMembers(List<ClassMemberSignature> result, ClassSignature thiz) {
-		ElementKind kind = thiz.getKind();
-		if (kind.isInterface()) {
+		byte kindidx = thiz.getKindIndex();
+		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE
+				|| kindidx == KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE) {
 			return;
 		}
 
+		//Note: don't add implicit members for records here as we cannot detect duplicate equals(Object) method
+		//the implicit members are added in IncrementalTypeElement
+		
 		if (!hasAnyConstructor(result)) {
-			Set<Modifier> cmodifiers;
-			Set<Modifier> thismodifiers = thiz.getModifiers();
-			if (kind == ElementKind.ENUM) {
-				cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
+			if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+				//don't add here, but in IncrementalTypeElement
 			} else {
-				if (thismodifiers.contains(Modifier.PUBLIC)) {
-					cmodifiers = IncrementalElementsTypes.MODIFIERS_PUBLIC;
-				} else if (thismodifiers.contains(Modifier.PRIVATE)) {
+				Set<Modifier> cmodifiers;
+				Set<Modifier> thismodifiers = thiz.getModifiers();
+				if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
 					cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
-				} else if (thismodifiers.contains(Modifier.PROTECTED)) {
-					cmodifiers = IncrementalElementsTypes.MODIFIERS_PROTECTED;
 				} else {
-					cmodifiers = Collections.emptySet();
+					if (thismodifiers.contains(Modifier.PUBLIC)) {
+						cmodifiers = IncrementalElementsTypes.MODIFIERS_PUBLIC;
+					} else if (thismodifiers.contains(Modifier.PRIVATE)) {
+						cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
+					} else if (thismodifiers.contains(Modifier.PROTECTED)) {
+						cmodifiers = IncrementalElementsTypes.MODIFIERS_PROTECTED;
+					} else {
+						cmodifiers = Collections.emptySet();
+					}
 				}
+				result.add(0, FullMethodSignature.createDefaultConstructor(cmodifiers));
 			}
-			result.add(0, FullMethodSignature.createDefaultConstructor(cmodifiers));
 		}
 
-		if (kind == ElementKind.ENUM) {
+		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
 			//we dont need to check if methods exist, as declaring them in an enum results in compilation error
 			TypeSignature thistypesig = thiz.getTypeSignature();
 

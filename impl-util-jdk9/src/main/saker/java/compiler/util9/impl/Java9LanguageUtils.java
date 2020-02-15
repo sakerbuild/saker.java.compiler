@@ -186,7 +186,7 @@ public class Java9LanguageUtils {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void addJava9KindBasedElementVisitorFunctions(
+	public static void addJavaKindBasedElementVisitorFunctions(
 			Map<ElementKind, TriFunction<ElementVisitor, ? extends Element, Object, Object>> result) {
 		result.put(ElementKind.MODULE,
 				(TriFunction<ElementVisitor, ModuleElement, Object, Object>) ElementVisitor::visitModule);

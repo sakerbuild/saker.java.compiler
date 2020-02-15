@@ -10,7 +10,7 @@ See the [documentation](https://saker.build/saker.java.compiler/doc/) for more i
 
 ## Build instructions
 
-The project uses the [saker.build system](https://saker.build) for building. It requires multiple JDKs to be installed to successfully build the complete project. This ranges from JDK 8-13, but you can also selectively build for a given JDK using the other build tasks in the `saker.build` build script.
+The project uses the [saker.build system](https://saker.build) for building. It requires multiple JDKs to be installed to successfully build the complete project. This ranges from JDK 8-14, but you can also selectively build for a given JDK using the other build tasks in the `saker.build` build script.
 
 Use the following command to build the project:
 

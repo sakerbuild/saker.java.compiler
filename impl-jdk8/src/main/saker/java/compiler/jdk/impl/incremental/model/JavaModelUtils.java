@@ -35,7 +35,7 @@ public class JavaModelUtils {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static void addJava9KindBasedElementVisitorFunctions(
+	public static void addJavaKindBasedElementVisitorFunctions(
 			Map<ElementKind, TriFunction<ElementVisitor, ? extends Element, Object, Object>> result) {
 	}
 

@@ -36,9 +36,6 @@ import saker.build.file.provider.FileEntry;
 import saker.build.file.provider.LocalFileProvider;
 import saker.build.runtime.environment.EnvironmentProperty;
 import saker.build.runtime.environment.SakerEnvironment;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.FileUtils;
 import saker.build.thirdparty.saker.util.io.JarFileUtils;
@@ -47,6 +44,9 @@ import saker.build.thirdparty.saker.util.io.UnsyncByteArrayInputStream;
 import saker.build.thirdparty.saker.util.io.UnsyncByteArrayOutputStream;
 import saker.build.util.cache.CacheKey;
 import saker.build.util.java.JavaTools;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassWriter;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.MethodVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Opcodes;
 import saker.nest.bundle.NestBundleClassLoader;
 
 public abstract class EchoJavaEnvironmentProperty<T> implements EnvironmentProperty<T>, Externalizable {

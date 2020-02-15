@@ -1,4 +1,4 @@
-global(VERSION_saker.java.compiler) = "0.8.0"
+global(VERSION_saker.java.compiler) = "0.8.2"
 
 global(TOOLS_OPTIONS) = [
 	{
@@ -72,6 +72,10 @@ static(TARGET_JDKS) = [
 		Id: jdk13,
 		Major: 13,
 	},
+	{
+		Id: jdk14,
+		Major: 14,
+	},
 ]
 static(JDK_ID_TO_MAJOR) = foreach $jdk in static(TARGET_JDKS) : { $jdk[Id]: $jdk[Major] }
 global(saker.java.compiler_DEPENDENCIES) = [
@@ -79,7 +83,6 @@ global(saker.java.compiler_DEPENDENCIES) = [
 	nest.repository.support-api,
 	saker.standard-api,
 	saker.compiler.utils,
-	org.objectweb.asm-v7.3.1,
 ]
 
 static(VERSION_saker.build) = nest.dependency.resolve(
@@ -103,6 +106,7 @@ compile(
 		SourceDirectories: [
 			main/src/main/,
 			impl/src/main/,
+			impl/src/asm/,
 			api/src/main/,
 			"impl-{ $jdk }/src/main/",
 			"impl-util-{ $jdk }/src/main/",
@@ -138,6 +142,15 @@ compile(
 					impl-util-jdk8/src/main/,
 					impl-util-jdk9/src/main/,
 					impl-util-jdk12/src/main/,
+				],
+			},
+			{
+				Identifier: jdk14,
+				SourceDirectories: [
+					impl-util-jdk8/src/main/,
+					impl-util-jdk9/src/main/,
+					impl-util-jdk12/src/main/,
+					impl-util-jdk13/src/main/,
 				],
 			},
 		] + [
@@ -248,6 +261,7 @@ export(
 					Directory: [
 						main/src/main/,
 						impl/src/main/,
+						impl/src/asm/,
 						api/src/main/,
 					],
 					Resources: **/*.java,
@@ -348,6 +362,9 @@ compile12() {
 compile13() {
 	include(compile, jdk: jdk13)
 }
+compile14() {
+	include(compile, jdk: jdk14)
+}
 export9(){
 	include(export, compile: include(compile, jdk: jdk9))
 }
@@ -356,7 +373,7 @@ export12(){
 }
 exportall(
 	in testapi = include(_testapicompile),
-	in jdkids = [ jdk8, jdk9, jdk12, jdk13 ],
+	in jdkids = [ jdk8, jdk9, jdk12, jdk13, jdk14 ],
 	
 	out bundlepaths,
 	out exportbyjdkid,
@@ -558,6 +575,22 @@ testjava13(){
 			testing.saker.java.compiler.tests.jdk11.**.*Test,
 			testing.saker.java.compiler.tests.jdk12.**.*Test,
 			testing.saker.java.compiler.tests.jdk13.**.*Test,
+		],
+	)
+}
+testjava14(){
+	include(
+		test, 
+		jre: saker.java.sdk(14),
+		testclasses: [
+			testing.saker.java.compiler.tests.tasks.**.*Test,
+			testing.saker.java.compiler.tests.only.jdk14.**.*Test,
+			testing.saker.java.compiler.tests.jdk9.**.*Test,
+			testing.saker.java.compiler.tests.jdk10.**.*Test,
+			testing.saker.java.compiler.tests.jdk11.**.*Test,
+			testing.saker.java.compiler.tests.jdk12.**.*Test,
+			testing.saker.java.compiler.tests.jdk13.**.*Test,
+			testing.saker.java.compiler.tests.jdk14.**.*Test,
 		],
 	)
 }

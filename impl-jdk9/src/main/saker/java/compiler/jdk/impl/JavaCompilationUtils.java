@@ -24,6 +24,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.StandardJavaFileManager;
 
 import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.util.Trees;
 
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
@@ -43,6 +44,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -101,8 +103,27 @@ public class JavaCompilationUtils {
 		return kind == ElementKind.MODULE;
 	}
 
-	public static void addModuleElementKind(Collection<? super ElementKind> coll) {
-		coll.add(ElementKind.MODULE);
+	public static boolean isRecordElementKind(ElementKind kind) {
+		return false;
+	}
+
+	public static boolean isRecordComponentElementKind(ElementKind kind) {
+		return false;
+	}
+
+	public static ElementKind getModuleElementKind() {
+		return ElementKind.MODULE;
+	}
+
+	public static ElementKind getRecordElementKind() {
+		return null;
+	}
+
+	public static ElementKind getRecordComponentElementKind() {
+		return null;
+	}
+
+	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
 	}
 
 	//when --release option is used, only Java 9 requires the file manager to implement StandardJavaFileManager

@@ -80,6 +80,7 @@ public class NativeHeaderGeneratorProcessor implements Processor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+		//TODO handle if the element kinds cannot be represented in this JVM
 		for (Element rootelem : roundEnv.getRootElements()) {
 			ElementKind tkind = rootelem.getKind();
 			switch (tkind) {

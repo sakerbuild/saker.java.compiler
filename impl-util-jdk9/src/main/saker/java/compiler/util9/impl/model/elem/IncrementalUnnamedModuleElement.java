@@ -139,7 +139,7 @@ public class IncrementalUnnamedModuleElement implements ModifiableModuleElement,
 			return v;
 		});
 		result.setEnclosingElement(encpackage);
-		for (ClassSignature ec : c.getEnclosedClasses()) {
+		for (ClassSignature ec : c.getEnclosedTypes()) {
 			IncrementalTypeElement ecres = addParsedClass(ec);
 			ecres.setEnclosingElement(result);
 		}

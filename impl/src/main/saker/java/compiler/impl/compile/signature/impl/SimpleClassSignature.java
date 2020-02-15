@@ -26,6 +26,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 
@@ -33,7 +34,7 @@ public class SimpleClassSignature extends ClassSignatureBase {
 	private static final long serialVersionUID = 1L;
 
 	protected transient ClassSignature enclosingClass;
-	protected ElementKind kind;
+	protected byte elementKindIndex;
 
 	/**
 	 * For {@link Externalizable}.
@@ -45,7 +46,7 @@ public class SimpleClassSignature extends ClassSignatureBase {
 			List<? extends ClassMemberSignature> members, ClassSignature enclosingClass, ElementKind kind) {
 		super(modifiers, packageName, name, members);
 		this.enclosingClass = enclosingClass;
-		this.kind = kind;
+		this.elementKindIndex = KindCompatUtils.getElementKindIndex(kind);
 	}
 
 	@Override
@@ -60,21 +61,26 @@ public class SimpleClassSignature extends ClassSignatureBase {
 
 	@Override
 	public final ElementKind getKind() {
-		return kind;
+		return KindCompatUtils.getElementKind(elementKindIndex);
+	}
+
+	@Override
+	public byte getKindIndex() {
+		return elementKindIndex;
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
 		out.writeObject(enclosingClass);
-		out.writeObject(kind);
+		out.writeByte(elementKindIndex);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		enclosingClass = (ClassSignature) in.readObject();
-		kind = (ElementKind) in.readObject();
+		elementKindIndex = in.readByte();
 	}
 
 	@Override
@@ -86,7 +92,7 @@ public class SimpleClassSignature extends ClassSignatureBase {
 		if (getClass() != obj.getClass())
 			return false;
 		SimpleClassSignature other = (SimpleClassSignature) obj;
-		if (kind != other.kind)
+		if (elementKindIndex != other.elementKindIndex)
 			return false;
 		return true;
 	}

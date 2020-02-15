@@ -16,6 +16,7 @@
 package saker.java.compiler.jdk.impl;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -50,8 +51,6 @@ public class JavaCompilationUtils {
 	private JavaCompilationUtils() {
 		throw new UnsupportedOperationException();
 	}
-
-	public static final ElementKind MODULE_ELEMENT_KIND = null;
 
 	public static CompilationUnitSignatureParser createSignatureParser(Trees trees, String srcver, ParserCache cache) {
 		return new CompilationUnitSignatureParser(trees, srcver, cache);
@@ -88,6 +87,26 @@ public class JavaCompilationUtils {
 		return false;
 	}
 
-	public static void addModuleElementKind(Collection<? super ElementKind> coll) {
+	public static boolean isRecordElementKind(ElementKind kind) {
+		return false;
+	}
+
+	public static boolean isRecordComponentElementKind(ElementKind kind) {
+		return false;
+	}
+
+	public static ElementKind getModuleElementKind() {
+		return null;
+	}
+
+	public static ElementKind getRecordElementKind() {
+		return null;
+	}
+
+	public static ElementKind getRecordComponentElementKind() {
+		return null;
+	}
+
+	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
 	}
 }

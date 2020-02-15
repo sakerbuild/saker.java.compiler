@@ -24,6 +24,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
@@ -59,6 +60,11 @@ public class SimpleAnnotationInterfaceSignature extends ClassSignatureBase {
 	@Override
 	public final ElementKind getKind() {
 		return ElementKind.ANNOTATION_TYPE;
+	}
+
+	@Override
+	public final byte getKindIndex() {
+		return KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE;
 	}
 
 	@Override

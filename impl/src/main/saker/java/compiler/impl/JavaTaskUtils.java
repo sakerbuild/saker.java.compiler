@@ -42,10 +42,6 @@ import saker.build.runtime.execution.ExecutionProperty;
 import saker.build.task.dependencies.CommonTaskOutputChangeDetector;
 import saker.build.task.dependencies.TaskOutputChangeDetector;
 import saker.build.task.identifier.TaskIdentifier;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ModuleVisitor;
-import org.objectweb.asm.Opcodes;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
@@ -57,6 +53,10 @@ import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
 import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ModuleVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Opcodes;
 
 public class JavaTaskUtils {
 	public static final String EXTENSION_CLASSFILE = "class";

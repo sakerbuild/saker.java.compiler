@@ -23,10 +23,10 @@ import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.NestingKind;
 
 import saker.build.thirdparty.saker.util.function.Functionals;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
@@ -88,12 +88,17 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 				.collect(Collectors.toList());
 	}
 
+	public default Collection<? extends MethodSignature> getConstructors() {
+		return getMembers().stream().filter(m -> m.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR)
+				.map(m -> (MethodSignature) m).collect(Collectors.toList());
+	}
+
 	public default Collection<? extends FieldSignature> getFields() {
 		return getMembers().stream().filter(m -> m instanceof FieldSignature).map(m -> (FieldSignature) m)
 				.collect(Collectors.toList());
 	}
 
-	public default Collection<? extends ClassSignature> getEnclosedClasses() {
+	public default Collection<? extends ClassSignature> getEnclosedTypes() {
 		return getMembers().stream().filter(m -> m instanceof ClassSignature).map(m -> (ClassSignature) m)
 				.collect(Collectors.toList());
 	}
@@ -108,59 +113,34 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 			Map<? super String, ? super ClassSignature> types) {
 		for (ClassMemberSignature member : getMembers()) {
 			String membername = member.getSimpleName();
-			ElementKind kind = member.getKind();
-			switch (kind) {
-				case ANNOTATION_TYPE:
-				case CLASS:
-				case ENUM:
-				case INTERFACE: {
+			switch (member.getKindIndex()) {
+				case KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
+				case KindCompatUtils.ELEMENTKIND_INDEX_CLASS:
+				case KindCompatUtils.ELEMENTKIND_INDEX_ENUM:
+				case KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
 					types.put(membername, (ClassSignature) member);
 					break;
 				}
-				case CONSTRUCTOR:
-				case METHOD:
-				case STATIC_INIT:
-				case INSTANCE_INIT: {
+				case KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
+				case KindCompatUtils.ELEMENTKIND_INDEX_METHOD:
+				case KindCompatUtils.ELEMENTKIND_INDEX_STATIC_INIT:
+				case KindCompatUtils.ELEMENTKIND_INDEX_INSTANCE_INIT: {
 					methods.computeIfAbsent(membername, Functionals.arrayListComputer()).add((MethodSignature) member);
 					break;
 				}
-				case ENUM_CONSTANT:
-				case FIELD: {
+				case KindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT:
+				case KindCompatUtils.ELEMENTKIND_INDEX_FIELD: {
+					fields.put(membername, (FieldSignature) member);
+					break;
+				}
+				case KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
+					//TODO should we use a different map instead of fields?
 					fields.put(membername, (FieldSignature) member);
 					break;
 				}
 				default: {
-					throw new IllegalArgumentException("Unknown kind: " + kind);
-				}
-			}
-		}
-	}
-
-	public default void categorizeEnclosedMemberSignatures(Collection<? super FieldSignature> fields,
-			Collection<? super MethodSignature> methods, Collection<? super ClassSignature> types) {
-		for (ClassMemberSignature member : getMembers()) {
-			switch (member.getKind()) {
-				case ANNOTATION_TYPE:
-				case CLASS:
-				case ENUM:
-				case INTERFACE: {
-					types.add((ClassSignature) member);
-					break;
-				}
-				case CONSTRUCTOR:
-				case METHOD:
-				case STATIC_INIT:
-				case INSTANCE_INIT: {
-					methods.add((MethodSignature) member);
-					break;
-				}
-				case ENUM_CONSTANT:
-				case FIELD: {
-					fields.add((FieldSignature) member);
-					break;
-				}
-				default: {
-					throw new IllegalArgumentException("Unknown kind: " + member.getKind());
+					throw new IllegalArgumentException(
+							"Unknown kind: " + KindCompatUtils.getElementKindName(member.getKindIndex()));
 				}
 			}
 		}

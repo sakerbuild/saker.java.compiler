@@ -1076,10 +1076,11 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 			});
 		} else {
 			withExpressionType(identifierpath, te -> {
+				String qname = cache.string(te.getQualifiedName());
+				param.usage.addUsedType(qname);
 				if (!te.getKind().isInterface()) {
 					//no need to add constructor reference for an interface
-					param.usage.addMethodMemberReference(cache.string(te.getQualifiedName()),
-							IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME);
+					param.usage.addMethodMemberReference(qname, IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME);
 				}
 			});
 		}

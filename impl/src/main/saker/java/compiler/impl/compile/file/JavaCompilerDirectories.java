@@ -51,11 +51,6 @@ import saker.build.file.path.SakerPath;
 import saker.build.file.provider.SakerPathFiles;
 import saker.build.task.TaskContext;
 import saker.build.task.TaskExecutionUtilities;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.ModuleVisitor;
-import org.objectweb.asm.Opcodes;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.LazySupplier;
@@ -65,6 +60,11 @@ import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths.IncrementalDirectoryLocation.IncrementalDirectoryFile;
 import saker.java.compiler.impl.compile.handler.ExternalizableLocation;
 import saker.java.compiler.impl.compile.handler.invoker.IncrementalCompilationDirector;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassWriter;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ModuleVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Opcodes;
 
 public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 	private static final Pattern PATTERN_DOT = Pattern.compile("[.]+");

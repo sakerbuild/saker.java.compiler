@@ -35,6 +35,7 @@ import javax.lang.model.type.TypeMirror;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.incremental.model.DualPackageElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
@@ -163,7 +164,7 @@ public class IncrementalModuleElement extends IncrementalElement<ModuleSignature
 			return v;
 		});
 		result.setEnclosingElement(encpackage);
-		for (ClassSignature ec : c.getEnclosedClasses()) {
+		for (ClassSignature ec : c.getEnclosedTypes()) {
 			IncrementalTypeElement ecres = addParsedClass(ec);
 			ecres.setEnclosingElement(result);
 		}
@@ -198,6 +199,11 @@ public class IncrementalModuleElement extends IncrementalElement<ModuleSignature
 		return null;
 	}
 
+	@Override
+	public byte getKindIndex() {
+		return KindCompatUtils.ELEMENTKIND_INDEX_MODULE;
+	}
+	
 	@Override
 	public ElementKind getKind() {
 		return ElementKind.MODULE;

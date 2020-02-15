@@ -16,6 +16,7 @@
 package saker.java.compiler.jdk.impl;
 
 import java.util.Collection;
+import java.util.Map;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -24,6 +25,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.StandardJavaFileManager;
 
 import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.util.Trees;
 
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
@@ -81,7 +83,26 @@ public class JavaCompilationUtils {
 		return Java9LanguageUtils.isModuleElementKind(kind);
 	}
 
-	public static void addModuleElementKind(Collection<? super ElementKind> coll) {
-		Java9LanguageUtils.addModuleElementKind(coll);
+	public static boolean isRecordElementKind(ElementKind kind) {
+		return false;
+	}
+
+	public static boolean isRecordComponentElementKind(ElementKind kind) {
+		return false;
+	}
+
+	public static ElementKind getModuleElementKind() {
+		return ElementKind.MODULE;
+	}
+
+	public static ElementKind getRecordElementKind() {
+		return null;
+	}
+
+	public static ElementKind getRecordComponentElementKind() {
+		return null;
+	}
+
+	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
 	}
 }

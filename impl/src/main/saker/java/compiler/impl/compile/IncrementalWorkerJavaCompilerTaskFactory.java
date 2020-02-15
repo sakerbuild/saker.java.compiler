@@ -48,6 +48,7 @@ import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils.ThreadWorkPool;
 import saker.java.compiler.api.compile.JavaAnnotationProcessor;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
+import saker.java.compiler.api.compile.JavaCompilerWarningType;
 import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.processor.ProcessorCreationContext;
 import saker.java.compiler.api.processor.ProcessorCreator;
@@ -351,9 +352,14 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 		return true;
 	}
 
-	private static final SimpleAnnotationProcessorReferenceOption NATIVE_HEADER_GENERATOR_PROCESSOR_REFERENCE = new SimpleAnnotationProcessorReferenceOption(
-			new SimpleProcessorConfiguration(NativeHeaderGeneratorProcessorCreator.INSTANCE));
+	private static final SimpleAnnotationProcessorReferenceOption NATIVE_HEADER_GENERATOR_PROCESSOR_REFERENCE;
 	static {
+		//suppress the less processor source version warnings as if the compilation is being done with an 
+		// external process to a more recent source version, then the compilation director warns
+		NATIVE_HEADER_GENERATOR_PROCESSOR_REFERENCE = new SimpleAnnotationProcessorReferenceOption(
+				new SimpleProcessorConfiguration(NativeHeaderGeneratorProcessorCreator.INSTANCE), null,
+				ImmutableUtils.makeImmutableNavigableSet(
+						new String[] { JavaCompilerWarningType.LessProcessorSourceVersion }));
 		NATIVE_HEADER_GENERATOR_PROCESSOR_REFERENCE.setAggregating(false);
 	}
 

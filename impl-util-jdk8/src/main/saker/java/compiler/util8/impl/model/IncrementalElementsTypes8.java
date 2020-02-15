@@ -78,8 +78,11 @@ import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
+import saker.build.thirdparty.saker.util.function.LazySupplier;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compat.element.ModuleElementCompat;
+import saker.java.compiler.impl.compat.element.RecordComponentElementCompat;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonDeclaredType;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonPackageType;
@@ -221,6 +224,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	private static final String JAVA_LANG_ENUM = "java.lang.Enum";
 	private static final String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
 	private static final String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
+	private static final String JAVA_LANG_RECORD = "java.lang.Record";
 
 	public static final String CONSTRUCTOR_METHOD_NAME = "<init>";
 
@@ -263,6 +267,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			Modifier.PROTECTED);
 
 	public static final Set<Modifier> MODIFIERS_PUBLIC = ImmutableModifierSet.of(Modifier.PUBLIC);
+	public static final Set<Modifier> MODIFIERS_PUBLIC_FINAL = ImmutableModifierSet.of(Modifier.PUBLIC, Modifier.FINAL);
 	public static final Set<Modifier> MODIFIERS_PUBLIC_ABSTRACT = ImmutableModifierSet.of(Modifier.PUBLIC,
 			Modifier.ABSTRACT);
 	public static final Set<Modifier> MODIFIERS_PROTECTED = ImmutableModifierSet.of(Modifier.PROTECTED);
@@ -282,7 +287,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 	static {
 		ELEMENT_KIND_PACKAGE_MODULE = EnumSet.of(ElementKind.PACKAGE);
-		JavaCompilationUtils.addModuleElementKind(ELEMENT_KIND_PACKAGE_MODULE);
+		ElementKind moduleelemkind = JavaCompilationUtils.getModuleElementKind();
+		if (moduleelemkind != null) {
+			ELEMENT_KIND_PACKAGE_MODULE.add(moduleelemkind);
+		}
 	}
 
 	static {
@@ -378,14 +386,15 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	private final IsAssignableTypeVisitor assignableTypeVisitor = new IsAssignableTypeVisitor(this);
 	private final ContainsTypeVisitor containsTypeVisitor = new ContainsTypeVisitor(this);
 	private final ElementHiderVisitor elementHiderVisitor = new ElementHiderVisitor();
-	private final ForwardingElementVisitor forwardingElementVisitor = new ForwardingElementVisitor();
 	private final TypeVariableMirrorReplacerVisitor typeVariableMirrorReplacerVisitor = new TypeVariableMirrorReplacerVisitor();
 	private final AsMemberOfVisitor asMemberOfVisitor = new AsMemberOfVisitor();
+	private ForwardingElementVisitor forwardingElementVisitor = new ForwardingElementVisitor();
 
 	private final TypeElement javaLangObjectElement;
 	private final TypeElement javaLangEnumElement;
 	private final TypeElement javaIoSerializableElement;
 	private final TypeElement javaLangCloneableElement;
+	private final Supplier<TypeElement> javaLangRecordElementSupplier;
 
 	private volatile transient List<TypeMirror> primitiveArrayDirectSuperTypes;
 
@@ -406,6 +415,11 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		this.javaLangEnumElement = getTypeElementFromRealElements(JAVA_LANG_ENUM);
 		this.javaIoSerializableElement = getTypeElementFromRealElements(JAVA_IO_SERIALIZABLE);
 		this.javaLangCloneableElement = getTypeElementFromRealElements(JAVA_LANG_CLONEABLE);
+		this.javaLangRecordElementSupplier = LazySupplier.of(() -> getTypeElementFromRealElements(JAVA_LANG_RECORD));
+	}
+	
+	protected void setForwardingElementVisitor(ForwardingElementVisitor forwardingElementVisitor) {
+		this.forwardingElementVisitor = forwardingElementVisitor;
 	}
 
 	public void setDocCommentTrackerThreadLocal(Set<? super DocumentedElement<?>> elements) {
@@ -732,6 +746,11 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	@Override
 	public DeclaredType getJavaLangObjectTypeMirror() {
 		return (DeclaredType) javaLangObjectElement.asType();
+	}
+
+	@Override
+	public DeclaredType getJavaLangRecordTypeMirror() {
+		return (DeclaredType) javaLangRecordElementSupplier.get().asType();
 	}
 
 	@Override
@@ -3278,8 +3297,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 				e -> new ForwardingPackageElement(this, pe, new IncrementalName(pname)));
 	}
 
-	private class ForwardingElementVisitor implements DefaultedElementVisitor<ForwardingElementBase<?>, Void> {
-
+	protected class ForwardingElementVisitor implements DefaultedElementVisitor<ForwardingElementBase<?>, Void> {
 		@Override
 		public ForwardingElementBase<?> visitPackage(PackageElement e, Void p) {
 			throw new IllegalArgumentException("Package element cannot be forwarded.");
@@ -3508,8 +3526,8 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	public static boolean isClassUnrelatedToEnclosing(ClassSignature sig) {
-		return sig.getKind() != ElementKind.CLASS || sig.getNestingKind() == NestingKind.TOP_LEVEL
-				|| sig.getModifiers().contains(Modifier.STATIC);
+		return sig.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_CLASS
+				|| sig.getNestingKind() == NestingKind.TOP_LEVEL || sig.getModifiers().contains(Modifier.STATIC);
 	}
 
 	public static boolean isClassUnrelatedToEnclosing(TypeElement elem) {
@@ -3896,6 +3914,12 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	@Override
+	public IncrementalElement<?> createRecordComponentElement(IncrementalTypeElement recordtype, FieldSignature m) {
+		//TODO support in a way that delays this exception? can be useful when cross compiling
+		throw new UnsupportedOperationException("cannot create record component element");
+	}
+
+	@Override
 	public ResolutionScope createResolutionScope(Element resolutionelement) {
 		if (resolutionelement == null) {
 			return null;
@@ -3969,6 +3993,12 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			}
 
 			default: {
+				if (JavaCompilationUtils.isRecordComponentElementKind(kind)) {
+					return createTypeHeaderResolutionScope((TypeElement) resolutionelement.getEnclosingElement());
+				}
+				if (JavaCompilationUtils.isRecordElementKind(kind)) {
+					return createTypeHeaderResolutionScope((TypeElement) resolutionelement);
+				}
 				//unrecognized element type for resolution
 				return null;
 			}
@@ -4334,6 +4364,18 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	public static TypeElement findDirectlyEnclosedType(TypeElement type, String typesimplename) {
+		if (type instanceof IncrementalTypeElement) {
+			//handle this specially as getting the enclosing elements may cause stackoverflows with records
+			IncrementalTypeElement ite = (IncrementalTypeElement) type;
+			for (ClassSignature c : ite.getSignature().getEnclosedTypes()) {
+				if (!c.getSimpleName().equals(typesimplename)) {
+					continue;
+				}
+				//found a type that matches the name
+				return ite.getIncrementalElementsTypes().getLocalPackagesTypesContainer().getTypeElement(c);
+			}
+			return null;
+		}
 		for (Element elem : type.getEnclosedElements()) {
 			ElementKind kind = elem.getKind();
 			if (kind == null || !(kind.isClass() || kind.isInterface())) {
@@ -4920,6 +4962,16 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		@Override
 		public Signature visitModuleCompat(ModuleElementCompat moduleElement, Void p) {
 			return JavaModelUtils.moduleElementToSignature(moduleElement.getRealObject(), cache);
+		}
+
+		@Override
+		public Signature visitRecordComponentElementCompat(RecordComponentElementCompat e, Void p) {
+			Element realelem = e.getRealObject();
+			List<AnnotationSignature> annotationsignatures = getAnnotationSignaturesForAnnotatedConstruct(realelem,
+					cache);
+			TypeSignature variabletypesignature = createTypeSignature(realelem.asType(), cache, annotationsignatures);
+			return FieldSignatureImpl.createRecordComponent(realelem.getModifiers(), variabletypesignature,
+					realelem.getSimpleName().toString(), null);
 		}
 
 		@Override

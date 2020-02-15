@@ -29,6 +29,7 @@ import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
+import saker.java.compiler.jdk.impl.JavaCompilationUtils;
 
 public class FieldSignatureImpl extends SimpleFieldSignature {
 	private static final long serialVersionUID = 1L;
@@ -50,6 +51,9 @@ public class FieldSignatureImpl extends SimpleFieldSignature {
 			}
 			return new DocumentedSimpleEnumConstantFieldSignature(type, name, docComment);
 		}
+		if (JavaCompilationUtils.isRecordComponentElementKind(kind)) {
+			return new RecordComponentSignatureImpl(modifiers, type, name, docComment);
+		}
 		if (docComment == null && constantValue == null) {
 			return new SimpleFieldSignature(modifiers, type, name);
 		}
@@ -70,6 +74,11 @@ public class FieldSignatureImpl extends SimpleFieldSignature {
 			return new SimpleEnumConstantFieldSignature(type, name);
 		}
 		return new DocumentedSimpleEnumConstantFieldSignature(type, name, docComment);
+	}
+
+	public static FieldSignature createRecordComponent(Set<Modifier> modifiers, TypeSignature type, String name,
+			String doccomment) {
+		return new RecordComponentSignatureImpl(modifiers, type, name, doccomment);
 	}
 
 	private FieldSignatureImpl(Set<Modifier> modifiers, TypeSignature type, String name,

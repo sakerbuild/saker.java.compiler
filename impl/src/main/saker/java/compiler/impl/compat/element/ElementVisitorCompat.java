@@ -38,4 +38,8 @@ public interface ElementVisitorCompat<R, P> extends ElementVisitor<R, P> {
 	public default R visitModuleCompat(ModuleElementCompat moduleElement, P p) {
 		return visitUnknown(moduleElement.getRealObject(), p);
 	}
+
+	public default R visitRecordComponentElementCompat(RecordComponentElementCompat e, P p) {
+		return visitUnknown(e.getRealObject(), p);
+	}
 }

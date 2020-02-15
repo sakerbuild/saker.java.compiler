@@ -24,7 +24,7 @@ public class JDK13SourceFeaturesTaskTest extends JavaCompilerVariablesMetricEnvi
 	@Override
 	protected void runNestTaskTestImpl() throws Throwable {
 		assertEquals(JavaTools.getCurrentJavaMajorVersion(), 13);
-		
+
 		runScriptTask("build");
 		assertEquals(getMetric().getCompiledJavacPasses(), setOf("src"));
 	}

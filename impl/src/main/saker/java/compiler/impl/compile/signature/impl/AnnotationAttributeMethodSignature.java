@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
@@ -67,6 +68,11 @@ public class AnnotationAttributeMethodSignature implements MethodSignature, Exte
 	@Override
 	public ElementKind getKind() {
 		return ElementKind.METHOD;
+	}
+
+	@Override
+	public final byte getKindIndex() {
+		return KindCompatUtils.ELEMENTKIND_INDEX_METHOD;
 	}
 
 	@Override

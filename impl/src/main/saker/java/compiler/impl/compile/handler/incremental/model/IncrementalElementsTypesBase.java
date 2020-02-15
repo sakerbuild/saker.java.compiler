@@ -34,10 +34,13 @@ import javax.lang.model.util.Elements;
 
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalAnnotationMirror;
+import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalElement;
+import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.mirror.ForwardingDeclaredType;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalDeclaredType;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
+import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.ResolutionScope;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
@@ -45,6 +48,8 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 	public List<TypeMirror> erasure(List<? extends TypeMirror> types);
 
 	public DeclaredType getJavaLangObjectTypeMirror();
+	
+	public DeclaredType getJavaLangRecordTypeMirror();
 
 	public DeclaredType getJavaLangCloneableTypeMirror();
 
@@ -150,4 +155,6 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 	public Name getJavacTypeBinaryName(TypeElement type);
 
 	public ResolutionScope createResolutionScope(Element resolutionelement);
+
+	public IncrementalElement<?> createRecordComponentElement(IncrementalTypeElement recordtype, FieldSignature m);
 }

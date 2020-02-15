@@ -84,6 +84,10 @@ public abstract class IncrementalAnnotatedConstruct implements AnnotatedConstruc
 		this.elementTypes = elementTypes;
 	}
 
+	public IncrementalElementsTypesBase getIncrementalElementsTypes() {
+		return elemTypes;
+	}
+
 	public boolean hasDeprecatedAnnotation() {
 		//XXX can we do this better?
 		for (AnnotationSignature as : getSignatureAnnotations()) {

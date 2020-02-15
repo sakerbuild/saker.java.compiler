@@ -35,9 +35,9 @@ public class JavaModelUtils {
 	}
 
 	@SuppressWarnings({ "rawtypes" })
-	public static void addJava9KindBasedElementVisitorFunctions(
+	public static void addJavaKindBasedElementVisitorFunctions(
 			Map<ElementKind, TriFunction<ElementVisitor, ? extends Element, Object, Object>> result) {
-		Java9LanguageUtils.addJava9KindBasedElementVisitorFunctions(result);
+		Java9LanguageUtils.addJavaKindBasedElementVisitorFunctions(result);
 	}
 
 	@SuppressWarnings({ "rawtypes" })

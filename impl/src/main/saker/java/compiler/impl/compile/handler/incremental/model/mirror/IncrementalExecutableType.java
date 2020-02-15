@@ -31,6 +31,7 @@ import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.TypeVisitor;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.signature.element.MethodSignature;
@@ -91,7 +92,7 @@ public class IncrementalExecutableType extends IncrementalTypeMirror<MethodSigna
 			return thistypevariables;
 		}
 		List<? extends TypeParameterTypeSignature> params = signature.getTypeParameters();
-		if (params.isEmpty()) {
+		if (ObjectUtils.isNullOrEmpty(params)) {
 			thistypevariables = Collections.emptyList();
 		} else {
 			List<? extends TypeParameterElement> typeparams = executableElement.getTypeParameters();
