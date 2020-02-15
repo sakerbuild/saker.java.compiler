@@ -27,6 +27,7 @@ import saker.build.task.Task;
 import saker.build.task.TaskContext;
 import saker.build.task.TaskFactory;
 import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
+import saker.build.trace.BuildTrace;
 import saker.java.compiler.api.compile.JavaCompilationConfigurationOutput;
 
 public class JavaCompilationConfigLiteralTaskFactory implements TaskFactory<JavaCompilationConfigurationOutput>,
@@ -57,6 +58,7 @@ public class JavaCompilationConfigLiteralTaskFactory implements TaskFactory<Java
 
 	@Override
 	public JavaCompilationConfigurationOutput run(TaskContext taskcontext) throws Exception {
+		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
 		taskcontext.reportSelfTaskOutputChangeDetector(new EqualityTaskOutputChangeDetector(outputConfiguration));
 		return outputConfiguration;
 	}

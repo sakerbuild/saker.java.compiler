@@ -32,6 +32,7 @@ import saker.build.task.utils.annot.SakerInput;
 import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.io.IOUtils;
+import saker.build.trace.BuildTrace;
 import saker.build.util.data.DataConverterUtils;
 import saker.java.compiler.impl.classpath.bundle.BundleClassPathWorkerTaskFactory;
 import saker.java.compiler.main.TaskDocs.DocBundleClassPath;
@@ -63,6 +64,8 @@ import saker.nest.utils.FrontendTaskFactory;
 public class BundleClassPathTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
 
+	public static final String TASK_NAME = "saker.java.classpath.bundle";
+
 	@Override
 	public ParameterizableTask<? extends Object> createTask(ExecutionContext executioncontext) {
 		return new ParameterizableTask<Object>() {
@@ -71,6 +74,7 @@ public class BundleClassPathTaskFactory extends FrontendTaskFactory<Object> {
 
 			@Override
 			public Object run(TaskContext taskcontext) throws Exception {
+				BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_FRONTEND);
 				//XXX abort the execution when appropriate
 				return collectBundleKeys(taskcontext);
 			}

@@ -39,6 +39,7 @@ import saker.build.task.utils.StructuredTaskResult;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.build.trace.BuildTrace;
 import saker.build.util.property.IDEConfigurationRequiredExecutionProperty;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.java.compiler.api.option.JavaAddExports;
@@ -121,6 +122,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 	@Override
 	public Void run(TaskContext taskcontext) throws Exception {
+		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
 		if (!taskcontext.getTaskUtilities()
 				.getReportExecutionDependency(IDEConfigurationRequiredExecutionProperty.INSTANCE)) {
 			return null;

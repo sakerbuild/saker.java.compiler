@@ -41,6 +41,7 @@ import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
+import saker.build.trace.BuildTrace;
 import saker.compiler.utils.api.CompilationIdentifier;
 import saker.compiler.utils.api.CompilerUtils;
 import saker.compiler.utils.main.CompilationIdentifierTaskOption;
@@ -178,7 +179,7 @@ import testing.saker.java.compiler.TestFlag;
 public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
 
-	public static final String TASK_NAME = "saker.java.compile";
+	public static final String TASK_NAME = SakerJavaCompilerUtils.TASK_NAME_SAKER_JAVA_COMPILE;
 
 	//TODO create a test for the following:
 	//    aggregating annotation processor, taking annotation @Annot
@@ -266,6 +267,8 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 
 		@Override
 		public Object run(TaskContext taskcontext) throws Exception {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_FRONTEND);
+
 			SimpleJavaCompilerOptions options = new SimpleJavaCompilerOptions();
 			options.setIdentifier(ObjectUtils.clone(identifierOption, CompilationIdentifierTaskOption::clone));
 			options.setLanguage(languageOption);

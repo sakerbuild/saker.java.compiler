@@ -82,6 +82,7 @@ import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.io.UnsyncByteArrayInputStream;
 import saker.build.thirdparty.saker.util.io.UnsyncByteArrayOutputStream;
 import saker.build.thirdparty.saker.util.io.function.IOConsumer;
+import saker.build.trace.BuildTrace;
 import saker.java.compiler.api.classpath.ClassPathEntry;
 import saker.java.compiler.api.classpath.ClassPathReference;
 import saker.java.compiler.api.classpath.ClassPathVisitor;
@@ -95,10 +96,12 @@ import saker.java.compiler.api.compile.JavaCompilerWorkerTaskOutput;
 import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.processor.ProcessorCreator;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.CompileFileTags;
 import saker.java.compiler.impl.compile.WorkerJavaCompilerTaskFactoryBase;
 import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
 import saker.java.compiler.impl.util.ClassPathEntryFileLocationExecutionProperty;
+import saker.java.compiler.main.processor.BundleProcessorTaskFactory;
 import saker.nest.bundle.NestBundleClassLoader;
 import saker.sdk.support.api.SDKDescription;
 import saker.sdk.support.api.SDKPathReference;
@@ -141,6 +144,11 @@ public final class ProcessorCreatorTaskFactory
 
 	@Override
 	public ProcessorCreator run(TaskContext taskcontext) throws Exception {
+		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
+		String procsimplename = JavaUtil.getClassSimpleNameFromBinaryName(processorClassName);
+		BuildTrace.setDisplayInformation("java.processor:" + procsimplename,
+				BundleProcessorTaskFactory.TASK_NAME + ": " + procsimplename);
+
 		Map<String, SDKReference> sdkreferences = WorkerJavaCompilerTaskFactoryBase.toSDKReferences(taskcontext, sdks);
 		Map<LocalFileLocation, NavigableSet<SakerPath>> localdirectorycontents = new HashMap<>();
 		Set<FileLocation> staticclasspaths = new HashSet<>();

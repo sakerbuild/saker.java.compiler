@@ -26,6 +26,7 @@ import saker.build.task.TaskContext;
 import saker.build.task.utils.annot.SakerInput;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
+import saker.build.trace.BuildTrace;
 import saker.java.compiler.api.classpath.JavaClassPath;
 import saker.java.compiler.api.processor.ProcessorConfiguration;
 import saker.java.compiler.api.processor.ProcessorCreator;
@@ -123,6 +124,7 @@ public class ClassPathProcessorTaskFactory extends FrontendTaskFactory<Processor
 
 		@Override
 		public ProcessorConfiguration run(TaskContext taskcontext) throws Exception {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_FRONTEND);
 			if (ObjectUtils.isNullOrEmpty(processorClassNameOption)) {
 				taskcontext.abortExecution(new IllegalArgumentException(
 						(processorClassNameOption == null ? "null" : "Empty") + " processor class name specified."));

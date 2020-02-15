@@ -99,6 +99,15 @@ public class JavaUtil {
 		}
 	}
 
+	public static String getClassSimpleNameFromBinaryName(String binaryname) {
+		if (binaryname == null) {
+			return null;
+		}
+		int dotidx = binaryname.lastIndexOf('.');
+		int dollaridx = binaryname.lastIndexOf('$', dotidx);
+		return binaryname.substring(Math.max(dotidx, dollaridx) + 1);
+	}
+
 	public static boolean isValidProcessorInputLocationName(String name) {
 		return !INVALID_PROCESSOR_INPUT_LOCATION_NAMES.contains(name);
 	}

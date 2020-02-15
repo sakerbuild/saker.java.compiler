@@ -34,8 +34,11 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils.ThreadWorkPool;
+import saker.build.trace.BuildTrace;
 import saker.build.util.property.IDEConfigurationRequiredExecutionProperty;
 import saker.java.compiler.api.classpath.ClassPathReference;
+import saker.java.compiler.main.classpath.bundle.BundleClassPathTaskFactory;
+import saker.java.compiler.main.processor.BundleProcessorTaskFactory;
 import saker.nest.bundle.BundleIdentifier;
 import saker.nest.bundle.BundleKey;
 import saker.nest.bundle.storage.StorageViewKey;
@@ -63,6 +66,9 @@ public class BundleClassPathWorkerTaskFactory
 
 	@Override
 	public ClassPathReference run(TaskContext taskcontext) throws Exception {
+		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
+		taskcontext.setStandardOutDisplayIdentifier(BundleClassPathTaskFactory.TASK_NAME);
+
 		BundleClassPathEntry[] entries = new BundleClassPathEntry[bundles.size()];
 		try (ThreadWorkPool workpool = ThreadUtils.newDynamicWorkPool()) {
 			int i = 0;
@@ -76,13 +82,14 @@ public class BundleClassPathWorkerTaskFactory
 
 					BundleClassPathEntry entry = new BundleClassPathEntry(bk, bundlecdpropval.getContentDescriptor());
 
-					BundleClassPathWorkerTaskFactory.AttachmentIDEConfigurationBundlePathTaskFactory docattachmenttask = new AttachmentIDEConfigurationBundlePathTaskFactory(
-							bk.getStorageViewKey(), BundlePropertyUtils.documentationAttachmentExecutionProperty(bk));
+					StorageViewKey storageviewkey = bk.getStorageViewKey();
+					AttachmentIDEConfigurationBundlePathTaskFactory docattachmenttask = new AttachmentIDEConfigurationBundlePathTaskFactory(
+							storageviewkey, BundlePropertyUtils.documentationAttachmentExecutionProperty(bk));
 					taskcontext.startTask(docattachmenttask, docattachmenttask, null);
 					entry.setDocumentationAttachment(new SimpleStructuredObjectTaskResult(docattachmenttask));
 
-					BundleClassPathWorkerTaskFactory.AttachmentIDEConfigurationBundlePathTaskFactory sourceattachmenttask = new AttachmentIDEConfigurationBundlePathTaskFactory(
-							bk.getStorageViewKey(), BundlePropertyUtils.sourceAttachmentExecutionProperty(bk));
+					AttachmentIDEConfigurationBundlePathTaskFactory sourceattachmenttask = new AttachmentIDEConfigurationBundlePathTaskFactory(
+							storageviewkey, BundlePropertyUtils.sourceAttachmentExecutionProperty(bk));
 					taskcontext.startTask(sourceattachmenttask, sourceattachmenttask, null);
 					entry.setSourceAttachment(new SimpleStructuredObjectTaskResult(sourceattachmenttask));
 
@@ -160,6 +167,7 @@ public class BundleClassPathWorkerTaskFactory
 
 		@Override
 		public FileLocation run(TaskContext taskcontext) throws Exception {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
 			if (!taskcontext.getTaskUtilities()
 					.getReportExecutionDependency(IDEConfigurationRequiredExecutionProperty.INSTANCE)) {
 				return null;

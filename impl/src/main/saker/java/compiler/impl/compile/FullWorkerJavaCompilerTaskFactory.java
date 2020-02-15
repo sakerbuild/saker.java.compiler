@@ -16,6 +16,7 @@
 package saker.java.compiler.impl.compile;
 
 import java.io.Externalizable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.NavigableMap;
@@ -34,6 +35,7 @@ import saker.build.task.TaskContext;
 import saker.build.task.dependencies.FileCollectionStrategy;
 import saker.build.task.identifier.TaskIdentifier;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.trace.BuildTrace;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
 import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
@@ -53,9 +55,16 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 
 	@Override
 	public InternalJavaCompilerOutput run(TaskContext taskcontext) throws Exception {
+		return compile(taskcontext);
+	}
+
+	private InternalJavaCompilerOutput compile(TaskContext taskcontext) throws IOException, Exception {
+		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
 		JavaCompilationWorkerTaskIdentifier taskid = (JavaCompilationWorkerTaskIdentifier) taskcontext.getTaskId();
-		taskcontext.setStandardOutDisplayIdentifier(
-				SakerJavaCompilerUtils.TASK_NAME_SAKER_JAVA_COMPILE + ":" + taskid.getPassIdentifier());
+		String stdoutid = SakerJavaCompilerUtils.TASK_NAME_SAKER_JAVA_COMPILE + ":" + taskid.getPassIdentifier();
+		taskcontext.setStandardOutDisplayIdentifier(stdoutid);
+		BuildTrace.setDisplayInformation("java:" + taskid.getPassIdentifier(), stdoutid);
+
 		if (TestFlag.ENABLED) {
 			TestFlag.metric().javacCompilingPass(taskid.getPassIdentifier());
 		}

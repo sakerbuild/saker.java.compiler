@@ -24,6 +24,7 @@ import saker.build.runtime.execution.ExecutionContext;
 import saker.build.task.ParameterizableTask;
 import saker.build.task.TaskContext;
 import saker.build.task.utils.annot.SakerInput;
+import saker.build.trace.BuildTrace;
 import saker.java.compiler.impl.sdk.CurrentJavaSDKReferenceEnvironmentProperty;
 import saker.java.compiler.impl.sdk.JavaSDKReferenceEnvironmentProperty;
 import saker.java.compiler.main.TaskDocs.JavaVersionOption;
@@ -54,7 +55,7 @@ import saker.sdk.support.main.TaskDocs.DocSDKDescription;
 				+ "If no version is specified, the task will return the reference to the JRE that runs the build execution."))
 public class JavaSDKTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
-	
+
 	public static final String TASK_NAME = "saker.java.sdk";
 
 	@Override
@@ -65,6 +66,7 @@ public class JavaSDKTaskFactory extends FrontendTaskFactory<Object> {
 
 			@Override
 			public Object run(TaskContext taskcontext) throws Exception {
+				BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_CONFIGURATION);
 				if (this.versionOption == null) {
 					return EnvironmentSDKDescription.create(CurrentJavaSDKReferenceEnvironmentProperty.INSTANCE);
 				}

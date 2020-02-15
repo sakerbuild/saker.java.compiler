@@ -46,6 +46,7 @@ import saker.build.thirdparty.saker.util.TransformingNavigableMap;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils.ThreadWorkPool;
+import saker.build.trace.BuildTrace;
 import saker.java.compiler.api.compile.JavaAnnotationProcessor;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
 import saker.java.compiler.api.compile.JavaCompilerWarningType;
@@ -98,9 +99,11 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 	}
 
 	private InternalJavaCompilerOutput compile(TaskContext taskcontext) throws IOException, Exception {
+		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
 		JavaCompilationWorkerTaskIdentifier taskid = (JavaCompilationWorkerTaskIdentifier) taskcontext.getTaskId();
-		taskcontext.setStandardOutDisplayIdentifier(
-				SakerJavaCompilerUtils.TASK_NAME_SAKER_JAVA_COMPILE + ":" + taskid.getPassIdentifier());
+		String stdoutid = SakerJavaCompilerUtils.TASK_NAME_SAKER_JAVA_COMPILE + ":" + taskid.getPassIdentifier();
+		taskcontext.setStandardOutDisplayIdentifier(stdoutid);
+		BuildTrace.setDisplayInformation("java:" + taskid.getPassIdentifier(), stdoutid);
 
 		if (TestFlag.ENABLED) {
 			TestFlag.metric().javacCompilingPass(taskid.getPassIdentifier());
