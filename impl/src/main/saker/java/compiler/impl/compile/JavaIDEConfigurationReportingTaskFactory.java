@@ -122,7 +122,9 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 	@Override
 	public Void run(TaskContext taskcontext) throws Exception {
-		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+		}
 		if (!taskcontext.getTaskUtilities()
 				.getReportExecutionDependency(IDEConfigurationRequiredExecutionProperty.INSTANCE)) {
 			return null;

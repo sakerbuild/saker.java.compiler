@@ -66,7 +66,9 @@ public class BundleClassPathWorkerTaskFactory
 
 	@Override
 	public ClassPathReference run(TaskContext taskcontext) throws Exception {
-		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
+		}
 		taskcontext.setStandardOutDisplayIdentifier(BundleClassPathTaskFactory.TASK_NAME);
 
 		BundleClassPathEntry[] entries = new BundleClassPathEntry[bundles.size()];
@@ -167,7 +169,9 @@ public class BundleClassPathWorkerTaskFactory
 
 		@Override
 		public FileLocation run(TaskContext taskcontext) throws Exception {
-			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+			if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+				BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+			}
 			if (!taskcontext.getTaskUtilities()
 					.getReportExecutionDependency(IDEConfigurationRequiredExecutionProperty.INSTANCE)) {
 				return null;

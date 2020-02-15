@@ -57,10 +57,12 @@ public class BundleProcessorWorkerTaskFactory
 
 	@Override
 	public ProcessorConfiguration run(TaskContext taskcontext) throws Exception {
-		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
-		String procsimplename = JavaUtil.getClassSimpleNameFromBinaryName(processorClassName);
-		BuildTrace.setDisplayInformation("java.processor:" + procsimplename,
-				BundleProcessorTaskFactory.TASK_NAME + ": " + procsimplename);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			String procsimplename = JavaUtil.getClassSimpleNameFromBinaryName(processorClassName);
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
+			BuildTrace.setDisplayInformation("java.processor:" + procsimplename,
+					BundleProcessorTaskFactory.TASK_NAME + ": " + procsimplename);
+		}
 
 		String cname = this.processorClassName;
 		BundleIdentifier bundleid = this.bundleIdentifier;

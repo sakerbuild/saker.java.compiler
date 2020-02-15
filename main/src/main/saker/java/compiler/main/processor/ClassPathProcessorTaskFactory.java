@@ -124,7 +124,9 @@ public class ClassPathProcessorTaskFactory extends FrontendTaskFactory<Processor
 
 		@Override
 		public ProcessorConfiguration run(TaskContext taskcontext) throws Exception {
-			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_FRONTEND);
+			if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+				BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_FRONTEND);
+			}
 			if (ObjectUtils.isNullOrEmpty(processorClassNameOption)) {
 				taskcontext.abortExecution(new IllegalArgumentException(
 						(processorClassNameOption == null ? "null" : "Empty") + " processor class name specified."));

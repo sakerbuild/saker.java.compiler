@@ -66,7 +66,9 @@ public class JavaSDKTaskFactory extends FrontendTaskFactory<Object> {
 
 			@Override
 			public Object run(TaskContext taskcontext) throws Exception {
-				BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_CONFIGURATION);
+				if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+					BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_CONFIGURATION);
+				}
 				if (this.versionOption == null) {
 					return EnvironmentSDKDescription.create(CurrentJavaSDKReferenceEnvironmentProperty.INSTANCE);
 				}

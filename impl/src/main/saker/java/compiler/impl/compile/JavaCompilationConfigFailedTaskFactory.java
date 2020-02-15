@@ -46,7 +46,9 @@ public class JavaCompilationConfigFailedTaskFactory implements TaskFactory<JavaC
 
 	@Override
 	public JavaCompilationConfigurationOutput run(TaskContext taskcontext) throws Exception {
-		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+		}
 		//just get the result. it should throw a task execution failure exception right away
 		taskcontext.getTaskResult(compilationTaskId);
 		//the following assertion shouldn't be reachable, as the task result retrieval must throw

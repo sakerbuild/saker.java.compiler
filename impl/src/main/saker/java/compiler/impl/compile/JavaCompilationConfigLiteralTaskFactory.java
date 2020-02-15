@@ -58,7 +58,9 @@ public class JavaCompilationConfigLiteralTaskFactory implements TaskFactory<Java
 
 	@Override
 	public JavaCompilationConfigurationOutput run(TaskContext taskcontext) throws Exception {
-		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_META);
+		}
 		taskcontext.reportSelfTaskOutputChangeDetector(new EqualityTaskOutputChangeDetector(outputConfiguration));
 		return outputConfiguration;
 	}

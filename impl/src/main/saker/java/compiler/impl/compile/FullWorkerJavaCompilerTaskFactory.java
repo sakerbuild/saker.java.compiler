@@ -59,11 +59,14 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 	}
 
 	private InternalJavaCompilerOutput compile(TaskContext taskcontext) throws IOException, Exception {
-		BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
 		JavaCompilationWorkerTaskIdentifier taskid = (JavaCompilationWorkerTaskIdentifier) taskcontext.getTaskId();
 		String stdoutid = SakerJavaCompilerUtils.TASK_NAME_SAKER_JAVA_COMPILE + ":" + taskid.getPassIdentifier();
 		taskcontext.setStandardOutDisplayIdentifier(stdoutid);
-		BuildTrace.setDisplayInformation("java:" + taskid.getPassIdentifier(), stdoutid);
+
+		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
+			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
+			BuildTrace.setDisplayInformation("java:" + taskid.getPassIdentifier(), stdoutid);
+		}
 
 		if (TestFlag.ENABLED) {
 			TestFlag.metric().javacCompilingPass(taskid.getPassIdentifier());
