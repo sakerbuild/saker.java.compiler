@@ -386,9 +386,9 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	private final IsAssignableTypeVisitor assignableTypeVisitor = new IsAssignableTypeVisitor(this);
 	private final ContainsTypeVisitor containsTypeVisitor = new ContainsTypeVisitor(this);
 	private final ElementHiderVisitor elementHiderVisitor = new ElementHiderVisitor();
-	private final ForwardingElementVisitor forwardingElementVisitor = new ForwardingElementVisitor();
 	private final TypeVariableMirrorReplacerVisitor typeVariableMirrorReplacerVisitor = new TypeVariableMirrorReplacerVisitor();
 	private final AsMemberOfVisitor asMemberOfVisitor = new AsMemberOfVisitor();
+	private ForwardingElementVisitor forwardingElementVisitor = new ForwardingElementVisitor();
 
 	private final TypeElement javaLangObjectElement;
 	private final TypeElement javaLangEnumElement;
@@ -416,6 +416,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		this.javaIoSerializableElement = getTypeElementFromRealElements(JAVA_IO_SERIALIZABLE);
 		this.javaLangCloneableElement = getTypeElementFromRealElements(JAVA_LANG_CLONEABLE);
 		this.javaLangRecordElementSupplier = LazySupplier.of(() -> getTypeElementFromRealElements(JAVA_LANG_RECORD));
+	}
+	
+	protected void setForwardingElementVisitor(ForwardingElementVisitor forwardingElementVisitor) {
+		this.forwardingElementVisitor = forwardingElementVisitor;
 	}
 
 	public void setDocCommentTrackerThreadLocal(Set<? super DocumentedElement<?>> elements) {
@@ -3293,8 +3297,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 				e -> new ForwardingPackageElement(this, pe, new IncrementalName(pname)));
 	}
 
-	private class ForwardingElementVisitor implements DefaultedElementVisitor<ForwardingElementBase<?>, Void> {
-
+	protected class ForwardingElementVisitor implements DefaultedElementVisitor<ForwardingElementBase<?>, Void> {
 		@Override
 		public ForwardingElementBase<?> visitPackage(PackageElement e, Void p) {
 			throw new IllegalArgumentException("Package element cannot be forwarded.");

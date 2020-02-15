@@ -27,6 +27,7 @@ import javax.lang.model.type.TypeVisitor;
 import saker.build.thirdparty.saker.util.function.TriFunction;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
+import saker.java.compiler.util14.impl.Java14LanguageUtils;
 import saker.java.compiler.util9.impl.Java9LanguageUtils;
 
 public class JavaModelUtils {
@@ -35,9 +36,10 @@ public class JavaModelUtils {
 	}
 
 	@SuppressWarnings({ "rawtypes" })
-	public static void addJava9KindBasedElementVisitorFunctions(
+	public static void addJavaKindBasedElementVisitorFunctions(
 			Map<ElementKind, TriFunction<ElementVisitor, ? extends Element, Object, Object>> result) {
-		Java9LanguageUtils.addJava9KindBasedElementVisitorFunctions(result);
+		Java9LanguageUtils.addJavaKindBasedElementVisitorFunctions(result);
+		Java14LanguageUtils.addJava14KindBasedElementVisitorFunctions(result);
 	}
 
 	@SuppressWarnings({ "rawtypes" })

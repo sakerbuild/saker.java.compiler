@@ -79,7 +79,7 @@ public class KindBasedElementVisitor {
 		result.put(ElementKind.RESOURCE_VARIABLE,
 				(TriFunction<ElementVisitor, Element, Object, Object>) ElementVisitor::visitUnknown);
 
-		JavaModelUtils.addJava9KindBasedElementVisitorFunctions(result);
+		JavaModelUtils.addJavaKindBasedElementVisitorFunctions(result);
 		return result;
 	}
 
