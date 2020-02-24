@@ -13,22 +13,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package testing.saker.java.compiler.tests.only.jdk8.tasks.javac;
+package testing.saker.java.compiler.tests.tasks.javac;
 
-import saker.build.util.java.JavaTools;
 import testing.saker.SakerTest;
 import testing.saker.java.compiler.JavaCompilerVariablesMetricEnvironmentTaskTestCase;
 
 @SakerTest
-public class BootClassPathTaskTest extends JavaCompilerVariablesMetricEnvironmentTaskTestCase {
+public class JarBootClassPathTaskTest extends JavaCompilerVariablesMetricEnvironmentTaskTestCase {
 
 	@Override
 	protected void runNestTaskTestImpl() throws Throwable {
-		//this test should only run on JDK 8, as compiling the boot classpath on javac 9+ is different 
-		assertEquals(JavaTools.getCurrentJavaMajorVersion(), 8);
-
 		runScriptTask("build");
-		assertEquals(getMetric().getCompiledJavacPasses(), setOf("cp", "src"));
+		assertEquals(getMetric().getCompiledJavacPasses(), setOf("src"));
 	}
 
 }

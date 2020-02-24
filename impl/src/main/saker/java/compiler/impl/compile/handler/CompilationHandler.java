@@ -121,10 +121,11 @@ public abstract class CompilationHandler {
 			String passtargetversion, Collection<JavaAddExports> passaddexports,
 			Set<? extends SakerPath> bootclasspathfiles, Set<? extends SakerPath> classpathfiles,
 			Set<? extends SakerPath> modulepathfiles, boolean parameternames, Set<String> debuginfos,
-			boolean[] outnocmdlineclasspath) {
+			boolean[] outnocmdlineclasspath, boolean[] outnocmdlinebootclasspath) {
 		ArrayList<String> result = new ArrayList<>();
 		collectOptions(passparameters, passsourceversion, passtargetversion, passaddexports, bootclasspathfiles,
-				classpathfiles, modulepathfiles, result, parameternames, debuginfos, outnocmdlineclasspath);
+				classpathfiles, modulepathfiles, result, parameternames, debuginfos, outnocmdlineclasspath,
+				outnocmdlinebootclasspath);
 		return result;
 	}
 
@@ -132,7 +133,8 @@ public abstract class CompilationHandler {
 	private static void collectOptions(List<String> passparameters, String passsourceversion, String passtargetversion,
 			Collection<JavaAddExports> passaddexports, Set<? extends SakerPath> bootclasspathfiles,
 			Set<? extends SakerPath> classpathfiles, Set<? extends SakerPath> modulepathfiles, List<String> result,
-			boolean parameternames, Set<String> debuginfos, boolean[] outnocmdlineclasspath) {
+			boolean parameternames, Set<String> debuginfos, boolean[] outnocmdlineclasspath,
+			boolean[] outnocmdlinebootclasspath) {
 		String presentclasspathparam = null;
 		String presentmodulepathparam = null;
 		String presentbootclasspathparam = null;
@@ -275,6 +277,8 @@ public abstract class CompilationHandler {
 		} else if (presentbootclasspathparam != null) {
 			result.add("-bootclasspath");
 			result.add(presentbootclasspathparam);
+		} else {
+			outnocmdlinebootclasspath[0] = true;
 		}
 		if (!ObjectUtils.isNullOrEmpty(classpathfiles)) {
 			result.add("-classpath");

@@ -476,6 +476,7 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 
 			taskcontext.startTask(workertaskid, workerfactory, workertaskparameters);
 
+			//TODO the used java SDK might need to be pinned
 			SDKDescription usedjavasdk = presentsdks.getOrDefault(JavaSDKReference.DEFAULT_SDK_NAME,
 					SakerJavaCompilerUtils.getDefaultJavaSDK());
 			Object result = new JavaCompilerTaskFrontendOutputImpl(workertaskid, usedjavasdk);

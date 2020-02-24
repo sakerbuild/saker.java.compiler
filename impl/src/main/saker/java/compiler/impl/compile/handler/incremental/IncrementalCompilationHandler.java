@@ -958,10 +958,11 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 	}
 
 	private void createOptions(Set<SakerPath> commandlineclasspaths, Set<SakerPath> commandlinemodulepaths,
-			boolean[] nocmdlineclasspath, Set<? extends SakerPath> commandlinebootclasspaths) throws IOException {
+			boolean[] nocmdlineclasspath, Set<? extends SakerPath> commandlinebootclasspaths,
+			boolean[] nocmdlinebootclasspath) throws IOException {
 		this.options = createOptions(passParameters, sourceVersionName, targetVersionName, passAddExports,
 				commandlinebootclasspaths, commandlineclasspaths, commandlinemodulepaths, parameterNames, debugInfos,
-				nocmdlineclasspath);
+				nocmdlineclasspath, nocmdlinebootclasspath);
 		//options never contain any -proc options, as it is ignored by the createOptions method
 		this.options.add("-proc:none");
 	}
@@ -1601,8 +1602,10 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 		collectModulePaths(passmodulepaths, commandlinemodulepaths);
 
 		boolean[] nocmdlineclasspath = { false };
-		boolean[] allowcmdlinebootclasspath = { bootClassPath == null };
-		createOptions(commandlineclasspaths, commandlinemodulepaths, nocmdlineclasspath, commandlinebootclasspaths);
+		boolean[] nocmdlinebootclasspath = { false };
+		createOptions(commandlineclasspaths, commandlinemodulepaths, nocmdlineclasspath, commandlinebootclasspaths,
+				nocmdlinebootclasspath);
+		boolean allowcmdlinebootclasspath = bootClassPath == null || !nocmdlinebootclasspath[0];
 
 		String compilejdkversion = compilationJavaSDKReference.getProperty(JavaSDKReference.PROPERTY_JAVA_VERSION);
 		System.out.println("Performing incremental Java compilation. (JDK version: " + compilejdkversion + ")");
@@ -1691,7 +1694,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 								invcontext, invoker);
 						resultCompilationInfo = invokeCompilation(director, firstroundsourcefiles, removedsourcefiles,
 								deltatriggeredprocessors, classpathabichanges, processordetailschanged,
-								invoker.getJavaVersionProperty(), nocmdlineclasspath[0], allowcmdlinebootclasspath[0]);
+								invoker.getJavaVersionProperty(), nocmdlineclasspath[0], allowcmdlinebootclasspath);
 						return;
 					}
 				}
@@ -1703,7 +1706,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 					director.setParserCache(invoker.getParserCache());
 					resultCompilationInfo = invokeCompilation(director, firstroundsourcefiles, removedsourcefiles,
 							deltatriggeredprocessors, classpathabichanges, processordetailschanged,
-							invoker.getJavaVersionProperty(), nocmdlineclasspath[0], allowcmdlinebootclasspath[0]);
+							invoker.getJavaVersionProperty(), nocmdlineclasspath[0], allowcmdlinebootclasspath);
 					return;
 				}
 			} catch (JavaCompilationFailedException e) {
@@ -1712,7 +1715,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 				throw new JavaCompilationFailedException("Unexpected Javac internal API error. "
 						+ "You can turn off internal API usage and incremental compilation by setting BuildIncremental to false on your Java compiler pass. ("
 						+ e + ")", e);
-			} catch (Exception e) {
+			} catch (Exception | com.sun.tools.javac.util.FatalError e) {
 				throw new JavaCompilationFailedException("Unexpected error.", e);
 			}
 		} finally {

@@ -1,0 +1,6 @@
+build {
+	$mainpass = saker.java.compile(
+		SourceDirectories: src,
+		BootClassPath: bootcp.jar,
+	)
+}

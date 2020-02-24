@@ -265,10 +265,13 @@ public class FullCompilationHandler extends CompilationHandler {
 		}
 
 		boolean[] nocmdlineclasspath = { false };
-		boolean[] allowcmdlinebootclasspath = { bootClassPath == null };
+		boolean[] nocmdlinebootclasspath = { false };
 
 		Collection<String> options = createOptions(parameters, sourceVersionName, targetVersionName, addExports,
-				bootclasspathpaths, classpathpaths, modulepathpaths, parameterNames, debugInfos, nocmdlineclasspath);
+				bootclasspathpaths, classpathpaths, modulepathpaths, parameterNames, debugInfos, nocmdlineclasspath,
+				nocmdlinebootclasspath);
+		boolean allowcmdlinebootclasspath = bootClassPath == null || !nocmdlinebootclasspath[0];
+
 		if (!ObjectUtils.isNullOrEmpty(this.annotationProcessorOptions)) {
 			StringBuilder sb = new StringBuilder();
 			for (Entry<String, String> entry : this.annotationProcessorOptions.entrySet()) {
@@ -301,52 +304,55 @@ public class FullCompilationHandler extends CompilationHandler {
 			processors = Collections.emptyList();
 		}
 
-		if (shouldExternallyCompile()) {
-			//externally compile
-			if (TestFlag.ENABLED) {
-				TestFlag.metric().externallyCompiling();
-			}
-			SakerPath javaexe = compilationJavaSDKReference.getPath(JavaSDKReference.PATH_JAVA_EXE);
-			if (javaexe == null) {
-				throw new NullPointerException("Java SDK doesn't contain java.exe path. (" + compilationJavaSDKReference
-						+ " : " + JavaSDKReference.PATH_JAVA_EXE + ")");
-			}
-			SakerEnvironment env = taskContext.getExecutionContext().getEnvironment();
-			RemoteJavaCompilerCacheKey key = new RemoteJavaCompilerCacheKey(env, javaexe.toString(),
-					env.getEnvironmentJarPath());
-			RemoteCompiler remotecompiler;
-			try {
-				remotecompiler = env.getCachedData(key);
-			} catch (Exception e) {
-				throw new JavaCompilationFailedException("Failed to use JDK: " + compilationJavaSDKReference, e);
-			}
-			RemoteJavaRMIProcess proc = remotecompiler.getRmiProcess();
-
-			try (RMIVariables vars = proc.getConnection().newVariables();) {
-				FullCompilationInvoker invoker;
+		try {
+			if (shouldExternallyCompile()) {
+				//externally compile
+				if (TestFlag.ENABLED) {
+					TestFlag.metric().externallyCompiling();
+				}
+				SakerPath javaexe = compilationJavaSDKReference.getPath(JavaSDKReference.PATH_JAVA_EXE);
+				if (javaexe == null) {
+					throw new NullPointerException("Java SDK doesn't contain java.exe path. ("
+							+ compilationJavaSDKReference + " : " + JavaSDKReference.PATH_JAVA_EXE + ")");
+				}
+				SakerEnvironment env = taskContext.getExecutionContext().getEnvironment();
+				RemoteJavaCompilerCacheKey key = new RemoteJavaCompilerCacheKey(env, javaexe.toString(),
+						env.getEnvironmentJarPath());
+				RemoteCompiler remotecompiler;
 				try {
-					invoker = (FullCompilationInvoker) vars
-							.newRemoteInstance(CONSTRUCTOR_FULL_COMPILATION_INVOKER_IMPL);
-				} catch (InvocationTargetException e) {
+					remotecompiler = env.getCachedData(key);
+				} catch (Exception e) {
+					throw new JavaCompilationFailedException("Failed to use JDK: " + compilationJavaSDKReference, e);
+				}
+				RemoteJavaRMIProcess proc = remotecompiler.getRmiProcess();
+
+				try (RMIVariables vars = proc.getConnection().newVariables()) {
+					FullCompilationInvoker invoker;
+					try {
+						invoker = (FullCompilationInvoker) vars
+								.newRemoteInstance(CONSTRUCTOR_FULL_COMPILATION_INVOKER_IMPL);
+					} catch (InvocationTargetException e) {
+						throw new JavaCompilationFailedException(
+								"Failed to create compilation invoker in remote process at JDK: "
+										+ compilationJavaSDKReference,
+								e);
+					}
+					invokeCompilation(invoker, options, processors, nocmdlineclasspath[0], allowcmdlinebootclasspath);
+					return;
+				} catch (RMIRuntimeException e) {
 					throw new JavaCompilationFailedException(
-							"Failed to create compilation invoker in remote process at JDK: "
+							"Failed to communicate with compilation invoker in remote process at JDK: "
 									+ compilationJavaSDKReference,
 							e);
 				}
-				invokeCompilation(invoker, options, processors, nocmdlineclasspath[0], allowcmdlinebootclasspath[0]);
-				return;
-			} catch (RMIRuntimeException e) {
-				throw new JavaCompilationFailedException(
-						"Failed to communicate with compilation invoker in remote process at JDK: "
-								+ compilationJavaSDKReference,
-						e);
-			} catch (JavaCompilationFailedException e) {
-				throw e;
 			}
+			invokeCompilation(new FullCompilationInvokerImpl(), options, processors, nocmdlineclasspath[0],
+					allowcmdlinebootclasspath);
+		} catch (JavaCompilationFailedException e) {
+			throw e;
+		} catch (Exception | com.sun.tools.javac.util.FatalError e) {
+			throw new JavaCompilationFailedException("Unexpected error.", e);
 		}
-		invokeCompilation(new FullCompilationInvokerImpl(), options, processors, nocmdlineclasspath[0],
-				allowcmdlinebootclasspath[0]);
-
 	}
 
 	private void addFileMirrorPathToPaths(String pathdisplayname, FileLocation cpfile, Set<SakerPath> paths,
