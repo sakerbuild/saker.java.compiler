@@ -21,14 +21,16 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFileVisitor;
 import saker.java.compiler.api.classpath.ClassPathVisitor;
 import saker.java.compiler.api.classpath.FileClassPath;
 import saker.java.compiler.api.modulepath.FileModulePath;
 import saker.java.compiler.api.modulepath.ModulePathVisitor;
 import saker.std.api.file.location.FileLocation;
 
-public class FileLocationClassAndModulePathReferenceOption
-		implements ClassPathReferenceOption, FileClassPath, ModulePathReferenceOption, FileModulePath, Externalizable {
+public class FileLocationClassAndModulePathReferenceOption implements ClassPathReferenceOption, FileClassPath,
+		ModulePathReferenceOption, FileModulePath, Externalizable, ClassPathEntryInputFile {
 	private static final long serialVersionUID = 1L;
 
 	private FileLocation fileLocation;
@@ -51,6 +53,11 @@ public class FileLocationClassAndModulePathReferenceOption
 
 	@Override
 	public void accept(ModulePathVisitor visitor) {
+		visitor.visit(this);
+	}
+
+	@Override
+	public void accept(ClassPathEntryInputFileVisitor visitor) throws NullPointerException {
 		visitor.visit(this);
 	}
 

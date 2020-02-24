@@ -39,4 +39,4 @@ public interface ProcessorCreationContext {
 	 * @return The environment.
 	 */
 	public SakerEnvironment getEnvironment();
-	}
+}

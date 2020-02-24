@@ -46,6 +46,8 @@ import saker.build.thirdparty.saker.rmi.exception.RMIRuntimeException;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.ReflectUtils;
 import saker.java.compiler.api.classpath.ClassPathEntry;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFileVisitor;
 import saker.java.compiler.api.classpath.ClassPathReference;
 import saker.java.compiler.api.classpath.ClassPathVisitor;
 import saker.java.compiler.api.classpath.CompilationClassPath;
@@ -470,39 +472,55 @@ public class FullCompilationHandler extends CompilationHandler {
 						SakerLog.warning().println("Class path entry is null for: " + classpath);
 						continue;
 					}
-					FileLocation filelocation = entry.getFileLocation();
-					if (filelocation == null) {
-						SakerLog.warning().println("No class path file location for: " + entry);
+					ClassPathEntryInputFile inputfile = entry.getInputFile();
+					if (inputfile == null) {
+						SakerLog.warning().println("No class path input for: " + entry);
 						continue;
 					}
-					if (result.containsKey(filelocation)) {
-						continue;
-					}
-					Collection<? extends JavaSourceDirectory> sourcedirs = entry.getSourceDirectories();
-					Collection<JavaSourceDirectory> sourcediroptions;
-					if (ObjectUtils.isNullOrEmpty(sourcedirs)) {
-						sourcediroptions = null;
-					} else {
-						sourcediroptions = new LinkedHashSet<>();
-						for (JavaSourceDirectory sdir : sourcedirs) {
-							sourcediroptions
-									.add(new SimpleJavaSourceDirectoryOption(sdir.getDirectory(), sdir.getFiles()));
-						}
-					}
-					ClassPathIDEConfigurationEntry value = new ClassPathIDEConfigurationEntry(filelocation,
-							sourcediroptions, entry.getSourceAttachment(), entry.getDocumentationAttachment());
-					result.put(filelocation, value);
+					ClassPathVisitor cpvisitor = this;
+					inputfile.accept(new ClassPathEntryInputFileVisitor() {
+						@Override
+						public void visit(FileClassPath inputfilecp) {
+							FileLocation filelocation = inputfilecp.getFileLocation();
+							if (filelocation == null) {
+								SakerLog.warning().println("No class path file location for: " + entry);
+								return;
+							}
+							if (result.containsKey(filelocation)) {
+								return;
+							}
+							Collection<? extends JavaSourceDirectory> sourcedirs = entry.getSourceDirectories();
+							Collection<JavaSourceDirectory> sourcediroptions;
+							if (ObjectUtils.isNullOrEmpty(sourcedirs)) {
+								sourcediroptions = null;
+							} else {
+								sourcediroptions = new LinkedHashSet<>();
+								for (JavaSourceDirectory sdir : sourcedirs) {
+									sourcediroptions.add(
+											new SimpleJavaSourceDirectoryOption(sdir.getDirectory(), sdir.getFiles()));
+								}
+							}
+							ClassPathIDEConfigurationEntry value = new ClassPathIDEConfigurationEntry(filelocation,
+									sourcediroptions, entry.getSourceAttachment(), entry.getDocumentationAttachment());
+							result.put(filelocation, value);
 
-					Collection<? extends ClassPathReference> additionalclasspaths = entry
-							.getAdditionalClassPathReferences();
-					if (!ObjectUtils.isNullOrEmpty(additionalclasspaths)) {
-						JavaClassPathBuilder additionalcpbuilder = JavaClassPathBuilder.newBuilder();
-						for (ClassPathReference additionalcp : additionalclasspaths) {
-							additionalcpbuilder.addClassPath(additionalcp);
+							Collection<? extends ClassPathReference> additionalclasspaths = entry
+									.getAdditionalClassPathReferences();
+							if (!ObjectUtils.isNullOrEmpty(additionalclasspaths)) {
+								JavaClassPathBuilder additionalcpbuilder = JavaClassPathBuilder.newBuilder();
+								for (ClassPathReference additionalcp : additionalclasspaths) {
+									additionalcpbuilder.addClassPath(additionalcp);
+								}
+								JavaClassPath additionalcp = additionalcpbuilder.build();
+								additionalcp.accept(cpvisitor);
+							}
 						}
-						JavaClassPath additionalcp = additionalcpbuilder.build();
-						additionalcp.accept(this);
-					}
+
+						@Override
+						public void visit(SDKClassPath classpath) {
+							cpvisitor.visit(classpath);
+						}
+					});
 				}
 			}
 

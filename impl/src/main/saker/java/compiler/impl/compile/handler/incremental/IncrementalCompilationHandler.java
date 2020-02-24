@@ -67,6 +67,8 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.java.compiler.api.classpath.ClassPathEntry;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFileVisitor;
 import saker.java.compiler.api.classpath.ClassPathReference;
 import saker.java.compiler.api.classpath.ClassPathVisitor;
 import saker.java.compiler.api.classpath.CompilationClassPath;
@@ -1265,46 +1267,58 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 						SakerLog.warning().println("Class path entry is null for: " + classpath);
 						continue;
 					}
-					FileLocation filelocation = entry.getFileLocation();
-					if (filelocation == null) {
-						SakerLog.warning().println("No class path file location for: " + entry);
-						continue;
-					}
-					if (!handledLocations.add(filelocation)) {
-						continue;
-					}
-					Object abiversionkey = entry.getAbiVersionKey();
-					if (abiversionkey == null) {
-						//fall back to the implementation version key if the abi version key is not available
-						abiversionkey = entry.getImplementationVersionKey();
-					}
-					handleFileLocationClassPath(filelocation, abiversionkey);
+					ClassPathEntryInputFile inputfile = entry.getInputFile();
+					ClassPathVisitor cpvisitor = this;
+					inputfile.accept(new ClassPathEntryInputFileVisitor() {
+						@Override
+						public void visit(FileClassPath inputfilecp) {
+							FileLocation filelocation = inputfilecp.getFileLocation();
+							if (filelocation == null) {
+								SakerLog.warning().println("No class path file location for: " + entry);
+								return;
+							}
+							if (!handledLocations.add(filelocation)) {
+								return;
+							}
+							Object abiversionkey = entry.getAbiVersionKey();
+							if (abiversionkey == null) {
+								//fall back to the implementation version key if the abi version key is not available
+								abiversionkey = entry.getImplementationVersionKey();
+							}
+							handleFileLocationClassPath(filelocation, abiversionkey);
 
-					Collection<? extends JavaSourceDirectory> sourcedirs = entry.getSourceDirectories();
-					Collection<JavaSourceDirectory> sourcediroptions;
-					if (ObjectUtils.isNullOrEmpty(sourcedirs)) {
-						sourcediroptions = null;
-					} else {
-						sourcediroptions = new LinkedHashSet<>();
-						for (JavaSourceDirectory sdir : sourcedirs) {
-							sourcediroptions
-									.add(new SimpleJavaSourceDirectoryOption(sdir.getDirectory(), sdir.getFiles()));
-						}
-					}
-					ClassPathIDEConfigurationEntry value = new ClassPathIDEConfigurationEntry(filelocation,
-							sourcediroptions, entry.getSourceAttachment(), entry.getDocumentationAttachment());
-					ideconfigentries.add(value);
+							Collection<? extends JavaSourceDirectory> sourcedirs = entry.getSourceDirectories();
+							Collection<JavaSourceDirectory> sourcediroptions;
+							if (ObjectUtils.isNullOrEmpty(sourcedirs)) {
+								sourcediroptions = null;
+							} else {
+								sourcediroptions = new LinkedHashSet<>();
+								for (JavaSourceDirectory sdir : sourcedirs) {
+									sourcediroptions.add(
+											new SimpleJavaSourceDirectoryOption(sdir.getDirectory(), sdir.getFiles()));
+								}
+							}
+							ClassPathIDEConfigurationEntry value = new ClassPathIDEConfigurationEntry(filelocation,
+									sourcediroptions, entry.getSourceAttachment(), entry.getDocumentationAttachment());
+							ideconfigentries.add(value);
 
-					Collection<? extends ClassPathReference> additionalclasspaths = entry
-							.getAdditionalClassPathReferences();
-					if (!ObjectUtils.isNullOrEmpty(additionalclasspaths)) {
-						JavaClassPathBuilder additionalcpbuilder = JavaClassPathBuilder.newBuilder();
-						for (ClassPathReference additionalcp : additionalclasspaths) {
-							additionalcpbuilder.addClassPath(additionalcp);
+							Collection<? extends ClassPathReference> additionalclasspaths = entry
+									.getAdditionalClassPathReferences();
+							if (!ObjectUtils.isNullOrEmpty(additionalclasspaths)) {
+								JavaClassPathBuilder additionalcpbuilder = JavaClassPathBuilder.newBuilder();
+								for (ClassPathReference additionalcp : additionalclasspaths) {
+									additionalcpbuilder.addClassPath(additionalcp);
+								}
+								JavaClassPath additionalcp = additionalcpbuilder.build();
+								additionalcp.accept(cpvisitor);
+							}
 						}
-						JavaClassPath additionalcp = additionalcpbuilder.build();
-						additionalcp.accept(this);
-					}
+
+						@Override
+						public void visit(SDKClassPath classpath) {
+							cpvisitor.visit(classpath);
+						}
+					});
 				}
 			}
 

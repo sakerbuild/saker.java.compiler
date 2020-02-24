@@ -23,6 +23,9 @@ import java.io.ObjectOutput;
 import saker.build.runtime.execution.ExecutionContext;
 import saker.build.runtime.execution.ExecutionProperty;
 import saker.java.compiler.api.classpath.ClassPathEntry;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFileVisitor;
+import saker.java.compiler.api.classpath.FileClassPath;
 import saker.std.api.file.location.FileLocation;
 
 public class ClassPathEntryFileLocationExecutionProperty implements ExecutionProperty<FileLocation>, Externalizable {
@@ -42,7 +45,18 @@ public class ClassPathEntryFileLocationExecutionProperty implements ExecutionPro
 
 	@Override
 	public FileLocation getCurrentValue(ExecutionContext executioncontext) throws Exception {
-		return entry.getFileLocation();
+		ClassPathEntryInputFile infile = entry.getInputFile();
+		if (infile == null) {
+			return null;
+		}
+		FileLocation[] result = { null };
+		infile.accept(new ClassPathEntryInputFileVisitor() {
+			@Override
+			public void visit(FileClassPath classpath) {
+				result[0] = classpath.getFileLocation();
+			}
+		});
+		return result[0];
 	}
 
 	@Override

@@ -44,8 +44,15 @@ public interface ClassPathEntry {
 	 * The file may be a JAR, or class directory. The interface doesn't specify a restriction on its nature.
 	 * 
 	 * @return The location of the classpath file.
+	 * @deprecated Use {@link #getInputFile()} instead. Implement {@link ClassPathEntryInputFileVisitor} to perform an
+	 *                 appropriate action based on the classpath file type.
 	 */
+	@Deprecated
 	public FileLocation getFileLocation();
+
+	public default ClassPathEntryInputFile getInputFile() {
+		return ClassPathEntryInputFile.create(getFileLocation());
+	}
 
 	/**
 	 * Gets the additional classpaths which are transitively included by this entry.

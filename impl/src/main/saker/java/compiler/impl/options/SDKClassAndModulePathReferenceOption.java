@@ -21,14 +21,16 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Objects;
 
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFileVisitor;
 import saker.java.compiler.api.classpath.ClassPathVisitor;
 import saker.java.compiler.api.classpath.SDKClassPath;
 import saker.java.compiler.api.modulepath.ModulePathVisitor;
 import saker.java.compiler.api.modulepath.SDKModulePath;
 import saker.sdk.support.api.SDKPathReference;
 
-public class SDKClassAndModulePathReferenceOption
-		implements ClassPathReferenceOption, SDKClassPath, ModulePathReferenceOption, SDKModulePath, Externalizable {
+public class SDKClassAndModulePathReferenceOption implements ClassPathReferenceOption, SDKClassPath,
+		ModulePathReferenceOption, SDKModulePath, Externalizable, ClassPathEntryInputFile {
 	private static final long serialVersionUID = 1L;
 
 	private SDKPathReference pathReference;
@@ -51,6 +53,11 @@ public class SDKClassAndModulePathReferenceOption
 
 	@Override
 	public void accept(ModulePathVisitor visitor) {
+		visitor.visit(this);
+	}
+
+	@Override
+	public void accept(ClassPathEntryInputFileVisitor visitor) throws NullPointerException {
 		visitor.visit(this);
 	}
 
