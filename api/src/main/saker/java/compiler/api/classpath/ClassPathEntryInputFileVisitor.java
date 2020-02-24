@@ -15,13 +15,22 @@
  */
 package saker.java.compiler.api.classpath;
 
+/**
+ * Visitor interface for {@link ClassPathEntryInputFile}.
+ * <p>
+ * The visitor can be used to visit various classpath input file configurations.
+ * <p>
+ * Clients can implement this interface.
+ * 
+ * @see ClassPathEntry
+ */
 public interface ClassPathEntryInputFileVisitor {
 
 	/**
 	 * Visits a file classpath.
 	 * 
 	 * @param classpath
-	 *            The classpath entry.
+	 *            The classpath.
 	 */
 	public default void visit(FileClassPath classpath) {
 		throw new UnsupportedOperationException("Unsupported class path: " + classpath);
@@ -31,7 +40,7 @@ public interface ClassPathEntryInputFileVisitor {
 	 * Visits an SDK classpath.
 	 * 
 	 * @param classpath
-	 *            The classpath entry.
+	 *            The classpath.
 	 */
 	public default void visit(SDKClassPath classpath) {
 		throw new UnsupportedOperationException("Unsupported class path: " + classpath);

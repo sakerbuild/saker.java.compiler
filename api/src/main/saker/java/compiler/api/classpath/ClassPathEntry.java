@@ -50,6 +50,18 @@ public interface ClassPathEntry {
 	@Deprecated
 	public FileLocation getFileLocation();
 
+	/**
+	 * Gets the input file of this classpath entry.
+	 * <p>
+	 * The input file contains the necessary class files of this classpath entry. The entry may refer to class
+	 * directories, or archives, in a configuration dependent way.
+	 * <p>
+	 * Implement a custom {@link ClassPathEntryInputFileVisitor} to examine the returned input file.
+	 * 
+	 * @return The input file of the classpath entry.
+	 * @see ClassPathEntryInputFile#accept(ClassPathEntryInputFileVisitor)
+	 * @since 0.8.4
+	 */
 	public default ClassPathEntryInputFile getInputFile() {
 		return ClassPathEntryInputFile.create(getFileLocation());
 	}
