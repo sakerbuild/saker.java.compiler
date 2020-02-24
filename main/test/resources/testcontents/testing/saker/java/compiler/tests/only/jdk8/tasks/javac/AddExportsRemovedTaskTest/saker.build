@@ -1,0 +1,11 @@
+build {
+	$mainpass = saker.java.compile(
+		SourceDirectories: src,
+		AddExports: {
+			Module: jdk.compiler,
+			Package:[
+				com.sun.tools.javac.main,
+			]
+		},
+	)
+}

@@ -18,6 +18,7 @@ package saker.java.compiler.impl.compile.handler.invoker;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -276,6 +277,21 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 
 		return handleParsedFileSignature(cunittree, parsedsignature, filepath, unit, sourcePositions,
 				parsedsignature.getImportScope());
+	}
+
+	protected static void removeAddExportsFromOptionsList(List<String> options) {
+		for (Iterator<String> it = options.iterator(); it.hasNext();) {
+			String o = it.next();
+			if ("--add-exports".equals(o)) {
+				it.remove();
+				if (it.hasNext()) {
+					it.next();
+					it.remove();
+				} else {
+					break;
+				}
+			}
+		}
 	}
 
 }
