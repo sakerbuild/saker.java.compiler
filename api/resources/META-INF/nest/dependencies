@@ -4,4 +4,4 @@ saker.java.compiler-impl
 saker.standard-api
 	classpath: [0)
 saker.sdk.support-api
-	classpath: [0)
+	classpath: [0.8.2)

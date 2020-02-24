@@ -41,7 +41,10 @@ import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.handler.full.FullCompilationHandler;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
+import saker.sdk.support.api.IndeterminateSDKDescription;
+import saker.sdk.support.api.SDKDescription;
 import saker.sdk.support.api.SDKReference;
+import saker.sdk.support.api.exc.SDKNotFoundException;
 import testing.saker.java.compiler.TestFlag;
 
 public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFactoryBase {
@@ -100,7 +103,12 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 		NavigableMap<String, SDKReference> sdkrefs = toSDKReferences(taskcontext, sdks);
 		SDKReference javasdkreference = sdkrefs.get(JavaSDKReference.DEFAULT_SDK_NAME);
 		if (javasdkreference == null) {
-			throw new IllegalArgumentException("No SDK found with name: " + JavaSDKReference.DEFAULT_SDK_NAME);
+			throw new SDKNotFoundException("No SDK found with name: " + JavaSDKReference.DEFAULT_SDK_NAME);
+		}
+
+		SDKDescription javasdkdesc = sdks.get(JavaSDKReference.DEFAULT_SDK_NAME);
+		if (javasdkdesc instanceof IndeterminateSDKDescription) {
+			javasdkdesc = ((IndeterminateSDKDescription) javasdkdesc).pinSDKDescription(javasdkreference);
 		}
 
 		String modulename;
@@ -174,8 +182,7 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 
 		SimpleJavaCompilationOutputConfiguration outputconfig = new SimpleJavaCompilationOutputConfiguration(taskid,
 				outputClassDirectory.getSakerPath(), outputNativeHeaderDirectory.getSakerPath(),
-				outputResourceDirectory.getSakerPath(), outputSourceDirectory.getSakerPath(), modulename,
-				sdks.get(JavaSDKReference.DEFAULT_SDK_NAME));
+				outputResourceDirectory.getSakerPath(), outputSourceDirectory.getSakerPath(), modulename, javasdkdesc);
 		taskcontext.startTask(JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(taskid),
 				new JavaCompilationConfigLiteralTaskFactory(outputconfig), null);
 

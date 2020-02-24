@@ -65,7 +65,10 @@ import saker.java.compiler.impl.compile.handler.invoker.ProcessorDetails;
 import saker.java.compiler.impl.options.SimpleAnnotationProcessorReferenceOption;
 import saker.java.compiler.impl.options.SimpleProcessorConfiguration;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
+import saker.sdk.support.api.IndeterminateSDKDescription;
+import saker.sdk.support.api.SDKDescription;
 import saker.sdk.support.api.SDKReference;
+import saker.sdk.support.api.exc.SDKNotFoundException;
 import testing.saker.java.compiler.TestFlag;
 
 public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFactoryBase {
@@ -134,8 +137,14 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 		NavigableMap<String, SDKReference> sdkrefs = toSDKReferences(taskcontext, sdks);
 		SDKReference javasdkreference = sdkrefs.get(JavaSDKReference.DEFAULT_SDK_NAME);
 		if (javasdkreference == null) {
-			throw new IllegalArgumentException("No SDK found with name: " + JavaSDKReference.DEFAULT_SDK_NAME);
+			throw new SDKNotFoundException("No SDK found with name: " + JavaSDKReference.DEFAULT_SDK_NAME);
 		}
+
+		SDKDescription javasdkdesc = sdks.get(JavaSDKReference.DEFAULT_SDK_NAME);
+		if (javasdkdesc instanceof IndeterminateSDKDescription) {
+			javasdkdesc = ((IndeterminateSDKDescription) javasdkdesc).pinSDKDescription(javasdkreference);
+		}
+
 		String modulename;
 		try {
 			if (sourceDirectories.isEmpty()) {
@@ -215,8 +224,7 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 
 		SimpleJavaCompilationOutputConfiguration outputconfig = new SimpleJavaCompilationOutputConfiguration(taskid,
 				outputClassDirectory.getSakerPath(), outputNativeHeaderDirectory.getSakerPath(),
-				outputResourceDirectory.getSakerPath(), outputSourceDirectory.getSakerPath(), modulename,
-				sdks.get(JavaSDKReference.DEFAULT_SDK_NAME));
+				outputResourceDirectory.getSakerPath(), outputSourceDirectory.getSakerPath(), modulename, javasdkdesc);
 
 		InternalJavaCompilerOutputImpl output = new InternalJavaCompilerOutputImpl(sourceDirectories, classPath,
 				modulePath, abiversionkey, implementationversionkey, outputconfig);

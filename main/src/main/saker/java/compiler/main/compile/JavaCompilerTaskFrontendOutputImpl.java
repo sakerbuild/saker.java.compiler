@@ -19,11 +19,15 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
+import saker.build.task.TaskResultDependencyHandle;
 import saker.build.task.TaskResultResolver;
+import saker.build.task.dependencies.TaskOutputChangeDetector;
 import saker.build.task.identifier.TaskIdentifier;
 import saker.build.task.utils.SimpleStructuredObjectTaskResult;
 import saker.build.task.utils.StructuredTaskResult;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.api.compile.JavaCompilationConfigurationOutput;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
 import saker.java.compiler.api.compile.JavaCompilerTaskFrontendOutput;
@@ -55,37 +59,43 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 
 	@Override
 	public SDKDescription getJavaSDK() {
+		//TODO this method should return structured task result as well and the pinned value of the SDK description
 		return javaSDK;
 	}
 
 	@Override
 	public StructuredTaskResult getClassDirectory() {
-		return new ClassDirectoryConfigResolverTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()));
+		return new ConfigFieldResolverStructuredTaskResult(
+				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+				new ClassDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getHeaderDirectory() {
-		return new HeaderDirectoryConfigResolverTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()));
+		return new ConfigFieldResolverStructuredTaskResult(
+				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+				new HeaderDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getResourceDirectory() {
-		return new ResourceDirectoryConfigResolverTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()));
+		return new ConfigFieldResolverStructuredTaskResult(
+				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+				new ResourceDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getSourceGenDirectory() {
-		return new SourceGenDirectoryConfigResolverTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()));
+		return new ConfigFieldResolverStructuredTaskResult(
+				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+				new SourceGenDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getModuleName() {
-		return new ModuleNameConfigResolverTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()));
+		return new ConfigFieldResolverStructuredTaskResult(
+				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+				new ModuleNameConfigResolverTaskResult());
 	}
 
 	@Override
@@ -125,7 +135,7 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		return true;
 	}
 
-	public static final class ClassDirectoryConfigResolverTaskResult extends ConfigFieldResolverStructuredTaskResult {
+	public static final class ClassDirectoryConfigResolverTaskResult extends CompilationTaskFieldResolver {
 		private static final long serialVersionUID = 1L;
 
 		/**
@@ -134,17 +144,13 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		public ClassDirectoryConfigResolverTaskResult() {
 		}
 
-		ClassDirectoryConfigResolverTaskResult(TaskIdentifier configOutputTaskId) {
-			super(configOutputTaskId);
-		}
-
 		@Override
-		protected Object resolveField(JavaCompilationConfigurationOutput config) {
+		public Object resolveField(JavaCompilationConfigurationOutput config) {
 			return config.getClassDirectory();
 		}
 	}
 
-	public static final class HeaderDirectoryConfigResolverTaskResult extends ConfigFieldResolverStructuredTaskResult {
+	public static final class HeaderDirectoryConfigResolverTaskResult extends CompilationTaskFieldResolver {
 		private static final long serialVersionUID = 1L;
 
 		/**
@@ -153,17 +159,13 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		public HeaderDirectoryConfigResolverTaskResult() {
 		}
 
-		HeaderDirectoryConfigResolverTaskResult(TaskIdentifier configOutputTaskId) {
-			super(configOutputTaskId);
-		}
-
 		@Override
-		protected Object resolveField(JavaCompilationConfigurationOutput config) {
+		public Object resolveField(JavaCompilationConfigurationOutput config) {
 			return config.getHeaderDirectory();
 		}
 	}
 
-	public static final class ResourceDirectoryConfigResolverTaskResult extends ConfigFieldResolverStructuredTaskResult {
+	public static final class ResourceDirectoryConfigResolverTaskResult extends CompilationTaskFieldResolver {
 		private static final long serialVersionUID = 1L;
 
 		/**
@@ -172,17 +174,13 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		public ResourceDirectoryConfigResolverTaskResult() {
 		}
 
-		ResourceDirectoryConfigResolverTaskResult(TaskIdentifier configOutputTaskId) {
-			super(configOutputTaskId);
-		}
-
 		@Override
-		protected Object resolveField(JavaCompilationConfigurationOutput config) {
+		public Object resolveField(JavaCompilationConfigurationOutput config) {
 			return config.getResourceDirectory();
 		}
 	}
 
-	public static final class SourceGenDirectoryConfigResolverTaskResult extends ConfigFieldResolverStructuredTaskResult {
+	public static final class SourceGenDirectoryConfigResolverTaskResult extends CompilationTaskFieldResolver {
 		private static final long serialVersionUID = 1L;
 
 		/**
@@ -191,17 +189,13 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		public SourceGenDirectoryConfigResolverTaskResult() {
 		}
 
-		SourceGenDirectoryConfigResolverTaskResult(TaskIdentifier configOutputTaskId) {
-			super(configOutputTaskId);
-		}
-
 		@Override
-		protected Object resolveField(JavaCompilationConfigurationOutput config) {
+		public Object resolveField(JavaCompilationConfigurationOutput config) {
 			return config.getSourceGenDirectory();
 		}
 	}
 
-	public static final class ModuleNameConfigResolverTaskResult extends ConfigFieldResolverStructuredTaskResult {
+	public static final class ModuleNameConfigResolverTaskResult extends CompilationTaskFieldResolver {
 		private static final long serialVersionUID = 1L;
 
 		/**
@@ -210,21 +204,98 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		public ModuleNameConfigResolverTaskResult() {
 		}
 
-		ModuleNameConfigResolverTaskResult(TaskIdentifier configOutputTaskId) {
-			super(configOutputTaskId);
-		}
-
 		@Override
-		protected Object resolveField(JavaCompilationConfigurationOutput config) {
+		public Object resolveField(JavaCompilationConfigurationOutput config) {
 			return config.getModuleName();
 		}
 	}
 
-	private static abstract class ConfigFieldResolverStructuredTaskResult
-			implements StructuredTaskResult, Externalizable {
+	private static abstract class CompilationTaskFieldResolver implements Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		/**
+		 * For {@link Externalizable}.
+		 */
+		public CompilationTaskFieldResolver() {
+		}
+
+		public abstract Object resolveField(JavaCompilationConfigurationOutput output);
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		}
+
+		@Override
+		public int hashCode() {
+			return getClass().getName().hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return ObjectUtils.isSameClass(this, obj);
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName().toString();
+		}
+	}
+
+	private static class ConfigFieldTaskOutputChangeDetector implements TaskOutputChangeDetector, Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		private CompilationTaskFieldResolver fieldResolver;
+		private Object expected;
+
+		/**
+		 * For {@link Externalizable}.
+		 */
+		public ConfigFieldTaskOutputChangeDetector() {
+		}
+
+		public ConfigFieldTaskOutputChangeDetector(CompilationTaskFieldResolver fieldResolver, Object expected) {
+			this.fieldResolver = fieldResolver;
+			this.expected = expected;
+		}
+
+		@Override
+		public boolean isChanged(Object taskoutput) {
+			if (!(taskoutput instanceof JavaCompilationConfigurationOutput)) {
+				return true;
+			}
+			JavaCompilationConfigurationOutput res = (JavaCompilationConfigurationOutput) taskoutput;
+			Object field = fieldResolver.resolveField(res);
+			return !Objects.equals(field, expected);
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(fieldResolver);
+			out.writeObject(expected);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			fieldResolver = (CompilationTaskFieldResolver) in.readObject();
+			expected = in.readObject();
+		}
+
+		@Override
+		public String toString() {
+			return "ConfigFieldTaskOutputChangeDetector[fieldResolver=" + fieldResolver + ", expected=" + expected
+					+ "]";
+		}
+	}
+
+	private static class ConfigFieldResolverStructuredTaskResult implements StructuredTaskResult, Externalizable {
 		private static final long serialVersionUID = 1L;
 
 		private TaskIdentifier configOutputTaskId;
+		private CompilationTaskFieldResolver fieldResolver;
 
 		/**
 		 * For {@link Externalizable}.
@@ -232,32 +303,36 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		public ConfigFieldResolverStructuredTaskResult() {
 		}
 
-		public ConfigFieldResolverStructuredTaskResult(TaskIdentifier configOutputTaskId) {
+		public ConfigFieldResolverStructuredTaskResult(TaskIdentifier configOutputTaskId,
+				CompilationTaskFieldResolver fieldResolver) {
 			this.configOutputTaskId = configOutputTaskId;
+			this.fieldResolver = fieldResolver;
 		}
 
 		@Override
 		public Object toResult(TaskResultResolver results) {
-			Object output = results.getTaskResult(configOutputTaskId);
+			TaskResultDependencyHandle dephandle = results.getTaskResultDependencyHandle(configOutputTaskId);
+			Object output = dephandle.get();
 			if (!(output instanceof JavaCompilationConfigurationOutput)) {
 				throw new IllegalStateException("Invalid Java compilation output for task identifier: "
 						+ configOutputTaskId + " with " + output);
 			}
 			JavaCompilationConfigurationOutput res = (JavaCompilationConfigurationOutput) output;
-			//XXX report dependency on the task result?
-			return resolveField(res);
+			Object field = fieldResolver.resolveField(res);
+			dephandle.setTaskOutputChangeDetector(new ConfigFieldTaskOutputChangeDetector(fieldResolver, field));
+			return field;
 		}
-
-		protected abstract Object resolveField(JavaCompilationConfigurationOutput config);
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
 			out.writeObject(configOutputTaskId);
+			out.writeObject(fieldResolver);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 			configOutputTaskId = (TaskIdentifier) in.readObject();
+			fieldResolver = (CompilationTaskFieldResolver) in.readObject();
 		}
 
 		@Override
@@ -265,6 +340,7 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + ((configOutputTaskId == null) ? 0 : configOutputTaskId.hashCode());
+			result = prime * result + ((fieldResolver == null) ? 0 : fieldResolver.hashCode());
 			return result;
 		}
 
@@ -281,6 +357,11 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 				if (other.configOutputTaskId != null)
 					return false;
 			} else if (!configOutputTaskId.equals(other.configOutputTaskId))
+				return false;
+			if (fieldResolver == null) {
+				if (other.fieldResolver != null)
+					return false;
+			} else if (!fieldResolver.equals(other.fieldResolver))
 				return false;
 			return true;
 		}

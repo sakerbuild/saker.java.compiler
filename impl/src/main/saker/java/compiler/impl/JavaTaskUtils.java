@@ -98,10 +98,10 @@ public class JavaTaskUtils {
 	//TODO we might not need this at all, since dependency handles were introduced to TaskResultResolver
 	public static TaskIdentifier createJavaCompilationConfigurationOutputTaskIdentifier(
 			JavaCompilationWorkerTaskIdentifier workertaskid) {
-		return new JavaCompilationOutputTaskIdentifier(workertaskid);
+		return new JavaCompilationConfigurationOutputTaskIdentifier(workertaskid);
 	}
 
-	private static class JavaCompilationOutputTaskIdentifier implements TaskIdentifier, Externalizable {
+	private static class JavaCompilationConfigurationOutputTaskIdentifier implements TaskIdentifier, Externalizable {
 		private static final long serialVersionUID = 1L;
 
 		private JavaCompilationWorkerTaskIdentifier workerTaskId;
@@ -109,10 +109,10 @@ public class JavaTaskUtils {
 		/**
 		 * For {@link Externalizable}.
 		 */
-		public JavaCompilationOutputTaskIdentifier() {
+		public JavaCompilationConfigurationOutputTaskIdentifier() {
 		}
 
-		public JavaCompilationOutputTaskIdentifier(JavaCompilationWorkerTaskIdentifier workerTaskId) {
+		public JavaCompilationConfigurationOutputTaskIdentifier(JavaCompilationWorkerTaskIdentifier workerTaskId) {
 			this.workerTaskId = workerTaskId;
 		}
 
@@ -142,7 +142,7 @@ public class JavaTaskUtils {
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			JavaCompilationOutputTaskIdentifier other = (JavaCompilationOutputTaskIdentifier) obj;
+			JavaCompilationConfigurationOutputTaskIdentifier other = (JavaCompilationConfigurationOutputTaskIdentifier) obj;
 			if (workerTaskId == null) {
 				if (other.workerTaskId != null)
 					return false;
