@@ -19,11 +19,15 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.NavigableMap;
 
 import saker.build.file.path.SakerPath;
+import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.api.compile.JavaCompilationConfigurationOutput;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
+import saker.java.compiler.impl.sdk.JavaSDKReference;
 import saker.sdk.support.api.SDKDescription;
+import saker.sdk.support.api.SDKSupportUtils;
 
 public class SimpleJavaCompilationOutputConfiguration implements JavaCompilationConfigurationOutput, Externalizable {
 	private static final long serialVersionUID = 1L;
@@ -34,7 +38,7 @@ public class SimpleJavaCompilationOutputConfiguration implements JavaCompilation
 	private SakerPath resourceDirectory;
 	private SakerPath sourceGenDirectory;
 	private String moduleName;
-	private SDKDescription javaSDK;
+	private NavigableMap<String, SDKDescription> sdks;
 
 	/**
 	 * For {@link Externalizable}.
@@ -44,14 +48,14 @@ public class SimpleJavaCompilationOutputConfiguration implements JavaCompilation
 
 	public SimpleJavaCompilationOutputConfiguration(JavaCompilationWorkerTaskIdentifier compilationTaskId,
 			SakerPath classDirectory, SakerPath headerDirectory, SakerPath resourceDirectory,
-			SakerPath sourceGenDirectory, String moduleName, SDKDescription javaSDK) {
+			SakerPath sourceGenDirectory, String moduleName, NavigableMap<String, SDKDescription> sdks) {
 		this.compilationTaskId = compilationTaskId;
 		this.classDirectory = classDirectory;
 		this.headerDirectory = headerDirectory;
 		this.resourceDirectory = resourceDirectory;
 		this.sourceGenDirectory = sourceGenDirectory;
 		this.moduleName = moduleName;
-		this.javaSDK = javaSDK;
+		this.sdks = sdks;
 	}
 
 	@Override
@@ -86,7 +90,12 @@ public class SimpleJavaCompilationOutputConfiguration implements JavaCompilation
 
 	@Override
 	public SDKDescription getJavaSDK() {
-		return javaSDK;
+		return sdks.get(JavaSDKReference.DEFAULT_SDK_NAME);
+	}
+
+	@Override
+	public NavigableMap<String, SDKDescription> getSDKs() {
+		return sdks;
 	}
 
 	@Override
@@ -97,7 +106,7 @@ public class SimpleJavaCompilationOutputConfiguration implements JavaCompilation
 		out.writeObject(sourceGenDirectory);
 		out.writeObject(compilationTaskId);
 		out.writeObject(moduleName);
-		out.writeObject(javaSDK);
+		SerialUtils.writeExternalMap(out, sdks);
 	}
 
 	@Override
@@ -108,7 +117,7 @@ public class SimpleJavaCompilationOutputConfiguration implements JavaCompilation
 		sourceGenDirectory = (SakerPath) in.readObject();
 		compilationTaskId = (JavaCompilationWorkerTaskIdentifier) in.readObject();
 		moduleName = (String) in.readObject();
-		javaSDK = (SDKDescription) in.readObject();
+		sdks = SerialUtils.readExternalSortedImmutableNavigableMap(in, SDKSupportUtils.getSDKNameComparator());
 	}
 
 	@Override
@@ -143,11 +152,6 @@ public class SimpleJavaCompilationOutputConfiguration implements JavaCompilation
 				return false;
 		} else if (!headerDirectory.equals(other.headerDirectory))
 			return false;
-		if (javaSDK == null) {
-			if (other.javaSDK != null)
-				return false;
-		} else if (!javaSDK.equals(other.javaSDK))
-			return false;
 		if (moduleName == null) {
 			if (other.moduleName != null)
 				return false;
@@ -157,6 +161,11 @@ public class SimpleJavaCompilationOutputConfiguration implements JavaCompilation
 			if (other.resourceDirectory != null)
 				return false;
 		} else if (!resourceDirectory.equals(other.resourceDirectory))
+			return false;
+		if (sdks == null) {
+			if (other.sdks != null)
+				return false;
+		} else if (!sdks.equals(other.sdks))
 			return false;
 		if (sourceGenDirectory == null) {
 			if (other.sourceGenDirectory != null)

@@ -41,6 +41,7 @@ import saker.build.runtime.environment.SakerEnvironment;
 import saker.build.runtime.execution.SakerLog;
 import saker.build.task.TaskContext;
 import saker.build.task.TaskDependencyFuture;
+import saker.build.task.utils.StructuredTaskResult;
 import saker.build.thirdparty.saker.rmi.connection.RMIVariables;
 import saker.build.thirdparty.saker.rmi.exception.RMIRuntimeException;
 import saker.build.thirdparty.saker.util.ObjectUtils;
@@ -518,7 +519,8 @@ public class FullCompilationHandler extends CompilationHandler {
 
 						@Override
 						public void visit(SDKClassPath classpath) {
-							cpvisitor.visit(classpath);
+							visitSDKPathReference(result, classpath.getSDKPathReference(), entry.getSourceDirectories(),
+									entry.getSourceAttachment(), entry.getDocumentationAttachment());
 						}
 					});
 				}
@@ -555,9 +557,16 @@ public class FullCompilationHandler extends CompilationHandler {
 			@Override
 			public void visit(SDKClassPath classpath) {
 				SDKPathReference sdkpathref = classpath.getSDKPathReference();
+				visitSDKPathReference(result, sdkpathref, null, null, null);
+			}
+
+			private void visitSDKPathReference(Map<FileLocation, ClassPathIDEConfigurationEntry> result,
+					SDKPathReference sdkpathref, Collection<? extends JavaSourceDirectory> srcdirs,
+					StructuredTaskResult sourceattachment, StructuredTaskResult docattachment) {
 				SakerPath path = SDKSupportUtils.getSDKPathReferencePath(sdkpathref, sdkReferences);
 				LocalFileLocation fileloc = LocalFileLocation.create(path);
-				result.put(fileloc, new ClassPathIDEConfigurationEntry(fileloc));
+				result.put(fileloc, new ClassPathIDEConfigurationEntry(ClassPathEntryInputFile.create(sdkpathref),
+						srcdirs, sourceattachment, docattachment));
 			}
 		});
 		return result;

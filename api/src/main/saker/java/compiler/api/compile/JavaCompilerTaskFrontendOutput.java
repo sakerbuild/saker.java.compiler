@@ -15,6 +15,8 @@
  */
 package saker.java.compiler.api.compile;
 
+import java.util.NavigableMap;
+
 import saker.build.file.path.SakerPath;
 import saker.build.task.utils.StructuredTaskResult;
 import saker.sdk.support.api.SDKDescription;
@@ -129,5 +131,16 @@ public interface JavaCompilerTaskFrontendOutput {
 	 * @see JavaCompilerWorkerTaskOutput#getModuleName()
 	 */
 	public StructuredTaskResult getModuleName();
+
+	//NavigableMap<String, SDKDescription>
+	/**
+	 * Gets the SDKs that were used during the Java compilation.
+	 * <p>
+	 * The result is an instance of {@link NavigableMap NavigableMap&lt;String, SDKDescription&gt;}.
+	 * 
+	 * @return The structured task result of the used SDKs.
+	 * @since saker.java.compiler 0.8.5
+	 */
+	public StructuredTaskResult getSDKs();
 
 }

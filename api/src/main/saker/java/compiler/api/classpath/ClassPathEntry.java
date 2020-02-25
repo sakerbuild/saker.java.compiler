@@ -60,7 +60,7 @@ public interface ClassPathEntry {
 	 * 
 	 * @return The input file of the classpath entry.
 	 * @see ClassPathEntryInputFile#accept(ClassPathEntryInputFileVisitor)
-	 * @since 0.8.4
+	 * @since saker.java.compiler 0.8.4
 	 */
 	public default ClassPathEntryInputFile getInputFile() {
 		return ClassPathEntryInputFile.create(getFileLocation());

@@ -15,7 +15,10 @@
  */
 package saker.java.compiler.api.compile;
 
+import java.util.NavigableMap;
+
 import saker.build.file.path.SakerPath;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.sdk.support.api.SDKDescription;
 
 /**
@@ -84,7 +87,17 @@ public interface JavaCompilationConfigurationOutput {
 	 * 
 	 * @return The SDK description.
 	 */
-	public SDKDescription getJavaSDK();
+	public default SDKDescription getJavaSDK() {
+		return ObjectUtils.getMapValue(getSDKs(), SakerJavaCompilerUtils.DEFAULT_SDK_NAME);
+	}
+
+	/**
+	 * Gets the SDKs that were used during the compilation.
+	 * 
+	 * @return The SDK names mapped to their descriptions.
+	 * @since saker.java.compiler 0.8.5
+	 */
+	public NavigableMap<String, SDKDescription> getSDKs();
 
 	@Override
 	public int hashCode();

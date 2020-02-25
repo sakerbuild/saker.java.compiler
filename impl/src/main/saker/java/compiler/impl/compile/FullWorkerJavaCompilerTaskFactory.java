@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import saker.build.file.SakerDirectory;
 import saker.build.file.SakerFile;
@@ -44,6 +46,7 @@ import saker.java.compiler.impl.sdk.JavaSDKReference;
 import saker.sdk.support.api.IndeterminateSDKDescription;
 import saker.sdk.support.api.SDKDescription;
 import saker.sdk.support.api.SDKReference;
+import saker.sdk.support.api.SDKSupportUtils;
 import saker.sdk.support.api.exc.SDKNotFoundException;
 import testing.saker.java.compiler.TestFlag;
 
@@ -106,9 +109,14 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 			throw new SDKNotFoundException("No SDK found with name: " + JavaSDKReference.DEFAULT_SDK_NAME);
 		}
 
-		SDKDescription javasdkdesc = sdks.get(JavaSDKReference.DEFAULT_SDK_NAME);
-		if (javasdkdesc instanceof IndeterminateSDKDescription) {
-			javasdkdesc = ((IndeterminateSDKDescription) javasdkdesc).pinSDKDescription(javasdkreference);
+		NavigableMap<String, SDKDescription> pinnedsdks = new TreeMap<>(SDKSupportUtils.getSDKNameComparator());
+		for (Entry<String, SDKReference> entry : sdkrefs.entrySet()) {
+			String sdkname = entry.getKey();
+			SDKDescription desc = sdks.get(sdkname);
+			if (desc instanceof IndeterminateSDKDescription) {
+				desc = ((IndeterminateSDKDescription) desc).pinSDKDescription(entry.getValue());
+			}
+			pinnedsdks.put(sdkname, desc);
 		}
 
 		String modulename;
@@ -170,7 +178,8 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 			//report the ide configuration even if the compilation failed
 			startIdeConfigurationTask(taskcontext, taskid.getPassIdentifier(), javasdkreference,
 					ObjectUtils.isNullOrEmpty(annotationProcessors) ? null : outputSourceDirectory.getSakerPath(),
-					classpathentries, bootclasspathentries, outputClassDirectory.getSakerPath(), modulepathentries);
+					classpathentries, bootclasspathentries, outputClassDirectory.getSakerPath(), modulepathentries,
+					pinnedsdks);
 		}
 
 		if (TestFlag.ENABLED) {
@@ -182,7 +191,7 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 
 		SimpleJavaCompilationOutputConfiguration outputconfig = new SimpleJavaCompilationOutputConfiguration(taskid,
 				outputClassDirectory.getSakerPath(), outputNativeHeaderDirectory.getSakerPath(),
-				outputResourceDirectory.getSakerPath(), outputSourceDirectory.getSakerPath(), modulename, javasdkdesc);
+				outputResourceDirectory.getSakerPath(), outputSourceDirectory.getSakerPath(), modulename, pinnedsdks);
 		taskcontext.startTask(JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(taskid),
 				new JavaCompilationConfigLiteralTaskFactory(outputconfig), null);
 
@@ -198,7 +207,8 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 	private void startIdeConfigurationTask(TaskContext taskcontext, String compilationId, SDKReference javacompilersdk,
 			SakerPath processorGenDirectory, Collection<? extends ClassPathIDEConfigurationEntry> classPathEntries,
 			Collection<? extends ClassPathIDEConfigurationEntry> bootClassPathEntries, SakerPath outputBinDirectory,
-			Collection<? extends ModulePathIDEConfigurationEntry> modulepathentries) throws Exception {
+			Collection<? extends ModulePathIDEConfigurationEntry> modulepathentries,
+			NavigableMap<String, SDKDescription> pinnedsdks) throws Exception {
 		JavaIDEConfigurationReportingTaskFactory task = new JavaIDEConfigurationReportingTaskFactory(compilationId);
 		task.setAddExports(addExports);
 		task.setCompilerJavaVersion(javacompilersdk.getProperty(JavaSDKReference.PROPERTY_JAVA_VERSION));
@@ -210,6 +220,7 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 		task.setParameters(parameters);
 		task.setCompilerInstallLocation(javacompilersdk.getPath(JavaSDKReference.PATH_INSTALL_LOCATION));
 		task.setClassPathEntries(classPathEntries);
+		task.setSdks(pinnedsdks);
 
 		TaskIdentifier taskid = JavaIDEConfigurationReportingTaskFactory.createTaskIdentifier(compilationId);
 		taskcontext.startTask(taskid, task, null);

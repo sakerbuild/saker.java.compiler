@@ -59,6 +59,7 @@ import saker.build.task.TaskDependencyFuture;
 import saker.build.task.TaskFileDeltas;
 import saker.build.task.delta.DeltaType;
 import saker.build.task.dependencies.FileCollectionStrategy;
+import saker.build.task.utils.StructuredTaskResult;
 import saker.build.task.utils.TaskUtils;
 import saker.build.task.utils.dependencies.RecursiveIgnoreCaseExtensionFileCollectionStrategy;
 import saker.build.thirdparty.saker.rmi.connection.RMIVariables;
@@ -1316,7 +1317,9 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 
 						@Override
 						public void visit(SDKClassPath classpath) {
-							cpvisitor.visit(classpath);
+							visitSDKPathReference(resultcommandlineclasspaths, classpath.getSDKPathReference(),
+									entry.getSourceDirectories(), entry.getSourceAttachment(),
+									entry.getDocumentationAttachment());
 						}
 					});
 				}
@@ -1416,11 +1419,17 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 			@Override
 			public void visit(SDKClassPath classpath) {
 				SDKPathReference sdkpathref = classpath.getSDKPathReference();
+				visitSDKPathReference(resultcommandlineclasspaths, sdkpathref, null, null, null);
+			}
+
+			private void visitSDKPathReference(Collection<SakerPath> resultcommandlineclasspaths,
+					SDKPathReference sdkpathref, Collection<? extends JavaSourceDirectory> srcdirs,
+					StructuredTaskResult sourceattachment, StructuredTaskResult docattachment) {
 				SakerPath path = SDKSupportUtils.getSDKPathReferencePath(sdkpathref, sdkReferences);
 				resultcommandlineclasspaths.add(path);
 
 				ClassPathIDEConfigurationEntry ideconfig = new ClassPathIDEConfigurationEntry(
-						LocalFileLocation.create(path));
+						ClassPathEntryInputFile.create(sdkpathref), srcdirs, sourceattachment, docattachment);
 				ideconfigentries.add(ideconfig);
 			}
 

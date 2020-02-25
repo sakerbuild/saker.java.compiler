@@ -16,12 +16,12 @@
 package saker.java.compiler.main.compile.option;
 
 import saker.build.task.TaskContext;
-import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
+import saker.java.compiler.api.compile.JavaCompilerWorkerTaskOutput;
 
 final class CompilationOutputJavaClassPathTaskOption implements JavaClassPathTaskOption {
-	private final InternalJavaCompilerOutput output;
+	private final JavaCompilerWorkerTaskOutput output;
 
-	CompilationOutputJavaClassPathTaskOption(InternalJavaCompilerOutput output) {
+	CompilationOutputJavaClassPathTaskOption(JavaCompilerWorkerTaskOutput output) {
 		this.output = output;
 	}
 

@@ -61,8 +61,13 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		//TODO the SDK result should be retrieved from a setup task that is started by the compiler worker before compilation
 		//     we don't actually need to wait for the compilation to complete before retrieving the SDK description
 		//     we can also use the SDK description if the compilation fails.
-		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(),
-				new JavaSDKConfigResolverTaskResult());
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(), new JavaSDKConfigResolverTaskResult());
+	}
+
+	@Override
+	public StructuredTaskResult getSDKs() {
+		//TODO should be through setup instance
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(), new SDKsConfigResolverTaskResult());
 	}
 
 	@Override
@@ -159,6 +164,21 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		@Override
 		public Object resolveField(JavaCompilationConfigurationOutput config) {
 			return config.getJavaSDK();
+		}
+	}
+
+	public static final class SDKsConfigResolverTaskResult extends CompilationTaskFieldResolver {
+		private static final long serialVersionUID = 1L;
+
+		/**
+		 * For {@link Externalizable}.
+		 */
+		public SDKsConfigResolverTaskResult() {
+		}
+
+		@Override
+		public Object resolveField(JavaCompilationConfigurationOutput config) {
+			return config.getSDKs();
 		}
 	}
 

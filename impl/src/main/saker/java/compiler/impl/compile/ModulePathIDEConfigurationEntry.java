@@ -23,13 +23,14 @@ import java.util.Collection;
 
 import saker.build.task.utils.StructuredTaskResult;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.std.api.file.location.FileLocation;
 
 public class ModulePathIDEConfigurationEntry implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	private FileLocation fileLocation;
+	private ClassPathEntryInputFile inputFile;
 	private Collection<? extends JavaSourceDirectory> sourceDirectories;
 	private StructuredTaskResult sourceAttachment;
 
@@ -40,11 +41,11 @@ public class ModulePathIDEConfigurationEntry implements Externalizable {
 	}
 
 	public ModulePathIDEConfigurationEntry(FileLocation fileLocation) {
-		this.fileLocation = fileLocation;
+		this.inputFile = ClassPathEntryInputFile.create(fileLocation);
 	}
 
-	public FileLocation getFileLocation() {
-		return fileLocation;
+	public ClassPathEntryInputFile getInputFile() {
+		return inputFile;
 	}
 
 	public void setSourceAttachment(StructuredTaskResult sourceAttachment) {
@@ -65,14 +66,14 @@ public class ModulePathIDEConfigurationEntry implements Externalizable {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(fileLocation);
+		out.writeObject(inputFile);
 		SerialUtils.writeExternalCollection(out, sourceDirectories);
 		out.writeObject(sourceAttachment);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		fileLocation = (FileLocation) in.readObject();
+		inputFile = (ClassPathEntryInputFile) in.readObject();
 		sourceDirectories = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		sourceAttachment = (StructuredTaskResult) in.readObject();
 	}
@@ -81,7 +82,7 @@ public class ModulePathIDEConfigurationEntry implements Externalizable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((fileLocation == null) ? 0 : fileLocation.hashCode());
+		result = prime * result + ((inputFile == null) ? 0 : inputFile.hashCode());
 		result = prime * result + ((sourceAttachment == null) ? 0 : sourceAttachment.hashCode());
 		result = prime * result + ((sourceDirectories == null) ? 0 : sourceDirectories.hashCode());
 		return result;
@@ -96,10 +97,10 @@ public class ModulePathIDEConfigurationEntry implements Externalizable {
 		if (getClass() != obj.getClass())
 			return false;
 		ModulePathIDEConfigurationEntry other = (ModulePathIDEConfigurationEntry) obj;
-		if (fileLocation == null) {
-			if (other.fileLocation != null)
+		if (inputFile == null) {
+			if (other.inputFile != null)
 				return false;
-		} else if (!fileLocation.equals(other.fileLocation))
+		} else if (!inputFile.equals(other.inputFile))
 			return false;
 		if (sourceAttachment == null) {
 			if (other.sourceAttachment != null)

@@ -34,7 +34,7 @@ import saker.std.api.file.location.FileLocation;
  * 
  * @see ClassPathEntry
  * @see ClassPathEntry#getInputFile()
- * @since 0.8.4
+ * @since saker.java.compiler 0.8.4
  */
 public interface ClassPathEntryInputFile {
 	/**

@@ -23,8 +23,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import saker.build.file.path.SakerPath;
@@ -41,13 +44,22 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.trace.BuildTrace;
 import saker.build.util.property.IDEConfigurationRequiredExecutionProperty;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFileVisitor;
+import saker.java.compiler.api.classpath.FileClassPath;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
+import saker.java.compiler.api.classpath.SDKClassPath;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.ide.configuration.JavaIDEConfigurationBuilder;
 import saker.java.compiler.impl.ide.configuration.JavaIDEConfigurationBuilder.ClassPathConfigurationBuilder;
 import saker.java.compiler.impl.ide.configuration.JavaIDEConfigurationBuilder.SourceDirectoryConfigurationBuilder;
 import saker.java.compiler.impl.options.SimpleAddExportsPath;
+import saker.sdk.support.api.SDKDescription;
+import saker.sdk.support.api.SDKPathReference;
+import saker.sdk.support.api.SDKReference;
+import saker.sdk.support.api.SDKSupportUtils;
+import saker.sdk.support.api.exc.SDKManagementException;
 import saker.std.api.file.location.ExecutionFileLocation;
 import saker.std.api.file.location.FileLocation;
 import saker.std.api.file.location.FileLocationVisitor;
@@ -70,6 +82,8 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 	protected Set<? extends ClassPathIDEConfigurationEntry> bootClassPathEntries;
 	protected Set<? extends ModulePathIDEConfigurationEntry> modulePathEntries;
 
+	private NavigableMap<String, SDKDescription> sdks;
+
 	/**
 	 * For {@link Externalizable}.
 	 */
@@ -78,6 +92,10 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 	public JavaIDEConfigurationReportingTaskFactory(String compilationId) {
 		this.compilationId = compilationId;
+	}
+
+	public void setSdks(NavigableMap<String, SDKDescription> sdks) {
+		this.sdks = sdks;
 	}
 
 	public void setAddExports(Set<JavaAddExports> addExports) {
@@ -129,6 +147,9 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 				.getReportExecutionDependency(IDEConfigurationRequiredExecutionProperty.INSTANCE)) {
 			return null;
 		}
+		NavigableMap<String, Optional<SDKReference>> sdkreferences = new TreeMap<>(
+				SDKSupportUtils.getSDKNameComparator());
+
 		JavaIDEConfigurationBuilder ideconfigbuilder = new JavaIDEConfigurationBuilder();
 
 		Collection<JavaSourceDirectory> sourcedirs = sourceDirectories;
@@ -141,7 +162,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		Collection<? extends ClassPathIDEConfigurationEntry> cpentries = classPathEntries;
 		if (!ObjectUtils.isNullOrEmpty(cpentries)) {
 			for (ClassPathIDEConfigurationEntry cpe : cpentries) {
-				ClassPathConfigurationBuilder cpbuilder = buildClassPathConfiguration(taskcontext, cpe);
+				ClassPathConfigurationBuilder cpbuilder = buildClassPathConfiguration(taskcontext, cpe, sdkreferences);
 
 				ideconfigbuilder.addClassPath(cpbuilder);
 			}
@@ -166,7 +187,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		Collection<? extends ClassPathIDEConfigurationEntry> bootclasspath = this.bootClassPathEntries;
 		if (!ObjectUtils.isNullOrEmpty(bootclasspath)) {
 			for (ClassPathIDEConfigurationEntry cpe : bootclasspath) {
-				ClassPathConfigurationBuilder cpbuilder = buildClassPathConfiguration(taskcontext, cpe);
+				ClassPathConfigurationBuilder cpbuilder = buildClassPathConfiguration(taskcontext, cpe, sdkreferences);
 
 				ideconfigbuilder.addBootClassPath(cpbuilder);
 			}
@@ -174,7 +195,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		Set<? extends ModulePathIDEConfigurationEntry> modulepath = this.modulePathEntries;
 		if (!ObjectUtils.isNullOrEmpty(modulepath)) {
 			for (ModulePathIDEConfigurationEntry mpe : modulepath) {
-				ClassPathConfigurationBuilder mpbuilder = buildModulePathConfiguration(taskcontext, mpe);
+				ClassPathConfigurationBuilder mpbuilder = buildModulePathConfiguration(taskcontext, mpe, sdkreferences);
 
 				ideconfigbuilder.addModulePath(mpbuilder);
 			}
@@ -209,6 +230,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		SerialUtils.writeExternalCollection(out, sourceDirectories);
 		SerialUtils.writeExternalCollection(out, classPathEntries);
 		SerialUtils.writeExternalCollection(out, bootClassPathEntries);
+		SerialUtils.writeExternalMap(out, sdks);
 	}
 
 	@Override
@@ -224,6 +246,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		sourceDirectories = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		classPathEntries = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		bootClassPathEntries = SerialUtils.readExternalImmutableLinkedHashSet(in);
+		sdks = SerialUtils.readExternalSortedImmutableNavigableMap(in, SDKSupportUtils.getSDKNameComparator());
 	}
 
 	@Override
@@ -270,6 +293,11 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 				return false;
 		} else if (!compilerJavaVersion.equals(other.compilerJavaVersion))
 			return false;
+		if (modulePathEntries == null) {
+			if (other.modulePathEntries != null)
+				return false;
+		} else if (!modulePathEntries.equals(other.modulePathEntries))
+			return false;
 		if (outputBinDirectory == null) {
 			if (other.outputBinDirectory != null)
 				return false;
@@ -284,6 +312,11 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 			if (other.processorGenDirectory != null)
 				return false;
 		} else if (!processorGenDirectory.equals(other.processorGenDirectory))
+			return false;
+		if (sdks == null) {
+			if (other.sdks != null)
+				return false;
+		} else if (!sdks.equals(other.sdks))
 			return false;
 		if (sourceDirectories == null) {
 			if (other.sourceDirectories != null)
@@ -315,26 +348,26 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		}
 	}
 
-	private static ClassPathConfigurationBuilder buildModulePathConfiguration(TaskContext taskcontext,
-			ModulePathIDEConfigurationEntry mpe) {
+	private ClassPathConfigurationBuilder buildModulePathConfiguration(TaskContext taskcontext,
+			ModulePathIDEConfigurationEntry mpe, NavigableMap<String, Optional<SDKReference>> sdkreferences) {
 		ClassPathConfigurationBuilder mpbuilder = new ClassPathConfigurationBuilder();
 
-		FileLocation filelocation = mpe.getFileLocation();
-		setClassPathPath(mpbuilder, filelocation);
+		ClassPathEntryInputFile inputfile = mpe.getInputFile();
+		setClassPathPath(mpbuilder, inputfile, taskcontext, sdkreferences);
 
 		setClassPathSourceDirectories(mpbuilder, mpe.getSourceDirectories());
 
-		setClassPathSourceAttachment(taskcontext, mpbuilder, mpe.getSourceAttachment());
+		setClassPathSourceAttachment(taskcontext, mpbuilder, mpe.getSourceAttachment(), sdkreferences);
 
 		return mpbuilder;
 	}
 
-	private static ClassPathConfigurationBuilder buildClassPathConfiguration(TaskContext taskcontext,
-			ClassPathIDEConfigurationEntry cpe) {
+	private ClassPathConfigurationBuilder buildClassPathConfiguration(TaskContext taskcontext,
+			ClassPathIDEConfigurationEntry cpe, NavigableMap<String, Optional<SDKReference>> sdkreferences) {
 		ClassPathConfigurationBuilder cpbuilder = new ClassPathConfigurationBuilder();
 
-		FileLocation filelocation = cpe.getFileLocation();
-		setClassPathPath(cpbuilder, filelocation);
+		ClassPathEntryInputFile inputfile = cpe.getInputFile();
+		setClassPathPath(cpbuilder, inputfile, taskcontext, sdkreferences);
 
 		Collection<? extends JavaSourceDirectory> cpsrcdirs = cpe.getSourceDirectories();
 		setClassPathSourceDirectories(cpbuilder, cpsrcdirs);
@@ -343,10 +376,10 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 			cpbuilder.setSourceGenDirectory(srcgendir.toString());
 		}
 		StructuredTaskResult srcattachment = cpe.getSourceAttachment();
-		setClassPathSourceAttachment(taskcontext, cpbuilder, srcattachment);
+		setClassPathSourceAttachment(taskcontext, cpbuilder, srcattachment, sdkreferences);
 
 		StructuredTaskResult docattachment = cpe.getDocumentationAttachment();
-		setClassPathDocAttachment(taskcontext, cpbuilder, docattachment);
+		setClassPathDocAttachment(taskcontext, cpbuilder, docattachment, sdkreferences);
 		return cpbuilder;
 	}
 
@@ -360,8 +393,8 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		}
 	}
 
-	private static void setClassPathDocAttachment(TaskContext taskcontext, ClassPathConfigurationBuilder cpbuilder,
-			StructuredTaskResult docattachment) {
+	private void setClassPathDocAttachment(TaskContext taskcontext, ClassPathConfigurationBuilder cpbuilder,
+			StructuredTaskResult docattachment, NavigableMap<String, Optional<SDKReference>> sdkreferences) {
 		if (docattachment == null) {
 			return;
 		}
@@ -370,15 +403,18 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 			if (docresult instanceof SakerPath) {
 				cpbuilder.setDocumentationAttachmentPath(docresult.toString());
 			} else if (docresult instanceof FileLocation) {
-				((FileLocation) docresult).accept(new FileLocationVisitor() {
+				setFileLocationDocAttachment(cpbuilder, (FileLocation) docresult);
+			} else if (docresult instanceof ClassPathEntryInputFile) {
+				((ClassPathEntryInputFile) docresult).accept(new ClassPathEntryInputFileVisitor() {
 					@Override
-					public void visit(ExecutionFileLocation loc) {
-						cpbuilder.setDocumentationAttachmentPath(loc.getPath().toString());
+					public void visit(FileClassPath classpath) {
+						setFileLocationDocAttachment(cpbuilder, classpath.getFileLocation());
 					}
 
 					@Override
-					public void visit(LocalFileLocation loc) {
-						cpbuilder.setDocumentationAttachmentLocalPath(loc.getLocalPath().toString());
+					public void visit(SDKClassPath classpath) {
+						SakerPath localpath = getSDKClassPathLocalPath(taskcontext, classpath, sdkreferences);
+						setDocAttachmentLocalPath(cpbuilder, localpath);
 					}
 				});
 			}
@@ -391,8 +427,23 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		}
 	}
 
-	private static void setClassPathSourceAttachment(TaskContext taskcontext, ClassPathConfigurationBuilder cpbuilder,
-			StructuredTaskResult srcattachment) {
+	private static void setFileLocationDocAttachment(ClassPathConfigurationBuilder cpbuilder,
+			FileLocation filelocation) {
+		filelocation.accept(new FileLocationVisitor() {
+			@Override
+			public void visit(ExecutionFileLocation loc) {
+				cpbuilder.setDocumentationAttachmentPath(loc.getPath().toString());
+			}
+
+			@Override
+			public void visit(LocalFileLocation loc) {
+				setDocAttachmentLocalPath(cpbuilder, loc.getLocalPath());
+			}
+		});
+	}
+
+	private void setClassPathSourceAttachment(TaskContext taskcontext, ClassPathConfigurationBuilder cpbuilder,
+			StructuredTaskResult srcattachment, NavigableMap<String, Optional<SDKReference>> sdkreferences) {
 		if (srcattachment == null) {
 			return;
 		}
@@ -401,15 +452,18 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 			if (srcresult instanceof SakerPath) {
 				cpbuilder.setSourceAttachmentPath(srcresult.toString());
 			} else if (srcresult instanceof FileLocation) {
-				((FileLocation) srcresult).accept(new FileLocationVisitor() {
+				setFileLocationSourceAttachment(cpbuilder, (FileLocation) srcresult);
+			} else if (srcresult instanceof ClassPathEntryInputFile) {
+				((ClassPathEntryInputFile) srcresult).accept(new ClassPathEntryInputFileVisitor() {
 					@Override
-					public void visit(ExecutionFileLocation loc) {
-						cpbuilder.setSourceAttachmentPath(loc.getPath().toString());
+					public void visit(FileClassPath classpath) {
+						setFileLocationSourceAttachment(cpbuilder, classpath.getFileLocation());
 					}
 
 					@Override
-					public void visit(LocalFileLocation loc) {
-						cpbuilder.setSourceAttachmentLocalPath(loc.getLocalPath().toString());
+					public void visit(SDKClassPath classpath) {
+						SakerPath localpath = getSDKClassPathLocalPath(taskcontext, classpath, sdkreferences);
+						setSourceAttachmentLocalPath(cpbuilder, localpath);
 					}
 				});
 			}
@@ -422,24 +476,100 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		}
 	}
 
-	private static void setClassPathPath(ClassPathConfigurationBuilder cpbuilder, FileLocation filelocation) {
+	private static void setFileLocationSourceAttachment(ClassPathConfigurationBuilder cpbuilder,
+			FileLocation filelocation) {
 		if (filelocation == null) {
 			return;
 		}
+		filelocation.accept(new FileLocationVisitor() {
+			@Override
+			public void visit(ExecutionFileLocation loc) {
+				cpbuilder.setSourceAttachmentPath(loc.getPath().toString());
+			}
+
+			@Override
+			public void visit(LocalFileLocation loc) {
+				setSourceAttachmentLocalPath(cpbuilder, loc.getLocalPath());
+			}
+
+		});
+	}
+
+	private static void setSourceAttachmentLocalPath(ClassPathConfigurationBuilder cpbuilder, SakerPath localpath) {
+		if (localpath == null) {
+			return;
+		}
+		cpbuilder.setSourceAttachmentLocalPath(localpath.toString());
+	}
+
+	private static void setDocAttachmentLocalPath(ClassPathConfigurationBuilder cpbuilder, SakerPath localpath) {
+		if (localpath == null) {
+			return;
+		}
+		cpbuilder.setDocumentationAttachmentLocalPath(localpath.toString());
+	}
+
+	private void setClassPathPath(ClassPathConfigurationBuilder cpbuilder, ClassPathEntryInputFile inputfile,
+			TaskContext taskcontext, NavigableMap<String, Optional<SDKReference>> sdkreferences) {
+		if (inputfile == null) {
+			return;
+		}
 		try {
-			filelocation.accept(new FileLocationVisitor() {
+			inputfile.accept(new ClassPathEntryInputFileVisitor() {
 				@Override
-				public void visit(ExecutionFileLocation loc) {
-					cpbuilder.setPath(loc.getPath().toString());
+				public void visit(FileClassPath classpath) {
+					classpath.getFileLocation().accept(new FileLocationVisitor() {
+						@Override
+						public void visit(ExecutionFileLocation loc) {
+							cpbuilder.setPath(loc.getPath().toString());
+						}
+
+						@Override
+						public void visit(LocalFileLocation loc) {
+							cpbuilder.setLocalPath(loc.getLocalPath().toString());
+						}
+					});
 				}
 
 				@Override
-				public void visit(LocalFileLocation loc) {
-					cpbuilder.setLocalPath(loc.getLocalPath().toString());
+				public void visit(SDKClassPath classpath) {
+					SakerPath localpath = getSDKClassPathLocalPath(taskcontext, classpath, sdkreferences);
+					if (localpath != null) {
+						cpbuilder.setLocalPath(localpath.toString());
+					}
 				}
 			});
 		} catch (UnsupportedOperationException e) {
 			//ignore
+		}
+	}
+
+	private SakerPath getSDKClassPathLocalPath(TaskContext taskcontext, SDKClassPath classpath,
+			NavigableMap<String, Optional<SDKReference>> sdkreferences) {
+		SDKPathReference pathref = classpath.getSDKPathReference();
+		String sdkname = pathref.getSDKName();
+		SDKReference sdkref = sdkreferences.computeIfAbsent(sdkname, n -> {
+			SDKDescription sdkdescription = sdks.get(sdkname);
+			if (sdkdescription == null) {
+				return Optional.empty();
+			}
+			try {
+				return Optional.of(SDKSupportUtils.resolveSDKReference(taskcontext, sdkdescription));
+			} catch (SDKManagementException e) {
+				return Optional.empty();
+			}
+		}).orElse(null);
+		if (sdkref == null) {
+			return null;
+		}
+		try {
+			SakerPath resolvedpath = pathref.getPath(sdkref);
+			if (resolvedpath == null) {
+				return null;
+			}
+			return resolvedpath;
+		} catch (Exception e) {
+			return null;
 		}
 	}
 

@@ -21,7 +21,7 @@ import saker.build.file.path.WildcardPath.ReducedWildcardPath;
 import saker.build.task.TaskContext;
 import saker.java.compiler.api.classpath.ClassPathReference;
 import saker.java.compiler.api.compile.JavaCompilerTaskFrontendOutput;
-import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
+import saker.java.compiler.api.compile.JavaCompilerWorkerTaskOutput;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTypeInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
@@ -70,7 +70,7 @@ public interface JavaClassPathTaskOption {
 		return new FileLocationJavaClassPathTaskOption(filelocation);
 	}
 
-	public static JavaClassPathTaskOption valueOf(InternalJavaCompilerOutput output) {
+	public static JavaClassPathTaskOption valueOf(JavaCompilerWorkerTaskOutput output) {
 		return new CompilationOutputJavaClassPathTaskOption(output);
 	}
 

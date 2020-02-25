@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.NavigableMap;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
@@ -158,6 +159,11 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 	@Override
 	public SDKDescription getJavaSDK() {
 		return outputConfig.getJavaSDK();
+	}
+
+	@Override
+	public NavigableMap<String, SDKDescription> getSDKs() {
+		return outputConfig.getSDKs();
 	}
 
 	public void setHadAnnotationProcessors(boolean hadAnnotationProcessors) {

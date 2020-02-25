@@ -24,13 +24,14 @@ import java.util.Collection;
 import saker.build.file.path.SakerPath;
 import saker.build.task.utils.StructuredTaskResult;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.java.compiler.api.classpath.ClassPathEntryInputFile;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.std.api.file.location.FileLocation;
 
 public class ClassPathIDEConfigurationEntry implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	private FileLocation fileLocation;
+	private ClassPathEntryInputFile inputFile;
 	private Collection<? extends JavaSourceDirectory> sourceDirectories;
 	private StructuredTaskResult sourceAttachment;
 	private StructuredTaskResult docAttachment;
@@ -45,18 +46,27 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 	public ClassPathIDEConfigurationEntry(FileLocation fileLocation,
 			Collection<? extends JavaSourceDirectory> sourceDirectories, StructuredTaskResult sourceAttachment,
 			StructuredTaskResult docAttachment) {
-		this.fileLocation = fileLocation;
+		this.inputFile = ClassPathEntryInputFile.create(fileLocation);
+		this.sourceDirectories = sourceDirectories;
+		this.sourceAttachment = sourceAttachment;
+		this.docAttachment = docAttachment;
+	}
+
+	public ClassPathIDEConfigurationEntry(ClassPathEntryInputFile inputFile,
+			Collection<? extends JavaSourceDirectory> sourceDirectories, StructuredTaskResult sourceAttachment,
+			StructuredTaskResult docAttachment) {
+		this.inputFile = inputFile;
 		this.sourceDirectories = sourceDirectories;
 		this.sourceAttachment = sourceAttachment;
 		this.docAttachment = docAttachment;
 	}
 
 	public ClassPathIDEConfigurationEntry(FileLocation fileLocation) {
-		this.fileLocation = fileLocation;
+		this.inputFile = ClassPathEntryInputFile.create(fileLocation);
 	}
 
-	public FileLocation getFileLocation() {
-		return fileLocation;
+	public ClassPathEntryInputFile getInputFile() {
+		return inputFile;
 	}
 
 	public Collection<? extends JavaSourceDirectory> getSourceDirectories() {
@@ -81,7 +91,7 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(fileLocation);
+		out.writeObject(inputFile);
 		SerialUtils.writeExternalCollection(out, sourceDirectories);
 		out.writeObject(sourceAttachment);
 		out.writeObject(docAttachment);
@@ -90,7 +100,7 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		fileLocation = (FileLocation) in.readObject();
+		inputFile = (ClassPathEntryInputFile) in.readObject();
 		sourceDirectories = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		sourceAttachment = (StructuredTaskResult) in.readObject();
 		docAttachment = (StructuredTaskResult) in.readObject();
@@ -102,7 +112,7 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((docAttachment == null) ? 0 : docAttachment.hashCode());
-		result = prime * result + ((fileLocation == null) ? 0 : fileLocation.hashCode());
+		result = prime * result + ((inputFile == null) ? 0 : inputFile.hashCode());
 		result = prime * result + ((sourceAttachment == null) ? 0 : sourceAttachment.hashCode());
 		result = prime * result + ((sourceDirectories == null) ? 0 : sourceDirectories.hashCode());
 		result = prime * result + ((sourceGenDirectory == null) ? 0 : sourceGenDirectory.hashCode());
@@ -123,10 +133,10 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 				return false;
 		} else if (!docAttachment.equals(other.docAttachment))
 			return false;
-		if (fileLocation == null) {
-			if (other.fileLocation != null)
+		if (inputFile == null) {
+			if (other.inputFile != null)
 				return false;
-		} else if (!fileLocation.equals(other.fileLocation))
+		} else if (!inputFile.equals(other.inputFile))
 			return false;
 		if (sourceAttachment == null) {
 			if (other.sourceAttachment != null)
@@ -148,7 +158,7 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[" + (fileLocation != null ? "fileLocation=" + fileLocation + ", " : "")
+		return getClass().getSimpleName() + "[" + (inputFile != null ? "fileLocation=" + inputFile + ", " : "")
 				+ (sourceDirectories != null ? "sourceDirectories=" + sourceDirectories + ", " : "")
 				+ (sourceAttachment != null ? "sourceAttachment=" + sourceAttachment + ", " : "")
 				+ (docAttachment != null ? "docAttachment=" + docAttachment : "") + "]";
