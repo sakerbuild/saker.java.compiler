@@ -1,4 +1,4 @@
-global(VERSION_saker.java.compiler) = "0.8.3"
+global(VERSION_saker.java.compiler) = "0.8.4"
 
 global(TOOLS_OPTIONS) = [
 	{
