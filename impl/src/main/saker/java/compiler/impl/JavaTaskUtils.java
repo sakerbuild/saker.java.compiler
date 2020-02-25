@@ -95,7 +95,9 @@ public class JavaTaskUtils {
 		return true;
 	}
 
-	//TODO we might not need this at all, since dependency handles were introduced to TaskResultResolver
+	@Deprecated
+	//TODO this should be changed to be started before the compilation, and contain configuration related
+	//     information of the compilation execution. E.g. SDK, source and target versions, etc...
 	public static TaskIdentifier createJavaCompilationConfigurationOutputTaskIdentifier(
 			JavaCompilationWorkerTaskIdentifier workertaskid) {
 		return new JavaCompilationConfigurationOutputTaskIdentifier(workertaskid);

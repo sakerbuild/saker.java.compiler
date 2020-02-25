@@ -41,14 +41,20 @@ public interface JavaCompilerTaskFrontendOutput {
 	 */
 	public JavaCompilationWorkerTaskIdentifier getTaskIdentifier();
 
+	//SDKDescription
 	/**
-	 * Gets the SDK description that is used to perform the compilation.
+	 * Gets the structured task result for SDK description that is used to perform the compilation.
+	 * <p>
+	 * The result will be a {@link SDKDescription}.
 	 * <p>
 	 * This is the {@link SDKDescription} that is associated with the <code>Java</code> name.
+	 * <p>
+	 * <b>Note:</b> This function was modified in an ABI breaking way in version 0.8.4. It directly returned
+	 * {@link SDKDescription} in previous releases.
 	 * 
-	 * @return The SDK description.
+	 * @return The SDK description task result.
 	 */
-	public SDKDescription getJavaSDK();
+	public StructuredTaskResult getJavaSDK();
 
 	//SakerPath
 	/**

@@ -31,7 +31,6 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.api.compile.JavaCompilationConfigurationOutput;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
 import saker.java.compiler.api.compile.JavaCompilerTaskFrontendOutput;
-import saker.java.compiler.impl.JavaTaskUtils;
 import saker.sdk.support.api.SDKDescription;
 
 public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTaskResult
@@ -58,43 +57,41 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 	}
 
 	@Override
-	public SDKDescription getJavaSDK() {
-		//TODO this method should return structured task result as well and the pinned value of the SDK description
-		return javaSDK;
+	public StructuredTaskResult getJavaSDK() {
+		//TODO the SDK result should be retrieved from a setup task that is started by the compiler worker before compilation
+		//     we don't actually need to wait for the compilation to complete before retrieving the SDK description
+		//     we can also use the SDK description if the compilation fails.
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(),
+				new JavaSDKConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getClassDirectory() {
-		return new ConfigFieldResolverStructuredTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(),
 				new ClassDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getHeaderDirectory() {
-		return new ConfigFieldResolverStructuredTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(),
 				new HeaderDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getResourceDirectory() {
-		return new ConfigFieldResolverStructuredTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(),
 				new ResourceDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getSourceGenDirectory() {
-		return new ConfigFieldResolverStructuredTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(),
 				new SourceGenDirectoryConfigResolverTaskResult());
 	}
 
 	@Override
 	public StructuredTaskResult getModuleName() {
-		return new ConfigFieldResolverStructuredTaskResult(
-				JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(getTaskIdentifier()),
+		return new ConfigFieldResolverStructuredTaskResult(getTaskIdentifier(),
 				new ModuleNameConfigResolverTaskResult());
 	}
 
@@ -147,6 +144,21 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 		@Override
 		public Object resolveField(JavaCompilationConfigurationOutput config) {
 			return config.getClassDirectory();
+		}
+	}
+
+	public static final class JavaSDKConfigResolverTaskResult extends CompilationTaskFieldResolver {
+		private static final long serialVersionUID = 1L;
+
+		/**
+		 * For {@link Externalizable}.
+		 */
+		public JavaSDKConfigResolverTaskResult() {
+		}
+
+		@Override
+		public Object resolveField(JavaCompilationConfigurationOutput config) {
+			return config.getJavaSDK();
 		}
 	}
 
