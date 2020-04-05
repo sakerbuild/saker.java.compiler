@@ -63,17 +63,25 @@ public interface ClassPathEntry {
 	 * @since saker.java.compiler 0.8.4
 	 */
 	public default ClassPathEntryInputFile getInputFile() {
-		return ClassPathEntryInputFile.create(getFileLocation());
+		FileLocation fl = getFileLocation();
+		if (fl == null) {
+			return null;
+		}
+		return ClassPathEntryInputFile.create(fl);
 	}
 
 	/**
 	 * Gets the additional classpaths which are transitively included by this entry.
 	 * <p>
 	 * The returned collection specifies the transitive classpaths that this entry automatically includes.
+	 * <p>
+	 * This method has a default implementation that returns <code>null</code>, since saker.java.compiler version 0.8.5.
 	 * 
 	 * @return The additional classpaths or <code>null</code> if none.
 	 */
-	public Collection<? extends ClassPathReference> getAdditionalClassPathReferences();
+	public default Collection<? extends ClassPathReference> getAdditionalClassPathReferences() {
+		return null;
+	}
 
 	/**
 	 * Gets the source directories that are associated with the classpath.
@@ -81,10 +89,14 @@ public interface ClassPathEntry {
 	 * This is usually used to configure IDE projects appropriately. It can be useful to add a classpath as an source
 	 * directory to the IDE project rather than a JAR or class directory as it can provide better documentation
 	 * assistance to the developer.
+	 * <p>
+	 * This method has a default implementation that returns <code>null</code>, since saker.java.compiler version 0.8.5.
 	 * 
 	 * @return The source directories that are directly associated with the classpath or <code>null</code> if none.
 	 */
-	public Collection<? extends JavaSourceDirectory> getSourceDirectories();
+	public default Collection<? extends JavaSourceDirectory> getSourceDirectories() {
+		return null;
+	}
 
 	/**
 	 * Gets a task result object that specifies the source attachment to the classpath.
@@ -124,11 +136,15 @@ public interface ClassPathEntry {
 	 * <p>
 	 * The ABI version key should include the signatures of the classes available in the (non-transitive) classpath, but
 	 * shouldn't include the method implementations and other non-signature code.
+	 * <p>
+	 * This method has a default implementation that returns <code>null</code>, since saker.java.compiler version 0.8.5.
 	 * 
 	 * @return The ABI version key or <code>null</code> if none.
 	 * @see JavaCompilerWorkerTaskOutput#getAbiVersionKey()
 	 */
-	public Object getAbiVersionKey();
+	public default Object getAbiVersionKey() {
+		return null;
+	}
 
 	/**
 	 * Gets the implementation version key of the classpath.
@@ -141,11 +157,15 @@ public interface ClassPathEntry {
 	 * <p>
 	 * The implementation version key should include all aspects of the class files available in the (non-transitive)
 	 * classpath.
+	 * <p>
+	 * This method has a default implementation that returns <code>null</code>, since saker.java.compiler version 0.8.5.
 	 * 
 	 * @return The implementation version key or <code>null</code> if none.
 	 * @see JavaCompilerWorkerTaskOutput#getImplementationVersionKey()
 	 */
-	public Object getImplementationVersionKey();
+	public default Object getImplementationVersionKey() {
+		return null;
+	}
 
 	/**
 	 * Checks if the {@linkplain #getFileLocation() file location} of this classpath may be considered static.

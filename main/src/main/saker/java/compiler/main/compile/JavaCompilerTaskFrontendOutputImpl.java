@@ -31,13 +31,10 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.api.compile.JavaCompilationConfigurationOutput;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
 import saker.java.compiler.api.compile.JavaCompilerTaskFrontendOutput;
-import saker.sdk.support.api.SDKDescription;
 
 public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTaskResult
 		implements JavaCompilerTaskFrontendOutput {
 	private static final long serialVersionUID = 1L;
-
-	private SDKDescription javaSDK;
 
 	/**
 	 * For {@link Externalizable}.
@@ -45,10 +42,8 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 	public JavaCompilerTaskFrontendOutputImpl() {
 	}
 
-	public JavaCompilerTaskFrontendOutputImpl(JavaCompilationWorkerTaskIdentifier taskIdentifier,
-			SDKDescription javaSDK) {
+	public JavaCompilerTaskFrontendOutputImpl(JavaCompilationWorkerTaskIdentifier taskIdentifier) {
 		super(taskIdentifier);
-		this.javaSDK = javaSDK;
 	}
 
 	@Override
@@ -103,38 +98,11 @@ public class JavaCompilerTaskFrontendOutputImpl extends SimpleStructuredObjectTa
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
-		out.writeObject(javaSDK);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		javaSDK = (SDKDescription) in.readObject();
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((javaSDK == null) ? 0 : javaSDK.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		JavaCompilerTaskFrontendOutputImpl other = (JavaCompilerTaskFrontendOutputImpl) obj;
-		if (javaSDK == null) {
-			if (other.javaSDK != null)
-				return false;
-		} else if (!javaSDK.equals(other.javaSDK))
-			return false;
-		return true;
 	}
 
 	public static final class ClassDirectoryConfigResolverTaskResult extends CompilationTaskFieldResolver {

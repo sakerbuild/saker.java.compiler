@@ -55,7 +55,6 @@ import saker.java.compiler.api.compile.JavaDebugInfoType;
 import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.impl.JavaTaskUtils;
-import saker.java.compiler.impl.sdk.JavaSDKReference;
 import saker.java.compiler.main.JavaTaskOptionUtils;
 import saker.java.compiler.main.TaskDocs;
 import saker.java.compiler.main.TaskDocs.AnnotationProcessorOptionKey;
@@ -476,10 +475,7 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 
 			taskcontext.startTask(workertaskid, workerfactory, workertaskparameters);
 
-			//TODO the used java SDK might need to be pinned
-			SDKDescription usedjavasdk = presentsdks.getOrDefault(JavaSDKReference.DEFAULT_SDK_NAME,
-					SakerJavaCompilerUtils.getDefaultJavaSDK());
-			Object result = new JavaCompilerTaskFrontendOutputImpl(workertaskid, usedjavasdk);
+			Object result = new JavaCompilerTaskFrontendOutputImpl(workertaskid);
 			taskcontext.reportSelfTaskOutputChangeDetector(new EqualityTaskOutputChangeDetector(result));
 			return result;
 		}

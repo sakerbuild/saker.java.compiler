@@ -413,10 +413,13 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 					@Override
 					public void visit(SDKClassPath classpath) {
-						SakerPath localpath = getSDKClassPathLocalPath(taskcontext, classpath, sdkreferences);
-						setDocAttachmentLocalPath(cpbuilder, localpath);
+						setDocAttachmentLocalPath(cpbuilder,
+								getSDKClassPathLocalPath(taskcontext, classpath, sdkreferences));
 					}
 				});
+			} else if (docresult instanceof SDKPathReference) {
+				setDocAttachmentLocalPath(cpbuilder,
+						getSDKClassPathLocalPath(taskcontext, (SDKClassPath) docresult, sdkreferences));
 			}
 		} catch (TaskResultWaitingFailedException e) {
 			//dont try to recover from deadlock and other waiting related exceptions
@@ -462,10 +465,13 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 					@Override
 					public void visit(SDKClassPath classpath) {
-						SakerPath localpath = getSDKClassPathLocalPath(taskcontext, classpath, sdkreferences);
-						setSourceAttachmentLocalPath(cpbuilder, localpath);
+						setSourceAttachmentLocalPath(cpbuilder,
+								getSDKClassPathLocalPath(taskcontext, classpath, sdkreferences));
 					}
 				});
+			} else if (srcresult instanceof SDKPathReference) {
+				setSourceAttachmentLocalPath(cpbuilder,
+						getSDKClassPathLocalPath(taskcontext, (SDKClassPath) srcresult, sdkreferences));
 			}
 		} catch (TaskResultWaitingFailedException e) {
 			//dont try to recover from deadlock and other waiting related exceptions
