@@ -35,7 +35,6 @@ import saker.java.compiler.main.TaskDocs.ProcessorInputLocationNameOption;
 import saker.java.compiler.main.compile.JavaCompilerTaskFactory;
 import saker.nest.scriptinfo.reflection.annot.NestFieldInformation;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
-import saker.nest.scriptinfo.reflection.annot.NestParameterInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 
@@ -49,7 +48,7 @@ import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 @NestFieldInformation(value = "Identifier",
 		info = @NestInformation(TaskDocs.COMPILE_OPTION_IDENTIFIER),
 		type = @NestTypeUsage(CompilationIdentifierTaskOption.class))
-@NestParameterInformation(value = "Language",
+@NestFieldInformation(value = "Language",
 		info = @NestInformation(TaskDocs.COMPILE_OPTION_LANGUAGE),
 		type = @NestTypeUsage(JavaCompilationLanguageOption.class))
 
@@ -115,10 +114,10 @@ import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 		info = @NestInformation(TaskDocs.COMPILE_MODULE_VERSION),
 		type = @NestTypeUsage(ModuleInfoInjectVersionOption.class))
 
-@NestParameterInformation(value = "ParameterNames",
+@NestFieldInformation(value = "ParameterNames",
 		info = @NestInformation(TaskDocs.COMPILE_PARAMETER_NAMES),
 		type = @NestTypeUsage(boolean.class))
-@NestParameterInformation(value = "DebugInfo",
+@NestFieldInformation(value = "DebugInfo",
 		info = @NestInformation(TaskDocs.COMPILE_DEBUG_INFO),
 		type = @NestTypeUsage(value = Collection.class, elementTypes = JavaDebugInfoType.class))
 
@@ -126,7 +125,7 @@ import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 		info = @NestInformation(TaskDocs.COMPILE_PARALLEL_PROCESSING),
 		type = @NestTypeUsage(boolean.class))
 
-@NestParameterInformation(value = "BuildIncremental",
+@NestFieldInformation(value = "BuildIncremental",
 		info = @NestInformation(TaskDocs.COMPILE_BUILD_INCREMENTAL),
 		type = @NestTypeUsage(boolean.class))
 public interface JavaCompilerOptions {
