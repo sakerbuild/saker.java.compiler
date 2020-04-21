@@ -298,6 +298,8 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 			options.setModuleVersion(this.moduleVersionOption);
 			options.setParallelProcessing(this.parallelProcessingOption);
 			options.setBuildIncremental(this.buildIncrementalOption);
+			options.setDebugInfo(debugInfoOption);
+			options.setParameterNames(parameterNamesOption);
 
 			return runPass(taskcontext, options,
 					ObjectUtils.cloneArrayList(compilerOptions, SimpleJavaCompilerOptions::new));
