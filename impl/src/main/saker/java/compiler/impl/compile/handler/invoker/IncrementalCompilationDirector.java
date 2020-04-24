@@ -1037,10 +1037,11 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 //	}
 
 	private static Predicate<String> makeAnnotationNamePredicate(String s) {
-		char lastchar = s.charAt(s.length() - 1);
+		int lastidx = s.length() - 1;
+		char lastchar = s.charAt(lastidx);
 		if (lastchar == '*') {
 			//ends in ".*"
-			String start = s.substring(0, lastchar);
+			String start = s.substring(0, lastidx);
 			return a -> a.startsWith(start);
 		}
 		return a -> s.equals(a);
