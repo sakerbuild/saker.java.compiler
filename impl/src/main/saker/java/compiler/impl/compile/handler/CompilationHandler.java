@@ -527,12 +527,16 @@ public abstract class CompilationHandler {
 		String scheme = uri.getScheme();
 		switch (scheme) {
 			case "jar": {
-				String specific = uri.getSchemeSpecificPart();
-				if (specific.startsWith("file:/")) {
-					int idx = specific.indexOf('!');
-					return SakerPath.valueOf(specific.substring(6, idx));
+				try {
+					String specific = uri.getSchemeSpecificPart();
+					if (specific.startsWith("file:///")) {
+						int idx = specific.indexOf('!');
+						return SakerPath.valueOf(specific.substring(8, idx));
+					}
+				} catch (Exception e) {
+					throw new IllegalArgumentException("Failed to convert URI to path: " + uri, e);
 				}
-				throw new RuntimeException("Unknown jar protocol: " + specific);
+				throw new IllegalArgumentException("Failed to convert URI to path: " + uri);
 			}
 			case CompilationHandler.URI_SCHEME_GENERATED:
 			case CompilationHandler.URI_SCHEME_INPUT: {
