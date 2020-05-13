@@ -46,6 +46,7 @@ public final class JavaIDEConfigurationBuilder {
 	public static final String FIELD_CLASSPATH_LOCAL_DOCPATH = "docpath.local";
 	public static final String FIELD_CLASSPATH_SOURCEDIRECTORIES = "sourcedirectories";
 	public static final String FIELD_CLASSPATH_SOURCEGENDIRECTORY = "sourcegendirectory";
+	public static final String FIELD_CLASSPATH_DISPLAY_NAME = "display.name";
 
 	public static final String FIELD_BOOT_CLASSPATHS = "java.bootclasspaths";
 
@@ -191,6 +192,7 @@ public final class JavaIDEConfigurationBuilder {
 		protected String documentationAttachmentLocalPath;
 		protected Set<Object> sourceDirectories = new LinkedHashSet<>();
 		protected String sourceGenDirectory;
+		protected String displayName;
 
 		public ClassPathConfigurationBuilder() {
 		}
@@ -236,6 +238,11 @@ public final class JavaIDEConfigurationBuilder {
 			return this;
 		}
 
+		public ClassPathConfigurationBuilder setDisplayName(String displayname) {
+			this.displayName = displayname;
+			return this;
+		}
+
 		public Object toClassPathObject() {
 			TreeMap<String, Object> result = new TreeMap<>();
 			if (!ObjectUtils.isNullOrEmpty(path)) {
@@ -263,7 +270,11 @@ public final class JavaIDEConfigurationBuilder {
 			if (!ObjectUtils.isNullOrEmpty(sourceGenDirectory)) {
 				result.put(FIELD_CLASSPATH_SOURCEGENDIRECTORY, sourceGenDirectory);
 			}
+			if (!ObjectUtils.isNullOrEmpty(displayName)) {
+				result.put(FIELD_CLASSPATH_DISPLAY_NAME, displayName);
+			}
 			return ImmutableUtils.unmodifiableMap(result);
 		}
+
 	}
 }

@@ -127,6 +127,20 @@ public interface ClassPathEntry {
 	}
 
 	/**
+	 * Gets the display name for this classpath entry.
+	 * <p>
+	 * The display name is purely for informational purposes, and is generally used in error messages or in the IDE when
+	 * IDE configurations are applied. They should be short, human readable, and identify the classpath entry in some
+	 * way.
+	 * 
+	 * @return The display name or <code>null</code> if none.
+	 * @since saker.java.compiler 0.8.6
+	 */
+	public default String getDisplayName() {
+		return null;
+	}
+
+	/**
 	 * Gets the ABI version key of the classpath.
 	 * <p>
 	 * An ABI version key is an arbitrary object that implements {@link Object#equals(Object)} and defines the current

@@ -36,6 +36,7 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 	private StructuredTaskResult sourceAttachment;
 	private StructuredTaskResult docAttachment;
 	private SakerPath sourceGenDirectory;
+	private String displayName;
 
 	/**
 	 * For {@link Externalizable}.
@@ -89,6 +90,14 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 		return sourceGenDirectory;
 	}
 
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(inputFile);
@@ -96,6 +105,7 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 		out.writeObject(sourceAttachment);
 		out.writeObject(docAttachment);
 		out.writeObject(sourceGenDirectory);
+		out.writeObject(displayName);
 	}
 
 	@Override
@@ -105,12 +115,14 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 		sourceAttachment = (StructuredTaskResult) in.readObject();
 		docAttachment = (StructuredTaskResult) in.readObject();
 		sourceGenDirectory = (SakerPath) in.readObject();
+		displayName = SerialUtils.readExternalObject(in);
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((displayName == null) ? 0 : displayName.hashCode());
 		result = prime * result + ((docAttachment == null) ? 0 : docAttachment.hashCode());
 		result = prime * result + ((inputFile == null) ? 0 : inputFile.hashCode());
 		result = prime * result + ((sourceAttachment == null) ? 0 : sourceAttachment.hashCode());
@@ -128,6 +140,11 @@ public class ClassPathIDEConfigurationEntry implements Externalizable {
 		if (getClass() != obj.getClass())
 			return false;
 		ClassPathIDEConfigurationEntry other = (ClassPathIDEConfigurationEntry) obj;
+		if (displayName == null) {
+			if (other.displayName != null)
+				return false;
+		} else if (!displayName.equals(other.displayName))
+			return false;
 		if (docAttachment == null) {
 			if (other.docAttachment != null)
 				return false;

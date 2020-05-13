@@ -503,6 +503,7 @@ public class FullCompilationHandler extends CompilationHandler {
 							}
 							ClassPathIDEConfigurationEntry value = new ClassPathIDEConfigurationEntry(filelocation,
 									sourcediroptions, entry.getSourceAttachment(), entry.getDocumentationAttachment());
+							value.setDisplayName(entry.getDisplayName());
 							result.put(filelocation, value);
 
 							Collection<? extends ClassPathReference> additionalclasspaths = entry

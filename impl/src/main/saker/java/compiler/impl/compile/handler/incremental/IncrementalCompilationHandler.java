@@ -1302,6 +1302,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 							}
 							ClassPathIDEConfigurationEntry value = new ClassPathIDEConfigurationEntry(filelocation,
 									sourcediroptions, entry.getSourceAttachment(), entry.getDocumentationAttachment());
+							value.setDisplayName(entry.getDisplayName());
 							ideconfigentries.add(value);
 
 							Collection<? extends ClassPathReference> additionalclasspaths = entry

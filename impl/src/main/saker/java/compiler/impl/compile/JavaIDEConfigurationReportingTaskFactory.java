@@ -380,6 +380,11 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 		StructuredTaskResult docattachment = cpe.getDocumentationAttachment();
 		setClassPathDocAttachment(taskcontext, cpbuilder, docattachment, sdkreferences);
+
+		String displayname = cpe.getDisplayName();
+		if (!ObjectUtils.isNullOrEmpty(displayname)) {
+			cpbuilder.setDisplayName(displayname);
+		}
 		return cpbuilder;
 	}
 
