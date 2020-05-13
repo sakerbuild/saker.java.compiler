@@ -52,4 +52,16 @@ public interface JavaCompilerInvocationDirector {
 	public boolean isAnyErrorRaised();
 
 	public void reportDiagnostic(DiagnosticEntry entry);
+
+	/**
+	 * The user provided source version name in <code>RELEASE_*</code> format
+	 */
+	@RMICacheResult
+	public String getSourceVersionOptionName();
+
+	/**
+	 * The user provided target version name in <code>RELEASE_*</code> format
+	 */
+	@RMICacheResult
+	public String getTargetVersionOptionName();
 }

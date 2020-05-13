@@ -35,6 +35,7 @@ import saker.java.compiler.main.TaskDocs.ProcessorInputLocationNameOption;
 import saker.java.compiler.main.compile.JavaCompilerTaskFactory;
 import saker.nest.scriptinfo.reflection.annot.NestFieldInformation;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
+import saker.nest.scriptinfo.reflection.annot.NestParameterInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 
@@ -128,6 +129,9 @@ import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 @NestFieldInformation(value = "BuildIncremental",
 		info = @NestInformation(TaskDocs.COMPILE_BUILD_INCREMENTAL),
 		type = @NestTypeUsage(boolean.class))
+@NestFieldInformation(value = "AllowTargetReleaseMismatch",
+		info = @NestInformation(TaskDocs.COMPILE_ALLOW_TARGET_RELEASE_MISMATCH),
+		type = @NestTypeUsage(boolean.class))
 public interface JavaCompilerOptions {
 	public CompilationIdentifierTaskOption getIdentifier();
 
@@ -172,4 +176,6 @@ public interface JavaCompilerOptions {
 	public Boolean getParallelProcessing();
 
 	public Boolean getBuildIncremental();
+
+	public Boolean getAllowTargetReleaseMismatch();
 }

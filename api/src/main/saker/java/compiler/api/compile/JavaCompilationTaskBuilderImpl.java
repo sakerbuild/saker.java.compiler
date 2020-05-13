@@ -88,6 +88,8 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 
 	protected NavigableSet<String> debugInfo;
 
+	protected boolean allowTargetReleaseMismatch;
+
 	public JavaCompilationTaskBuilderImpl() {
 	}
 
@@ -128,15 +130,6 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 				if (nparams.size() <= relidx + 1) {
 					throw new IllegalArgumentException("Parameter --release has no argument.");
 				}
-				String arg = nparams.get(relidx + 1);
-				if (!isReleaseCompatibleWithLegacyVersions(arg, sourceVersion)) {
-					throw new IllegalArgumentException(
-							"--release argument: " + arg + " is not compatible with SourceVersion: " + sourceVersion);
-				}
-				if (!isReleaseCompatibleWithLegacyVersions(arg, targetVersion)) {
-					throw new IllegalArgumentException(
-							"--release argument: " + arg + " is not compatible with TargetVersion: " + targetVersion);
-				}
 			}
 		}
 		this.parameters = nparams;
@@ -166,25 +159,11 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 
 	@Override
 	public void setSourceVersion(Integer version) {
-		if (version != null) {
-			String arg = getCurrentReleaseParameterValue();
-			if (!isReleaseCompatibleWithLegacyVersions(arg, version)) {
-				throw new IllegalArgumentException(
-						"--release argument: " + arg + " is not compatible with SourceVersion: " + version);
-			}
-		}
 		this.sourceVersion = version;
 	}
 
 	@Override
 	public void setTargetVersion(Integer version) {
-		if (version != null) {
-			String arg = getCurrentReleaseParameterValue();
-			if (!isReleaseCompatibleWithLegacyVersions(arg, version)) {
-				throw new IllegalArgumentException(
-						"--release argument: " + arg + " is not compatible with TargetVersion: " + version);
-			}
-		}
 		this.targetVersion = version;
 	}
 
@@ -275,6 +254,11 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 	}
 
 	@Override
+	public void setAllowTargetReleaseMismatch(boolean enabled) {
+		this.allowTargetReleaseMismatch = enabled;
+	}
+
+	@Override
 	public void setParameterNames(Boolean parameterNames) {
 		this.parameterNames = ObjectUtils.defaultize(parameterNames, true);
 	}
@@ -296,7 +280,27 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 	}
 
 	@Override
-	public TaskFactory<? extends JavaCompilerWorkerTaskOutput> buildTaskFactory() {
+	public TaskFactory<? extends JavaCompilerWorkerTaskOutput> buildTaskFactory() throws IllegalStateException {
+		Integer srcversion = sourceVersion;
+		Integer targetversion = targetVersion;
+		if (srcversion != null || targetversion != null) {
+			if (!allowTargetReleaseMismatch) {
+				String arg = getCurrentReleaseParameterValue();
+				if (arg != null) {
+					if (!isReleaseCompatibleWithLegacyVersions(arg, srcversion)) {
+						throw new IllegalStateException(
+								"--release argument: " + arg + " is not compatible with SourceVersion: " + srcversion);
+					}
+					if (!isReleaseCompatibleWithLegacyVersions(arg, targetversion)) {
+						throw new IllegalStateException("--release argument: " + arg
+								+ " is not compatible with TargetVersion: " + targetversion);
+					}
+					//we can unset these versions as the --release parameter implies them
+					srcversion = null;
+					targetversion = null;
+				}
+			}
+		}
 		WorkerJavaCompilerTaskFactoryBase workertask;
 		if (buildIncremental) {
 			IncrementalWorkerJavaCompilerTaskFactory task = new IncrementalWorkerJavaCompilerTaskFactory();
@@ -312,11 +316,11 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 		workertask.setModulePath(modulePath);
 		workertask.setBootClassPath(bootClassPath);
 		workertask.setParameters(parameters);
-		if (this.sourceVersion != null) {
-			workertask.setSourceVersionName("RELEASE_" + this.sourceVersion);
+		if (srcversion != null) {
+			workertask.setSourceVersionName("RELEASE_" + srcversion);
 		}
-		if (this.targetVersion != null) {
-			workertask.setTargetVersionName("RELEASE_" + this.targetVersion);
+		if (targetversion != null) {
+			workertask.setTargetVersionName("RELEASE_" + targetversion);
 		}
 		if (!ObjectUtils.isNullOrEmpty(annotationProcessors)) {
 			workertask.setAnnotationProcessors(annotationProcessors);

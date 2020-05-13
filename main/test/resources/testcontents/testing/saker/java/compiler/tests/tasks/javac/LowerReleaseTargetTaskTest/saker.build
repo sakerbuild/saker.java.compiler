@@ -1,0 +1,10 @@
+build {
+	saker.java.compile(
+		SourceDirectories: [src, DIRS]
+		Parameters: [ --release, RELEASE ],
+		SourceVersion: SOURCE,
+		TargetVersion: TARGET,
+		Identifier: c_rRELEASE_sSOURCE_tTARGET,
+		AllowTargetReleaseMismatch: true,
+	)
+}

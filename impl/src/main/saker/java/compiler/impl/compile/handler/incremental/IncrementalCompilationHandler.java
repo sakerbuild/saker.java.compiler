@@ -717,7 +717,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 				processordetailschanged, prevModuleInfoFileData, prevCompilationModuleSet, prevDiagnosticEntries,
 				fileRemover, prevClassFileDatas, processorInputLocations, methodParameterNameChangeChecker,
 				moduleMainClass, prevModuleMainClass, moduleVersion, prevModuleVersion, nocommandlineclasspath,
-				allowcommandlinebootclasspath);
+				allowcommandlinebootclasspath, sourceVersionName, targetVersionName);
 		CompilationInfo result = director.invokeCompilation(units, removedsourcefiles);
 		result.setExecutionClassPathStateInfosSignatures(currentExecutionClassPathStateInfos);
 		result.setLocalClassPathStateInfosSignatures(currentLocalClassPathStateInfos);
@@ -963,9 +963,10 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 	private void createOptions(Set<SakerPath> commandlineclasspaths, Set<SakerPath> commandlinemodulepaths,
 			boolean[] nocmdlineclasspath, Set<? extends SakerPath> commandlinebootclasspaths,
 			boolean[] nocmdlinebootclasspath) throws IOException {
-		this.options = createOptions(passParameters, sourceVersionName, targetVersionName, passAddExports,
-				commandlinebootclasspaths, commandlineclasspaths, commandlinemodulepaths, parameterNames, debugInfos,
-				nocmdlineclasspath, nocmdlinebootclasspath);
+		//do not pass sourceVersionName, targetVersionName, as they are added manually by the invoker
+		this.options = createOptions(passParameters, null, null, passAddExports, commandlinebootclasspaths,
+				commandlineclasspaths, commandlinemodulepaths, parameterNames, debugInfos, nocmdlineclasspath,
+				nocmdlinebootclasspath);
 		//options never contain any -proc options, as it is ignored by the createOptions method
 		this.options.add("-proc:none");
 	}

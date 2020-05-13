@@ -38,17 +38,21 @@ import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.ClassReader;
+import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.main.JavaCompiler;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Options;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.util.java.JavaTools;
+import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.info.ClassGenerationInfo;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
 import saker.java.compiler.impl.compile.handler.invoker.InternalIncrementalCompilationInvokerBase;
@@ -67,6 +71,10 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 		context.put(JavaFileManager.class, fileManager);
 
 		java.util.List<String> options = ObjectUtils.newArrayList(director.getOptions());
+		String sourceversionname = CompilationHandler
+				.sourceVersionToParameterString(director.getSourceVersionOptionName());
+		String targetversionname = CompilationHandler
+				.sourceVersionToParameterString(director.getTargetVersionOptionName());
 		int currentmajor = JavaTools.getCurrentJavaMajorVersion();
 		if (currentmajor < 11) {
 			options.remove("--enable-preview");
@@ -76,11 +84,41 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 				if (releaseidx >= 0) {
 					//remove the release argument and its value
 					options.remove(releaseidx);
-					options.remove(releaseidx);
+					String releaseval = options.remove(releaseidx);
+
+					//set these for compatibility, but only if they aren't set to other values
+					if (sourceversionname == null) {
+						sourceversionname = releaseval;
+					}
+					if (targetversionname == null) {
+						targetversionname = releaseval;
+					}
 				}
 			}
 		}
+
+		Options opt = Options.instance(context);
+		//put the version options and query the corresponding instances
+		//as they cache themselves with other keys
+		//remove them as well to avoid validation conflicts with --release
+		if (sourceversionname != null) {
+			opt.put(Option.SOURCE, sourceversionname);
+			Source.instance(context);
+			opt.remove(Option.SOURCE.text);
+		}
+		if (targetversionname != null) {
+			opt.put(Option.TARGET, targetversionname);
+			Target.instance(context);
+			opt.remove(Option.TARGET.text);
+		}
 		JavacTool.processOptions(context, fileManager, options);
+		//put the source and target options again as they might've been overwritten
+		if (sourceversionname != null) {
+			opt.put(Option.SOURCE, sourceversionname);
+		}
+		if (targetversionname != null) {
+			opt.put(Option.TARGET, sourceversionname);
+		}
 
 		final JavaCompiler javac = JavaCompiler.instance(context);
 		this.javac = javac;

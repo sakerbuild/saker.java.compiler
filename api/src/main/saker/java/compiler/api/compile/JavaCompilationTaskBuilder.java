@@ -113,30 +113,24 @@ public interface JavaCompilationTaskBuilder {
 	 * 
 	 * @param parameters
 	 *            The parameters.
-	 * @throws IllegalArgumentException
-	 *             If the specified parameters are in conflict with other properties.
 	 */
-	public void setParameters(List<String> parameters) throws IllegalArgumentException;
+	public void setParameters(List<String> parameters);
 
 	/**
 	 * Sets the source version of the source files.
 	 * 
 	 * @param version
 	 *            The source version major number or <code>null</code> to use the default.
-	 * @throws IllegalArgumentException
-	 *             If the specified argument is in conflict with other properties.
 	 */
-	public void setSourceVersion(Integer version) throws IllegalArgumentException;
+	public void setSourceVersion(Integer version);
 
 	/**
 	 * Sets the target version of the generated class files.
 	 * 
 	 * @param version
 	 *            The target version major number or <code>null</code> to use the default.
-	 * @throws IllegalArgumentException
-	 *             If the specified argument is in conflict with other properties.
 	 */
-	public void setTargetVersion(Integer version) throws IllegalArgumentException;
+	public void setTargetVersion(Integer version);
 
 	/**
 	 * Sets the SDKs that should be used during the compilation.
@@ -294,6 +288,23 @@ public interface JavaCompilationTaskBuilder {
 	public void setBuildIncremental(Boolean buildIncremental);
 
 	/**
+	 * Sets if mismatching values are allowed for the {@linkplain #setTargetVersion(Integer) target},
+	 * {@linkplain #setSourceVersion(Integer) source} and {@linkplain #setParameters(List) --release} values.
+	 * <p>
+	 * <b>WARNING: Using this flag may cause your class files to be binary incompatible with the platform you intend to
+	 * run it on. This flag uses undocumented javac API to trick it into generating bytecode for different versions than
+	 * it's used to. Using this may cause crashes in your application in unexpected ways.</b>
+	 * <p>
+	 * If this is set to <code>true</code>, the compiler task will set the source, target, and --release values in a way
+	 * that may allow generating bytecode for different Java versions than the one dicatated by the source version.
+	 * 
+	 * @param enabled
+	 *            <code>true</code> to enable mismatched values.
+	 * @since saker.java.compiler 0.8.6
+	 */
+	public void setAllowTargetReleaseMismatch(boolean enabled);
+
+	/**
 	 * Builds the task identifier that should be used to start the configured task.
 	 * <p>
 	 * The builder can be reused after this call.
@@ -312,8 +323,10 @@ public interface JavaCompilationTaskBuilder {
 	 * The builder can be reused after this call.
 	 * 
 	 * @return The worker compiler task factory.
+	 * @throws IllegalStateException
+	 *             If the builder is in an illegal state.
 	 */
-	public TaskFactory<? extends JavaCompilerWorkerTaskOutput> buildTaskFactory();
+	public TaskFactory<? extends JavaCompilerWorkerTaskOutput> buildTaskFactory() throws IllegalStateException;
 
 	/**
 	 * Creates a new builder instance.

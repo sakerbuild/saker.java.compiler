@@ -111,10 +111,15 @@ public abstract class CompilationHandler {
 	private static final Map<String, String> IGNORED_VALUE_PARAMETERS = new TreeMap<>();
 	static {
 		IGNORED_VALUE_PARAMETERS.put("-processorpath", "AnnotationProcessors");
+		IGNORED_VALUE_PARAMETERS.put("--processor-path", "AnnotationProcessors");
 		IGNORED_VALUE_PARAMETERS.put("-processor", "AnnotationProcessors");
+		IGNORED_VALUE_PARAMETERS.put("--processor-module-path", "AnnotationProcessors");
 		IGNORED_VALUE_PARAMETERS.put("-target", "TargetVersion");
+		IGNORED_VALUE_PARAMETERS.put("--target", "TargetVersion");
 		IGNORED_VALUE_PARAMETERS.put("-source", "SourceVersion");
+		IGNORED_VALUE_PARAMETERS.put("--source", "SourceVersion");
 		IGNORED_VALUE_PARAMETERS.put("-sourcepath", "");
+		IGNORED_VALUE_PARAMETERS.put("--source-path", "");
 	}
 
 	public static List<String> createOptions(List<String> passparameters, String passsourceversion,

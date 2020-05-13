@@ -49,18 +49,22 @@ import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Modules;
+import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.main.Arguments;
 import com.sun.tools.javac.main.JavaCompiler;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Options;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.JavaUtil;
+import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.info.ClassGenerationInfo;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
 import saker.java.compiler.impl.compile.handler.invoker.InternalIncrementalCompilationInvokerBase;
@@ -93,10 +97,40 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 
 		Arguments args = Arguments.instance(context);
 		java.util.List<String> options = ObjectUtils.newArrayList(director.getOptions());
+		String sourceversionname = CompilationHandler
+				.sourceVersionToParameterString(director.getSourceVersionOptionName());
+		String targetversionname = CompilationHandler
+				.sourceVersionToParameterString(director.getTargetVersionOptionName());
 		if (JavaTools.getCurrentJavaMajorVersion() < 11) {
 			options.remove("--enable-preview");
 		}
+
+		Options opt = Options.instance(context);
+
+		//put the version options and query the corresponding instances
+		//as they cache themselves with other keys
+		//remove them as well to avoid validation conflicts with --release
+		if (sourceversionname != null) {
+			opt.put(Option.SOURCE, sourceversionname);
+			Source.instance(context);
+			opt.remove(Option.SOURCE.primaryName);
+		}
+		if (targetversionname != null) {
+			opt.put(Option.TARGET, targetversionname);
+			Target.instance(context);
+			opt.remove(Option.TARGET.primaryName);
+		}
+
 		args.init("saker-with-javac", options, null, null);
+
+		//put the source and target options again as they might've been overwritten
+		if (sourceversionname != null) {
+			opt.put(Option.SOURCE, sourceversionname);
+		}
+		if (targetversionname != null) {
+			opt.put(Option.TARGET, sourceversionname);
+		}
+
 		//XXX we may need to call args.validate(), however it is fine to not do it
 
 		final JavaCompiler javac = JavaCompiler.instance(context);

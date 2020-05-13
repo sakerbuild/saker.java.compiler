@@ -312,6 +312,9 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 	//true by default
 	private boolean allowCommandLineBootClassPath = true;
 
+	private String sourceVersionOptionName;
+	private String targetVersionOptionName;
+
 	public IncrementalCompilationDirector(TaskContext taskContext, JavaCompilerInvocationContext invocationContext,
 			JavaCompilationInvoker invoker) {
 		this.taskContext = taskContext;
@@ -337,7 +340,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			NavigableMap<String, SakerPath> processorInputLocations,
 			SignatureNameChecker methodParameterNameChangeChecker, String moduleMainClass, String prevModuleMainClass,
 			String moduleVersion, String prevModuleVersion, boolean noCommandLineClassPath,
-			boolean allowcommandlinebootclasspath) {
+			boolean allowcommandlinebootclasspath, String sourceVersionName, String targetVersionName) {
 		this.presentSourceFilePaths = presentSourceFilePaths;
 		this.prevSourceFileDatas = prevSourceFileDatas;
 		this.unaddedGeneratedSourceFileDatas = unaddedGeneratedSourceFileDatas;
@@ -360,6 +363,8 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		this.prevModuleVersion = prevModuleVersion;
 		this.noCommandLineClassPath = noCommandLineClassPath;
 		this.allowCommandLineBootClassPath = allowcommandlinebootclasspath;
+		this.sourceVersionOptionName = sourceVersionName;
+		this.targetVersionOptionName = targetVersionName;
 
 		this.infoPutClassFiles = new ConcurrentSkipListMap<>(prevClassFileDatas);
 
@@ -1524,6 +1529,16 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 	@Override
 	public boolean isAnyErrorRaised() {
 		return errorRaised || anyProcessingException != null;
+	}
+
+	@Override
+	public String getSourceVersionOptionName() {
+		return sourceVersionOptionName;
+	}
+
+	@Override
+	public String getTargetVersionOptionName() {
+		return targetVersionOptionName;
 	}
 
 	private class IncrementalRoundEnvironment implements SakerRoundEnvironment {

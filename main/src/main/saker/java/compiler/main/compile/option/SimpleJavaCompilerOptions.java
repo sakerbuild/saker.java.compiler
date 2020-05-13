@@ -56,6 +56,7 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 	protected Map<String, SDKDescriptionTaskOption> sdks;
 	protected Boolean parameterNames;
 	protected Collection<String> debugInfo;
+	protected Boolean allowTargetReleaseMismatch;
 
 	public SimpleJavaCompilerOptions() {
 	}
@@ -87,6 +88,7 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 		this.buildIncremental = copy.getBuildIncremental();
 		this.parameterNames = copy.getParameterNames();
 		this.debugInfo = JavaTaskUtils.makeImmutableIgnoreCaseNullableStringCollection(copy.getDebugInfo());
+		this.allowTargetReleaseMismatch = copy.getAllowTargetReleaseMismatch();
 	}
 
 	public SimpleJavaCompilerOptions(JavaCompilerOptions base, JavaCompilerOptions merge)
@@ -258,6 +260,10 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 			NavigableSet<String> ndebuginfo = JavaTaskUtils.newIgnoreCaseNullableStringCollection(this.getDebugInfo());
 			ndebuginfo.addAll(odebuginfo);
 			this.setDebugInfo(ndebuginfo);
+		}
+
+		if (Boolean.TRUE.equals(merge.getAllowTargetReleaseMismatch())) {
+			this.setAllowTargetReleaseMismatch(true);
 		}
 	}
 
@@ -457,6 +463,15 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 
 	public void setDebugInfo(Collection<String> debugInfo) {
 		this.debugInfo = debugInfo;
+	}
+
+	@Override
+	public Boolean getAllowTargetReleaseMismatch() {
+		return allowTargetReleaseMismatch;
+	}
+
+	public void setAllowTargetReleaseMismatch(Boolean allowTargetReleaseMismatch) {
+		this.allowTargetReleaseMismatch = allowTargetReleaseMismatch;
 	}
 
 	@Override

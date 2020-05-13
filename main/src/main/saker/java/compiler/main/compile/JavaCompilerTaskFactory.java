@@ -175,6 +175,9 @@ import testing.saker.java.compiler.TestFlag;
 @NestParameterInformation(value = "BuildIncremental",
 		info = @NestInformation(TaskDocs.COMPILE_BUILD_INCREMENTAL),
 		type = @NestTypeUsage(boolean.class))
+@NestParameterInformation(value = "AllowTargetReleaseMismatch",
+		info = @NestInformation(TaskDocs.COMPILE_ALLOW_TARGET_RELEASE_MISMATCH),
+		type = @NestTypeUsage(boolean.class))
 public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
 
@@ -264,6 +267,9 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 		@SakerInput(value = { TaskDocs.PARAM_NAME_COMPILER_OPTIONS })
 		public Collection<JavaCompilerOptions> compilerOptions = Collections.emptyList();
 
+		@SakerInput(value = { "AllowTargetReleaseMismatch" })
+		public Boolean allowTargetReleaseMismatchOption;
+
 		@Override
 		public Object run(TaskContext taskcontext) throws Exception {
 			if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
@@ -300,6 +306,7 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 			options.setBuildIncremental(this.buildIncrementalOption);
 			options.setDebugInfo(debugInfoOption);
 			options.setParameterNames(parameterNamesOption);
+			options.setAllowTargetReleaseMismatch(allowTargetReleaseMismatchOption);
 
 			return runPass(taskcontext, options,
 					ObjectUtils.cloneArrayList(compilerOptions, SimpleJavaCompilerOptions::new));
@@ -331,6 +338,9 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 			SakerPath workingdirpath = taskcontext.getTaskWorkingDirectoryPath();
 
 			JavaCompilationTaskBuilder taskbuilder = JavaCompilationTaskBuilder.newBuilder();
+			if (Boolean.TRUE.equals(p.getAllowTargetReleaseMismatch())) {
+				taskbuilder.setAllowTargetReleaseMismatch(true);
+			}
 
 			if (passid != null) {
 				taskbuilder.setCompilationIdentifier(passid);

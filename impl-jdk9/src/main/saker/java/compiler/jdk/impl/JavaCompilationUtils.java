@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -198,6 +199,17 @@ public class JavaCompilationUtils {
 		@Override
 		public void setPathFactory(PathFactory f) {
 			fileManager.setPathFactory(f);
+		}
+
+		@Override
+		public boolean handleOption(String current, Iterator<String> remaining) {
+			if ("--system".equals(current)) {
+				//DONT ALLOW SETTING THE --system OPTION
+				//this is called on JDK 9 in the Arguments.handleReleaseOptions function automatically
+				//and messes up the system module path
+				return false;
+			}
+			return super.handleOption(current, remaining);
 		}
 	}
 }

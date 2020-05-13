@@ -439,10 +439,7 @@ testexport(
 }
 test(
 	in jre = saker.java.sdk(8),
-	in testclasses = [
-		testing.saker.java.compiler.tests.tasks.**.*Test,
-		testing.saker.java.compiler.tests.only.jdk8.**.*Test,
-	],
+	in testclasses,
 ){
 	$testexport = include(testexport)
 	$testapi = $testexport[testapi]
@@ -498,7 +495,7 @@ test(
 		},
 		TestInvokerParameters: {
 			SakerJarPath: std.file.mirror($testapi[instrumentedjar]),
-			TimeoutMillis: 120000,
+			TimeoutMillis: 240000,
 			TestsBaseBuildDirectory: std.file.mirror.path(std.file.place(test/build)),
 		},
 		IgnoreFileChanges: [
