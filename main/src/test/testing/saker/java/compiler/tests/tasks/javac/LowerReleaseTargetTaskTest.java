@@ -32,6 +32,12 @@ import testing.saker.build.tests.EnvironmentTestCaseConfiguration;
 import testing.saker.java.compiler.JavaCompilerVariablesMetricEnvironmentTaskTestCase;
 import testing.saker.java.compiler.tests.JavaCompilerTestUtils;
 
+/**
+ * <h1>TARGET SHOULDNT BE GREATER THAN RELEASE.</h1>
+ * <p>
+ * Otherwise errors may be thrown such as <code>Unable to find method makeConcatWithConstants</code> when target is 9
+ * and release is 8.
+ */
 @SakerTest
 public class LowerReleaseTargetTaskTest extends JavaCompilerVariablesMetricEnvironmentTaskTestCase {
 	//the test also tests that the ClassPath parameter still works correctly with all the file manager machination
@@ -51,8 +57,7 @@ public class LowerReleaseTargetTaskTest extends JavaCompilerVariablesMetricEnvir
 		final int minmajor = 7;
 		for (int release = runtimemajor; release >= 8; --release) {
 			for (int source = Math.min(release + 1, runtimemajor); source >= minmajor; --source) {
-				for (int target = Math.min(Math.max(source + 1, release + 1),
-						runtimemajor); target >= minmajor; --target) {
+				for (int target = Math.min(source + 1, Math.min(runtimemajor, release)); target >= minmajor; --target) {
 					int expectedversion = target + 44;
 					Integer actualsrc = source;
 					StringBuilder dirsbuilder = new StringBuilder();

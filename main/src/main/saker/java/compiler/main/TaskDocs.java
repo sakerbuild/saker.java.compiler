@@ -189,6 +189,8 @@ public class TaskDocs {
 			+ "WARNING: Using this flag may cause your class files to be binary incompatible with the platform you intend to "
 			+ "run it on. This flag uses undocumented javac API to trick it into generating bytecode for different versions than "
 			+ "it's used to. Using this may cause crashes in your application in unexpected ways.\n"
+			+ "WARNING: The specified TargetVersion shouldn't be greater than the --release version. Compilation may result in error if you target "
+			+ "a more recent release than the specified --release.\n"
 			+ "WARNING: Other general incompatibility errors may occurr if you intend to use bytecode instructions on older Java releases where they "
 			+ "don't exist.\n"
 			+ "By setting this to true, the compile task will directly set the specified TargetVersion, SourceVersion and --release parameter values "
