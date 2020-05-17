@@ -34,6 +34,7 @@ import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.compile.handler.diagnostic.DiagnosticEntry;
 import saker.java.compiler.impl.compile.handler.invoker.ProcessorDetails;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
@@ -594,11 +595,7 @@ public interface CompilationInfo extends Serializable {
 
 	public String getJreVersion();
 
-	public String getModuleMainClass();
+	public OutputBytecodeManipulationOption getBytecodeManipulation();
 
-	public void setModuleMainClass(String moduleMainClass);
-
-	public String getModuleVersion();
-
-	public void setModuleVersion(String moduleVersion);
+	public void setBytecodeManipulation(OutputBytecodeManipulationOption bytecodeManipulation);
 }

@@ -547,6 +547,9 @@ public abstract class CompilationHandler {
 			case CompilationHandler.URI_SCHEME_INPUT: {
 				return SakerPath.valueOf(uri.getSchemeSpecificPart());
 			}
+			case "jrt":{
+				return SakerPath.valueOf(uri.toString());
+			}
 			default: {
 				throw new IllegalArgumentException("Failed to convert URI to path: " + uri);
 			}

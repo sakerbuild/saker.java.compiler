@@ -189,7 +189,7 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 				compilationhandler.setPassOptions(sourceVersionName, targetVersionName, parallelProcessing,
 						javasdkreference, parameters, classPath, modulePath, annotationProcessorOptions,
 						processorreferences, addExports, bootClassPath, suppressWarnings, processorInputLocations,
-						moduleMainClass, moduleVersion, sdkrefs, parameterNames, debugInfo);
+						bytecodeManipulation, sdkrefs, parameterNames, debugInfo);
 
 				//TODO remove using the present output generated resource files
 				compilationhandler.setPresentOutputGeneratedResourceFiles(

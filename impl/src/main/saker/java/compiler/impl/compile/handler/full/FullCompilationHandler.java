@@ -77,6 +77,7 @@ import saker.java.compiler.impl.compile.handler.ProcessorCreationContextImpl;
 import saker.java.compiler.impl.compile.handler.incremental.RemoteCompiler;
 import saker.java.compiler.impl.compile.handler.incremental.RemoteJavaCompilerCacheKey;
 import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.options.SimpleJavaSourceDirectoryOption;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
 import saker.sdk.support.api.SDKPathReference;
@@ -122,8 +123,7 @@ public class FullCompilationHandler extends CompilationHandler {
 	private ContentDescriptor implementationHash;
 	private ContentDescriptor abiVersionKeyHash;
 	private NavigableMap<String, SakerPath> processorInputLocations;
-	private String moduleMainClass;
-	private String moduleVersion;
+	private OutputBytecodeManipulationOption bytecodeManipulation;
 
 	private String outModuleName;
 	private NavigableMap<String, SDKReference> sdkReferences;
@@ -145,11 +145,11 @@ public class FullCompilationHandler extends CompilationHandler {
 			JavaModulePath modulepath, Map<String, String> annotationprocessoroptions,
 			Collection<JavaAnnotationProcessor> annotationprocessors, Collection<JavaAddExports> addexports,
 			JavaClassPath bootclasspath, NavigableMap<SakerPath, SakerFile> sourcefiles,
-			NavigableMap<String, SakerPath> processorInputLocations, String moduleMainClass, String moduleVersion,
-			NavigableMap<String, SDKReference> sdkrefs, boolean parameterNames, Set<String> debugInfos) {
+			NavigableMap<String, SakerPath> processorInputLocations,
+			OutputBytecodeManipulationOption bytecodeManipulation, NavigableMap<String, SDKReference> sdkrefs,
+			boolean parameterNames, Set<String> debugInfos) {
 		this.sourceFiles = sourcefiles;
-		this.moduleMainClass = moduleMainClass;
-		this.moduleVersion = moduleVersion;
+		this.bytecodeManipulation = bytecodeManipulation;
 		this.sdkReferences = sdkrefs;
 		this.parameterNames = parameterNames;
 		this.debugInfos = debugInfos;
@@ -401,7 +401,7 @@ public class FullCompilationHandler extends CompilationHandler {
 		FullCompilationDirector director = new FullCompilationDirector(invoker);
 		director.setOptions(taskContext, outputClassDirectory, outputNativeHeaderDirectory, outputSourceDirectory,
 				outputResourceDirectory, generateNativeHeaders, options, processors, sourceFiles,
-				processorInputLocations, moduleMainClass, moduleVersion, nocmdlineclasspath,
+				processorInputLocations, bytecodeManipulation, nocmdlineclasspath,
 				allowcommandlinebootclasspath);
 		director.invokeCompilation();
 		this.outputFileContents = director.getOutputFileContents();

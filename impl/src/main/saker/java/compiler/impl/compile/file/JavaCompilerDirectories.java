@@ -60,6 +60,7 @@ import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths.IncrementalDirectoryLocation.IncrementalDirectoryFile;
 import saker.java.compiler.impl.compile.handler.ExternalizableLocation;
 import saker.java.compiler.impl.compile.handler.invoker.IncrementalCompilationDirector;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassWriter;
@@ -78,8 +79,7 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 	private ConcurrentNavigableMap<String, SakerFile> outputClassFiles = new ConcurrentSkipListMap<>();
 	private ConcurrentNavigableMap<SakerPath, SakerFile> allOutputFiles = new ConcurrentSkipListMap<>();
 
-	private String moduleMainClassInjectValue = null;
-	private String moduleVersionInjectValue = null;
+	private OutputBytecodeManipulationOption bytecodeManipulation = null;
 
 	private NavigableMap<String, IncrementalDirectoryLocation> modulePathLocations = new TreeMap<>();
 
@@ -127,12 +127,8 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		}
 	}
 
-	public void setModuleMainClassInjectValue(String moduleMainClassInjectValue) {
-		this.moduleMainClassInjectValue = moduleMainClassInjectValue;
-	}
-
-	public void setModuleVersionInjectValue(String moduleVersionInjectValue) {
-		this.moduleVersionInjectValue = moduleVersionInjectValue;
+	public void setBytecodeManipulation(OutputBytecodeManipulationOption bytecodeManipulation) {
+		this.bytecodeManipulation = bytecodeManipulation;
 	}
 
 	@Override
@@ -264,10 +260,9 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		dir = SakerPathFiles.resolveDirectoryAtRelativePathNamesCreate(dir,
 				ImmutableUtils.unmodifiableArrayList(split, 0, split.length - 1));
 		SakerFile mfile;
-		if (isAnyModuleAttributeInjected() && "module-info".equals(classname) && ".class".equals(extension)
-				&& location.equals(ExternalizableLocation.LOCATION_CLASS_OUTPUT)) {
-			mfile = new ModuleAttributeInjectLazyByteArraySakerFile(split[split.length - 1], moduleMainClassInjectValue,
-					moduleVersionInjectValue, output);
+		if (".class".equals(extension) && location.equals(ExternalizableLocation.LOCATION_CLASS_OUTPUT)) {
+			mfile = new BytecodeManipulationLazyByteArraySakerFile(split[split.length - 1], bytecodeManipulation,
+					output);
 		} else {
 			mfile = new LazyByteArraySakerFile(split[split.length - 1], output);
 		}
@@ -278,10 +273,6 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		}
 		allOutputFiles.put(resultpath, mfile);
 		return resultpath;
-	}
-
-	private boolean isAnyModuleAttributeInjected() {
-		return moduleMainClassInjectValue != null || moduleVersionInjectValue != null;
 	}
 
 	@Override
@@ -312,21 +303,66 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		return allOutputFiles;
 	}
 
-	private static class ModuleAttributeInjectLazyByteArraySakerFile extends LazyByteArraySakerFile {
-		protected ModuleAttributeInjectLazyByteArraySakerFile(String name, String mainclassname, String moduleversion,
-				OutputFileObject output) throws NullPointerException, InvalidPathFormatException {
-			super(name, toRewritingSupplier(mainclassname, moduleversion, output));
+	private static class BytecodeManipulationLazyByteArraySakerFile extends LazyByteArraySakerFile {
+		protected BytecodeManipulationLazyByteArraySakerFile(String name,
+				OutputBytecodeManipulationOption bytecodeManipulation, OutputFileObject output)
+				throws NullPointerException, InvalidPathFormatException {
+			super(name, toRewritingSupplier(name, bytecodeManipulation, output));
 		}
 
-		private static Supplier<ByteArrayRegion> toRewritingSupplier(String mainclassname, String moduleversion,
-				OutputFileObject output) {
-			return LazySupplier.of(() -> {
-				ByteArrayRegion bytes = output.getOutputBytes();
-				ClassReader reader = new ClassReader(bytes.getArray(), bytes.getOffset(), bytes.getLength());
-				ClassWriter writer = new ClassWriter(reader, 0);
-				reader.accept(new ModuleMainClassInjectorClassVisitor(writer, mainclassname, moduleversion), 0);
-				return ByteArrayRegion.wrap(writer.toByteArray());
-			});
+		private static void patchEnablePreview(ByteArrayRegion cfbytes, boolean patch) {
+			if (patch) {
+				patchEnablePreviewImpl(cfbytes);
+			}
+		}
+
+		private static void patchEnablePreviewImpl(ByteArrayRegion cfbytes) {
+			//should start with
+			//u4             magic; 0xcafebabe
+			//u2             minor_version;
+			//u2             major_version;
+			if (cfbytes.getLength() < 8) {
+				//not enough bytes? what? shouldn't ever happen, just a sanity check
+				return;
+			}
+			byte[] array = cfbytes.getArray();
+			//change 0xFFFF minor to 0x0000
+			if (array[4] == (byte) 0xFF && array[5] == (byte) 0xFF) {
+				array[4] = 0;
+				array[5] = 0;
+			}
+		}
+
+		private static Supplier<ByteArrayRegion> toRewritingSupplier(String name,
+				OutputBytecodeManipulationOption bytecodeManipulation, OutputFileObject output) {
+			if (bytecodeManipulation == null) {
+				return LazySupplier.of(output::getOutputBytes);
+			}
+			boolean patchenablepreview = bytecodeManipulation.isPatchEnablePreview();
+			Supplier<ByteArrayRegion> supplier = LazySupplier.of(output::getOutputBytes);
+			if ("module-info.class".equals(name)) {
+				String moduleMainClassInjectValue = bytecodeManipulation.getModuleMainClassInjectValue();
+				String moduleVersionInjectValue = bytecodeManipulation.getModuleVersionInjectValue();
+				if (moduleMainClassInjectValue != null || moduleVersionInjectValue != null) {
+					return LazySupplier.of(() -> {
+						ByteArrayRegion bytes = output.getOutputBytes();
+						patchEnablePreview(bytes, patchenablepreview);
+						ClassReader reader = new ClassReader(bytes.getArray(), bytes.getOffset(), bytes.getLength());
+						ClassWriter writer = new ClassWriter(reader, 0);
+						reader.accept(new ModuleMainClassInjectorClassVisitor(writer, moduleMainClassInjectValue,
+								moduleVersionInjectValue), 0);
+						return ByteArrayRegion.wrap(writer.toByteArray());
+					});
+				}
+			}
+			if (patchenablepreview) {
+				return LazySupplier.of(() -> {
+					ByteArrayRegion bytes = output.getOutputBytes();
+					patchEnablePreviewImpl(bytes);
+					return bytes;
+				});
+			}
+			return supplier;
 		}
 	}
 

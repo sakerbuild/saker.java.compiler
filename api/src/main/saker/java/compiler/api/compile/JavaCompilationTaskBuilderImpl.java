@@ -46,6 +46,7 @@ import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.FullWorkerJavaCompilerTaskFactory;
 import saker.java.compiler.impl.compile.IncrementalWorkerJavaCompilerTaskFactory;
 import saker.java.compiler.impl.compile.WorkerJavaCompilerTaskFactoryBase;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.options.SimpleAddExportsPath;
 import saker.java.compiler.impl.options.SimpleAnnotationProcessorReferenceOption;
 import saker.java.compiler.impl.options.SimpleJavaSourceDirectoryOption;
@@ -89,6 +90,7 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 	protected NavigableSet<String> debugInfo;
 
 	protected boolean allowTargetReleaseMismatch;
+	protected boolean patchEnablePreview;
 
 	public JavaCompilationTaskBuilderImpl() {
 	}
@@ -259,6 +261,11 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 	}
 
 	@Override
+	public void setPatchEnablePreview(boolean enabled) {
+		this.patchEnablePreview = enabled;
+	}
+
+	@Override
 	public void setParameterNames(Boolean parameterNames) {
 		this.parameterNames = ObjectUtils.defaultize(parameterNames, true);
 	}
@@ -327,8 +334,12 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 			workertask.setProcessorInputLocations(processorInputLocations);
 			workertask.setAnnotationProcessorOptions(annotationProcessorOptions);
 		}
-		workertask.setModuleMainClass(moduleMainClass);
-		workertask.setModuleVersion(moduleVersion);
+		OutputBytecodeManipulationOption bytecodemanip = new OutputBytecodeManipulationOption();
+		bytecodemanip.setModuleMainClassInjectValue(moduleMainClass);
+		bytecodemanip.setModuleVersionInjectValue(moduleVersion);
+		bytecodemanip.setPatchEnablePreview(this.patchEnablePreview && parameters.contains("--enable-preview"));
+		workertask.setBytecodeManipulation(bytecodemanip);
+
 		workertask.setAddExports(addExports);
 		workertask.setGenerateNativeHeaders(generateNativeHeaders);
 		workertask.setParameterNames(parameterNames);

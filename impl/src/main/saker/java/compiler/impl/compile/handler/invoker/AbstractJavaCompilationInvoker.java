@@ -38,12 +38,12 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.SourcePositions;
 import com.sun.source.util.Trees;
+import com.sun.tools.javac.api.JavacTool;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
-import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.compile.file.JavaCompilerJavaFileObject;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.diagnostic.CompilerDiagnosticListener;
@@ -98,8 +98,8 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 	@Override
 	public void initCompilation(JavaCompilerInvocationDirector director) throws IOException {
 		this.director = director;
-		this.fileManager = JavaCompilationUtils.createFileManager(JavaTools.getSystemJavaCompiler()
-				.getStandardFileManager(getDiagnosticListener(), null, StandardCharsets.UTF_8),
+		this.fileManager = JavaCompilationUtils.createFileManager(
+				JavacTool.create().getStandardFileManager(getDiagnosticListener(), null, StandardCharsets.UTF_8),
 				director.getDirectoryPaths());
 	}
 

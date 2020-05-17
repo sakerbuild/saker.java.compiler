@@ -57,6 +57,7 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 	protected Boolean parameterNames;
 	protected Collection<String> debugInfo;
 	protected Boolean allowTargetReleaseMismatch;
+	protected Boolean patchEnablePreview;
 
 	public SimpleJavaCompilerOptions() {
 	}
@@ -89,6 +90,7 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 		this.parameterNames = copy.getParameterNames();
 		this.debugInfo = JavaTaskUtils.makeImmutableIgnoreCaseNullableStringCollection(copy.getDebugInfo());
 		this.allowTargetReleaseMismatch = copy.getAllowTargetReleaseMismatch();
+		this.parallelProcessing = copy.getPatchEnablePreview();
 	}
 
 	public SimpleJavaCompilerOptions(JavaCompilerOptions base, JavaCompilerOptions merge)
@@ -264,6 +266,9 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 
 		if (Boolean.TRUE.equals(merge.getAllowTargetReleaseMismatch())) {
 			this.setAllowTargetReleaseMismatch(true);
+		}
+		if (Boolean.TRUE.equals(merge.getPatchEnablePreview())) {
+			this.setPatchEnablePreview(true);
 		}
 	}
 
@@ -472,6 +477,15 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 
 	public void setAllowTargetReleaseMismatch(Boolean allowTargetReleaseMismatch) {
 		this.allowTargetReleaseMismatch = allowTargetReleaseMismatch;
+	}
+
+	@Override
+	public Boolean getPatchEnablePreview() {
+		return patchEnablePreview;
+	}
+
+	public void setPatchEnablePreview(Boolean patchEnablePreview) {
+		this.patchEnablePreview = patchEnablePreview;
 	}
 
 	@Override

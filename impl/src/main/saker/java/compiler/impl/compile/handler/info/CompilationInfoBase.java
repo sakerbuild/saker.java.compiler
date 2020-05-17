@@ -37,6 +37,7 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.compile.handler.diagnostic.DiagnosticEntry;
 import saker.java.compiler.impl.compile.handler.invoker.ProcessorDetails;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
@@ -74,8 +75,7 @@ public abstract class CompilationInfoBase implements CompilationInfo, Externaliz
 	private Object abiVersionKey;
 	private Object implementationVersionKey;
 
-	private String moduleMainClass;
-	private String moduleVersion;
+	private OutputBytecodeManipulationOption bytecodeManipulation;
 
 	public CompilationInfoBase() {
 	}
@@ -357,23 +357,13 @@ public abstract class CompilationInfoBase implements CompilationInfo, Externaliz
 	}
 
 	@Override
-	public void setModuleMainClass(String moduleMainClass) {
-		this.moduleMainClass = moduleMainClass;
+	public OutputBytecodeManipulationOption getBytecodeManipulation() {
+		return bytecodeManipulation;
 	}
 
 	@Override
-	public String getModuleMainClass() {
-		return moduleMainClass;
-	}
-
-	@Override
-	public void setModuleVersion(String moduleVersion) {
-		this.moduleVersion = moduleVersion;
-	}
-
-	@Override
-	public String getModuleVersion() {
-		return moduleVersion;
+	public void setBytecodeManipulation(OutputBytecodeManipulationOption bytecodeManipulation) {
+		this.bytecodeManipulation = bytecodeManipulation;
 	}
 
 	@Override
@@ -394,8 +384,7 @@ public abstract class CompilationInfoBase implements CompilationInfo, Externaliz
 		out.writeObject(moduleFileData);
 		out.writeObject(abiVersionKey);
 		out.writeObject(implementationVersionKey);
-		out.writeObject(moduleMainClass);
-		out.writeObject(moduleVersion);
+		out.writeObject(bytecodeManipulation);
 
 		SerialUtils.writeExternalCollection(out, compilationModuleSet);
 
@@ -421,8 +410,7 @@ public abstract class CompilationInfoBase implements CompilationInfo, Externaliz
 		moduleFileData = (ClassHoldingData) in.readObject();
 		abiVersionKey = in.readObject();
 		implementationVersionKey = in.readObject();
-		moduleMainClass = (String) in.readObject();
-		moduleVersion = (String) in.readObject();
+		bytecodeManipulation = SerialUtils.readExternalObject(in);
 
 		compilationModuleSet = SerialUtils.readExternalSortedImmutableNavigableSet(in);
 

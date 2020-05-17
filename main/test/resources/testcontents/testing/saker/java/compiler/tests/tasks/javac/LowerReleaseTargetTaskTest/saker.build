@@ -6,5 +6,7 @@ build {
 		TargetVersion: TARGET,
 		Identifier: c_rRELEASE_sSOURCE_tTARGET,
 		AllowTargetReleaseMismatch: true,
+		
+		ClassPath: mpath.jar,
 	)
 }

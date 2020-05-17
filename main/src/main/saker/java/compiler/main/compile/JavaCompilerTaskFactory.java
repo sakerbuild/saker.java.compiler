@@ -178,6 +178,9 @@ import testing.saker.java.compiler.TestFlag;
 @NestParameterInformation(value = "AllowTargetReleaseMismatch",
 		info = @NestInformation(TaskDocs.COMPILE_ALLOW_TARGET_RELEASE_MISMATCH),
 		type = @NestTypeUsage(boolean.class))
+@NestParameterInformation(value = "PatchEnablePreview",
+		info = @NestInformation(TaskDocs.COMPILE_PATCH_ENABLE_PREVIEW),
+		type = @NestTypeUsage(boolean.class))
 public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 	private static final long serialVersionUID = 1L;
 
@@ -270,6 +273,9 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 		@SakerInput(value = { "AllowTargetReleaseMismatch" })
 		public Boolean allowTargetReleaseMismatchOption;
 
+		@SakerInput(value = { "PatchEnablePreview" })
+		public Boolean patchEnablePreviewOption;
+
 		@Override
 		public Object run(TaskContext taskcontext) throws Exception {
 			if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
@@ -307,6 +313,7 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 			options.setDebugInfo(debugInfoOption);
 			options.setParameterNames(parameterNamesOption);
 			options.setAllowTargetReleaseMismatch(allowTargetReleaseMismatchOption);
+			options.setPatchEnablePreview(patchEnablePreviewOption);
 
 			return runPass(taskcontext, options,
 					ObjectUtils.cloneArrayList(compilerOptions, SimpleJavaCompilerOptions::new));
@@ -338,10 +345,6 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 			SakerPath workingdirpath = taskcontext.getTaskWorkingDirectoryPath();
 
 			JavaCompilationTaskBuilder taskbuilder = JavaCompilationTaskBuilder.newBuilder();
-			if (Boolean.TRUE.equals(p.getAllowTargetReleaseMismatch())) {
-				taskbuilder.setAllowTargetReleaseMismatch(true);
-			}
-
 			if (passid != null) {
 				taskbuilder.setCompilationIdentifier(passid);
 			} else {
@@ -396,6 +399,12 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 			taskbuilder.setModulePath(JavaTaskOptionUtils.createModulePath(taskcontext, p.getModulePath()));
 			taskbuilder.setParameterNames(p.getParameterNames());
 			taskbuilder.setDebugInfo(p.getDebugInfo());
+			if (Boolean.TRUE.equals(p.getAllowTargetReleaseMismatch())) {
+				taskbuilder.setAllowTargetReleaseMismatch(true);
+			}
+			if (Boolean.TRUE.equals(p.getPatchEnablePreview())) {
+				taskbuilder.setPatchEnablePreview(true);
+			}
 			Collection<? extends AddExportsPathTaskOption> addexports = p.getAddExports();
 			if (!ObjectUtils.isNullOrEmpty(addexports)) {
 				Collection<JavaAddExports> setaddexports = new HashSet<>();

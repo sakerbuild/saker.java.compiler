@@ -15,7 +15,6 @@
  */
 package saker.java.compiler.api.processor;
 
-import saker.build.runtime.environment.EnvironmentProperty;
 import saker.build.runtime.environment.SakerEnvironment;
 
 /**
@@ -33,8 +32,11 @@ public interface ProcessorCreationContext {
 	/**
 	 * Gets the build environment.
 	 * <p>
-	 * The callers should only use the {@link SakerEnvironment#getEnvironmentPropertyCurrentValue(EnvironmentProperty)}
-	 * if they already reported a dependency to it when the processor creator was created.
+	 * Callers shouldn't expect the returned build environment to have any specific properties that they previously
+	 * retrieved.
+	 * <p>
+	 * The processor creation may run on completely different build environment than the one that was used to
+	 * instantiate the {@link ProcessorCreator} itself.
 	 * 
 	 * @return The environment.
 	 */

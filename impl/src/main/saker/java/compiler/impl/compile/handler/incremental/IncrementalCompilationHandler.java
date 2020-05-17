@@ -135,6 +135,7 @@ import saker.java.compiler.impl.compile.signature.change.member.MethodAddedABICh
 import saker.java.compiler.impl.compile.signature.change.member.MethodRemovedABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.NamedMethodModifiedABIChange;
 import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.options.SimpleJavaSourceDirectoryOption;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
 import saker.java.compiler.impl.signature.element.AnnotatedSignature;
@@ -346,13 +347,11 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 	private CompilationInfo resultCompilationInfo;
 
 	private SignatureNameChecker methodParameterNameChangeChecker;
-	private String prevModuleMainClass;
-	private String moduleMainClass;
-	private String prevModuleVersion;
-	private String moduleVersion;
 	private Set<ClassPathIDEConfigurationEntry> classPathIdeConfigurationEntries = new LinkedHashSet<>();
 	private Set<ClassPathIDEConfigurationEntry> bootClassPathIdeConfigurationEntries = new LinkedHashSet<>();
 	private Set<ModulePathIDEConfigurationEntry> modulePathIdeConfigurationEntries = new LinkedHashSet<>();
+	private OutputBytecodeManipulationOption prevBytecodeManipulation;
+	private OutputBytecodeManipulationOption bytecodeManipulation;
 
 	private String outModuleName;
 	private NavigableMap<String, SDKReference> sdkReferences;
@@ -383,10 +382,10 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 			JavaModulePath modulepath, Map<String, String> annotationprocessoroptions,
 			Collection<JavaAnnotationProcessor> annotationprocessors, Collection<JavaAddExports> addexports,
 			JavaClassPath bootclasspath, Collection<String> suppresswarnings,
-			NavigableMap<String, SakerPath> processorInputLocations, String moduleMainClass, String moduleVersion,
-			NavigableMap<String, SDKReference> sdkrefs, boolean parameterNames, Set<String> debugInfos) {
-		this.moduleMainClass = moduleMainClass;
-		this.moduleVersion = moduleVersion;
+			NavigableMap<String, SakerPath> processorInputLocations,
+			OutputBytecodeManipulationOption bytecodeManipulation, NavigableMap<String, SDKReference> sdkrefs,
+			boolean parameterNames, Set<String> debugInfos) {
+		this.bytecodeManipulation = bytecodeManipulation;
 		this.sdkReferences = sdkrefs;
 		this.parameterNames = parameterNames;
 		this.debugInfos = debugInfos;
@@ -455,8 +454,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 		this.prevLocalModulePathStateInfos = emptymap;
 		this.prevCompilationModuleSet = new TreeSet<>();
 		this.prevDiagnosticEntries = new HashSet<>();
-		this.prevModuleMainClass = null;
-		this.prevModuleVersion = null;
+		this.prevBytecodeManipulation = null;
 	}
 
 	private void clearOutputDirectories() {
@@ -716,8 +714,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 				deltatriggeredprocessors, prevProcessorDetails, unaddedGeneratedResourceFileDatas, classpathabichanges,
 				processordetailschanged, prevModuleInfoFileData, prevCompilationModuleSet, prevDiagnosticEntries,
 				fileRemover, prevClassFileDatas, processorInputLocations, methodParameterNameChangeChecker,
-				moduleMainClass, prevModuleMainClass, moduleVersion, prevModuleVersion, nocommandlineclasspath,
-				allowcommandlinebootclasspath, sourceVersionName, targetVersionName);
+				bytecodeManipulation, prevBytecodeManipulation, nocommandlineclasspath, allowcommandlinebootclasspath,
+				sourceVersionName, targetVersionName);
 		CompilationInfo result = director.invokeCompilation(units, removedsourcefiles);
 		result.setExecutionClassPathStateInfosSignatures(currentExecutionClassPathStateInfos);
 		result.setLocalClassPathStateInfosSignatures(currentLocalClassPathStateInfos);
@@ -1579,8 +1577,10 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 			this.prevModuleInfoFileData = prevInfo.getModuleClassFile();
 			this.prevCompilationModuleSet = ObjectUtils.cloneTreeSet(prevInfo.getCompilationModuleSet());
 			this.prevDiagnosticEntries = new HashSet<>(prevInfo.getDiagnostics());
-			this.prevModuleMainClass = prevInfo.getModuleMainClass();
-			this.prevModuleVersion = prevInfo.getModuleVersion();
+			this.prevBytecodeManipulation = prevInfo.getBytecodeManipulation();
+			if (!Objects.equals(this.bytecodeManipulation, prevBytecodeManipulation)) {
+				clearForFullCompilation("Bytecode injection options changed.");
+			}
 		}
 
 		//only compare the method parameter names for ABI changes if there are any processors that can use them
@@ -1672,8 +1672,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 
 		try {
 			boolean processordetailschanged = isProcessorsChanged(passProcessorReferences);
-			if (firstroundsourcefiles.isEmpty() && Objects.equals(prevModuleMainClass, moduleMainClass)
-					&& Objects.equals(prevModuleVersion, moduleVersion)) {
+			if (firstroundsourcefiles.isEmpty() && Objects.equals(prevBytecodeManipulation, bytecodeManipulation)) {
 				if (removedsourcefiles.isEmpty() && classpathabichanges.isEmpty() && deltatriggeredprocessors.isEmpty()
 						&& canSkipProcessorRunning(annotationprocessors) && !processordetailschanged) {
 					SakerLog.log().verbose().println("No Java files changed, skipping compilation.");

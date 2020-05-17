@@ -1,0 +1,6 @@
+$first = saker.java.compile(
+	SourceDirectories: first,
+	ModuleMainClass: test.mainclass(),
+	ModuleVersion: test.version(),
+	Identifier: main,
+)

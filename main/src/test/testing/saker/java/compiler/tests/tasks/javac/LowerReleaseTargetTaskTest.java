@@ -15,33 +15,26 @@
  */
 package testing.saker.java.compiler.tests.tasks.javac;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
 
 import saker.build.file.path.SakerPath;
+import saker.build.file.provider.LocalFileProvider;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
+import saker.build.thirdparty.saker.util.io.ByteSink;
+import saker.build.thirdparty.saker.util.io.UnsyncByteArrayOutputStream;
 import saker.build.util.java.JavaTools;
 import testing.saker.SakerTest;
 import testing.saker.build.tests.EnvironmentTestCaseConfiguration;
 import testing.saker.java.compiler.JavaCompilerVariablesMetricEnvironmentTaskTestCase;
 import testing.saker.java.compiler.tests.JavaCompilerTestUtils;
 
-/**
- * <h1>BINARY INCOMPATIBILITY MAY OCCURR IF THE SOURCE VERSION AND THE RELEASE VERSION DON'T BOTH SUPPORT OR DON'T
- * SUPPORT MODULES.</h1>
- * <p>
- * That is, the following should be true for the source and --release versions:
- * 
- * <pre>
- * supportsModules(sourceVersion) == supportsModules(releaseVersion)
- * </pre>
- * <p>
- * Otherwise binary incompatibility may occur. E.g. if the release is 8, and source version is 9, then the
- * {@link ByteBuffer#flip()} method will resolve to the version in Java 9 rather than in Java 8.
- */
 @SakerTest
 public class LowerReleaseTargetTaskTest extends JavaCompilerVariablesMetricEnvironmentTaskTestCase {
+	//the test also tests that the ClassPath parameter still works correctly with all the file manager machination
 
 	@Override
 	protected Set<EnvironmentTestCaseConfiguration> getTestConfigurations() {
@@ -50,13 +43,16 @@ public class LowerReleaseTargetTaskTest extends JavaCompilerVariablesMetricEnvir
 
 	@Override
 	protected void runNestTaskTestImpl() throws Throwable {
+		files.putFile(PATH_WORKING_DIRECTORY.resolve("mpath.jar"), getInitialJarBytes());
+
 		String buildfilestr = files.getAllBytes(PATH_WORKING_DIRECTORY.resolve("saker.build")).toString();
 
 		final int runtimemajor = JavaTools.getCurrentJavaMajorVersion();
+		final int minmajor = 7;
 		for (int release = runtimemajor; release >= 8; --release) {
-			for (int source = Math.min(release + 1, runtimemajor); source >= release - 1; --source) {
-				for (int target = Math.min(Math.max(source + 1, release + 1), runtimemajor); target >= Math
-						.min(source - 1, release - 1); --target) {
+			for (int source = Math.min(release + 1, runtimemajor); source >= minmajor; --source) {
+				for (int target = Math.min(Math.max(source + 1, release + 1),
+						runtimemajor); target >= minmajor; --target) {
 					int expectedversion = target + 44;
 					Integer actualsrc = source;
 					StringBuilder dirsbuilder = new StringBuilder();
@@ -82,8 +78,9 @@ public class LowerReleaseTargetTaskTest extends JavaCompilerVariablesMetricEnvir
 					ByteArrayRegion maincfallbytes = files.getAllBytes(maincfpath);
 					String cfstr = new String(maincfallbytes.copy(), StandardCharsets.US_ASCII);
 
-					//seems like the actual release is determined by taking the greater of source and release
-					if (Math.max(release, source) >= 9) {
+					JavaCompilerTestUtils.assertClassBytesMajorVersion(maincfallbytes, expectedversion);
+
+					if (release >= 9) {
 						assertTrue(cfstr.contains("()Ljava/nio/ByteBuffer;"), cfstr);
 						assertFalse(cfstr.contains("()Ljava/nio/Buffer;"), cfstr);
 					} else {
@@ -91,10 +88,23 @@ public class LowerReleaseTargetTaskTest extends JavaCompilerVariablesMetricEnvir
 						assertFalse(cfstr.contains("()Ljava/nio/ByteBuffer;"), cfstr);
 					}
 
-					JavaCompilerTestUtils.assertClassBytesVersion(maincfallbytes, expectedversion);
 				}
 			}
 		}
+	}
+
+	private ByteArrayRegion getInitialJarBytes() throws IOException {
+		ByteArrayRegion jarbytes;
+		try (UnsyncByteArrayOutputStream baos = new UnsyncByteArrayOutputStream()) {
+			try (JarOutputStream jaros = new JarOutputStream(baos)) {
+
+				jaros.putNextEntry(new ZipEntry("firstpkg/FirstClass.class"));
+				LocalFileProvider.getInstance().writeTo(
+						getWorkingDirectory().resolve("jarfiles/firstpkg/FirstClass.class"), ByteSink.valueOf(jaros));
+			}
+			jarbytes = baos.toByteArrayRegion();
+		}
+		return jarbytes;
 	}
 
 }

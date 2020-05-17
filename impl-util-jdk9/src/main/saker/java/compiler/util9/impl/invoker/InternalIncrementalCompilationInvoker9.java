@@ -15,13 +15,21 @@
  */
 package saker.java.compiler.util9.impl.invoker;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -33,9 +41,14 @@ import javax.lang.model.element.ModuleElement.RequiresDirective;
 import javax.lang.model.element.NestingKind;
 import javax.lang.model.util.Elements;
 import javax.tools.DiagnosticListener;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.ForwardingJavaFileObject;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 
 import com.sun.tools.javac.api.JavacTrees;
 import com.sun.tools.javac.api.MultiTaskListener;
@@ -53,6 +66,8 @@ import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.main.Arguments;
 import com.sun.tools.javac.main.JavaCompiler;
 import com.sun.tools.javac.main.Option;
+import com.sun.tools.javac.platform.PlatformDescription;
+import com.sun.tools.javac.platform.PlatformUtils;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
@@ -65,6 +80,7 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
+import saker.java.compiler.impl.compile.handler.incremental.JavacPrivateAPIError;
 import saker.java.compiler.impl.compile.handler.info.ClassGenerationInfo;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
 import saker.java.compiler.impl.compile.handler.invoker.InternalIncrementalCompilationInvokerBase;
@@ -79,6 +95,7 @@ import saker.java.compiler.impl.signature.element.ModuleSignature.RequiresDirect
 import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignatureParser;
 
 public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalCompilationInvokerBase {
+
 	private static final AtomicReferenceFieldUpdater<InternalIncrementalCompilationInvoker9, ClassHoldingData> ARFU_moduleHoldingFile = AtomicReferenceFieldUpdater
 			.newUpdater(InternalIncrementalCompilationInvoker9.class, ClassHoldingData.class, "moduleHoldingFile");
 
@@ -93,9 +110,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		super.initCompilation(director);
 		context = new Context();
 		context.put(DiagnosticListener.class, getDiagnosticListener());
-		context.put(JavaFileManager.class, fileManager);
 
-		Arguments args = Arguments.instance(context);
 		java.util.List<String> options = ObjectUtils.newArrayList(director.getOptions());
 		String sourceversionname = CompilationHandler
 				.sourceVersionToParameterString(director.getSourceVersionOptionName());
@@ -104,6 +119,104 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		if (JavaTools.getCurrentJavaMajorVersion() < 11) {
 			options.remove("--enable-preview");
 		}
+
+		JavaFileManager putfilemanager = fileManager;
+
+		int releaseidx = options.indexOf("--release");
+		if (releaseidx >= 0) {
+			options.remove(releaseidx);
+			String releaseval = options.remove(releaseidx);
+
+			PlatformDescription platformdesc = PlatformUtils.lookupPlatformDescription(releaseval);
+			if (platformdesc == null) {
+				throw new IllegalArgumentException("Platform not found for --release " + releaseval);
+			}
+			context.put(PlatformDescription.class, platformdesc);
+			if (sourceversionname == null) {
+				sourceversionname = platformdesc.getSourceVersion();
+			}
+			if (targetversionname == null) {
+				targetversionname = platformdesc.getTargetVersion();
+			}
+			int release = Integer.parseInt(releaseval);
+			try {
+				Method getFileManagerMethod = PlatformDescription.class.getMethod("getFileManager");
+				JavaFileManager fm = (JavaFileManager) getFileManagerMethod.invoke(platformdesc);
+				//we are running on java 10 or later
+				//use the file manager
+				putfilemanager = fileManager instanceof StandardJavaFileManager
+						? new DelegatingStandardJavaFileManager(fm, (StandardJavaFileManager) fileManager, release)
+						: new DelegatingJavaFileManager(fm, fileManager, release);
+			} catch (NoSuchMethodException e) {
+				//we're running on Java 9
+				if (release == 9) {
+					//do nothing with the file manager
+				} else if (release < 9) {
+					//release is 8 or lower
+					//set the platform class path
+					try {
+						Method getPlatformPathMethod = PlatformDescription.class.getMethod("getPlatformPath");
+						@SuppressWarnings("unchecked")
+						Collection<? extends Path> platformpaths = (Collection<? extends Path>) getPlatformPathMethod
+								.invoke(platformdesc);
+						((StandardJavaFileManager) fileManager)
+								.setLocationFromPaths(StandardLocation.PLATFORM_CLASS_PATH, platformpaths);
+						putfilemanager = new ForwardingJavaFileManager<JavaFileManager>(fileManager) {
+							@Override
+							public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds,
+									boolean recurse) throws IOException {
+								if (location instanceof StandardLocation) {
+									return super.list(location, packageName, kinds, recurse);
+								}
+								//fall back to the platform class path for any module related things
+								Iterable<JavaFileObject> superresult = super.list(StandardLocation.PLATFORM_CLASS_PATH,
+										packageName, kinds, recurse);
+								//override the Kind of the returned objects as the caller doesn't handle sig files properly on JDK9
+								ArrayList<JavaFileObject> result = new ArrayList<>();
+								for (JavaFileObject jfo : superresult) {
+									result.add(new ClassKindOverridingForwardingJavaFileObject(jfo));
+								}
+								return result;
+							}
+
+							@Override
+							public String inferBinaryName(Location location, JavaFileObject file) {
+								if (file instanceof ClassKindOverridingForwardingJavaFileObject) {
+									return super.inferBinaryName(location,
+											((ClassKindOverridingForwardingJavaFileObject) file).getFileObject());
+								}
+								return super.inferBinaryName(location, file);
+							}
+
+							@Override
+							public boolean isSameFile(FileObject a, FileObject b) {
+								if (a instanceof ClassKindOverridingForwardingJavaFileObject) {
+									a = ((ClassKindOverridingForwardingJavaFileObject) a).getFileObject();
+								}
+								if (b instanceof ClassKindOverridingForwardingJavaFileObject) {
+									b = ((ClassKindOverridingForwardingJavaFileObject) a).getFileObject();
+								}
+								return super.isSameFile(a, b);
+							}
+
+						};
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+							| NoSuchMethodException | SecurityException e1) {
+						e1.addSuppressed(e);
+						throw new JavacPrivateAPIError(e1);
+					}
+				} else {
+					//release is 10 or above
+					//this should not happen as we're running on Java 9
+					//  because the getFileManager method was not found
+					throw new JavacPrivateAPIError(e);
+				}
+			} catch (Exception e) {
+				throw new JavacPrivateAPIError(e);
+			}
+		}
+
+		context.put(JavaFileManager.class, putfilemanager);
 
 		Options opt = Options.instance(context);
 
@@ -121,6 +234,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			opt.remove(Option.TARGET.primaryName);
 		}
 
+		Arguments args = Arguments.instance(context);
 		args.init("saker-with-javac", options, null, null);
 
 		//put the source and target options again as they might've been overwritten
@@ -366,5 +480,246 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 				}
 			}
 		}
+	}
+
+	private static final class ClassKindOverridingForwardingJavaFileObject
+			extends ForwardingJavaFileObject<JavaFileObject> {
+		private ClassKindOverridingForwardingJavaFileObject(JavaFileObject fileObject) {
+			super(fileObject);
+		}
+
+		@Override
+		public Kind getKind() {
+			return Kind.CLASS;
+		}
+
+		public JavaFileObject getFileObject() {
+			return fileObject;
+		}
+	}
+
+	private static class DelegatingJavaFileManager implements JavaFileManager {
+
+		private final JavaFileManager releaseFM;
+		private final JavaFileManager baseFM;
+		private final int release;
+
+		public DelegatingJavaFileManager(JavaFileManager releaseFM, JavaFileManager baseFM, int release) {
+			this.releaseFM = releaseFM;
+			this.baseFM = baseFM;
+			this.release = release;
+		}
+
+		private JavaFileManager delegate(Location location) {
+			if (releaseFM.hasLocation(location)) {
+				return releaseFM;
+			}
+			return baseFM;
+		}
+
+		@Override
+		public ClassLoader getClassLoader(Location location) {
+			return delegate(location).getClassLoader(location);
+		}
+
+		@Override
+		public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse)
+				throws IOException {
+			if (release > 8) {
+				return delegate(location).list(location, packageName, kinds, recurse);
+			}
+			//the release is 8 or earlier 
+			// non-standard (i.e. module oriented) locations should be delegated to release fm
+			if (location instanceof StandardLocation) {
+				return delegate(location).list(location, packageName, kinds, recurse);
+			}
+			return releaseFM.list(StandardLocation.PLATFORM_CLASS_PATH, packageName, kinds, recurse);
+		}
+
+		@Override
+		public String inferBinaryName(Location location, JavaFileObject file) {
+			return delegate(location).inferBinaryName(location, file);
+		}
+
+		@Override
+		public boolean isSameFile(FileObject a, FileObject b) {
+			return baseFM.isSameFile(a, b);
+		}
+
+		@Override
+		public boolean handleOption(String current, Iterator<String> remaining) {
+			return baseFM.handleOption(current, remaining);
+		}
+
+		@Override
+		public boolean hasLocation(Location location) {
+			return releaseFM.hasLocation(location) || baseFM.hasLocation(location);
+		}
+
+		@Override
+		public JavaFileObject getJavaFileForInput(Location location, String className, Kind kind) throws IOException {
+			return delegate(location).getJavaFileForInput(location, className, kind);
+		}
+
+		@Override
+		public JavaFileObject getJavaFileForOutput(Location location, String className, Kind kind, FileObject sibling)
+				throws IOException {
+			return delegate(location).getJavaFileForOutput(location, className, kind, sibling);
+		}
+
+		@Override
+		public FileObject getFileForInput(Location location, String packageName, String relativeName)
+				throws IOException {
+			return delegate(location).getFileForInput(location, packageName, relativeName);
+		}
+
+		@Override
+		public FileObject getFileForOutput(Location location, String packageName, String relativeName,
+				FileObject sibling) throws IOException {
+			return delegate(location).getFileForOutput(location, packageName, relativeName, sibling);
+		}
+
+		@Override
+		public void flush() throws IOException {
+			releaseFM.flush();
+			baseFM.flush();
+		}
+
+		@Override
+		public void close() throws IOException {
+			releaseFM.close();
+			baseFM.close();
+		}
+
+		@Override
+		public Location getLocationForModule(Location location, String moduleName) throws IOException {
+			return delegate(location).getLocationForModule(location, moduleName);
+		}
+
+		@Override
+		public Location getLocationForModule(Location location, JavaFileObject fo) throws IOException {
+			return delegate(location).getLocationForModule(location, fo);
+		}
+
+		@Override
+		public <S> ServiceLoader<S> getServiceLoader(Location location, Class<S> service) throws IOException {
+			return delegate(location).getServiceLoader(location, service);
+		}
+
+		@Override
+		public String inferModuleName(Location location) throws IOException {
+			return delegate(location).inferModuleName(location);
+		}
+
+		@Override
+		public Iterable<Set<Location>> listLocationsForModules(Location location) throws IOException {
+			return delegate(location).listLocationsForModules(location);
+		}
+
+		@Override
+		public boolean contains(Location location, FileObject fo) throws IOException {
+			return delegate(location).contains(location, fo);
+		}
+
+		@Override
+		public int isSupportedOption(String option) {
+			return baseFM.isSupportedOption(option);
+		}
+
+		public JavaFileManager getBaseFileManager() {
+			return baseFM;
+		}
+
+	}
+
+	private static final class DelegatingStandardJavaFileManager extends DelegatingJavaFileManager
+			implements StandardJavaFileManager {
+
+		private final StandardJavaFileManager baseSJFM;
+
+		private DelegatingStandardJavaFileManager(JavaFileManager releaseFM, StandardJavaFileManager baseSJFM,
+				int release) {
+			super(releaseFM, baseSJFM, release);
+			this.baseSJFM = baseSJFM;
+		}
+
+		@Override
+		public boolean isSameFile(FileObject a, FileObject b) {
+			return baseSJFM.isSameFile(a, b);
+		}
+
+		@Override
+		public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
+			return baseSJFM.getJavaFileObjectsFromFiles(files);
+		}
+
+		//not available on jdk 12
+		//@Override
+		public Iterable<? extends JavaFileObject> getJavaFileObjectsFromPaths(Collection<? extends Path> paths) {
+			return baseSJFM.getJavaFileObjectsFromPaths(paths);
+		}
+
+		@Deprecated(since = "13")
+		@Override
+		public Iterable<? extends JavaFileObject> getJavaFileObjectsFromPaths(Iterable<? extends Path> paths) {
+			return baseSJFM.getJavaFileObjectsFromPaths(paths);
+		}
+
+		@Override
+		public Iterable<? extends JavaFileObject> getJavaFileObjects(File... files) {
+			return baseSJFM.getJavaFileObjects(files);
+		}
+
+		@Override
+		public Iterable<? extends JavaFileObject> getJavaFileObjects(Path... paths) {
+			return baseSJFM.getJavaFileObjects(paths);
+		}
+
+		@Override
+		public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
+			return baseSJFM.getJavaFileObjectsFromStrings(names);
+		}
+
+		@Override
+		public Iterable<? extends JavaFileObject> getJavaFileObjects(String... names) {
+			return baseSJFM.getJavaFileObjects(names);
+		}
+
+		@Override
+		public void setLocation(Location location, Iterable<? extends File> files) throws IOException {
+			baseSJFM.setLocation(location, files);
+		}
+
+		@Override
+		public void setLocationFromPaths(Location location, Collection<? extends Path> paths) throws IOException {
+			baseSJFM.setLocationFromPaths(location, paths);
+		}
+
+		@Override
+		public void setLocationForModule(Location location, String moduleName, Collection<? extends Path> paths)
+				throws IOException {
+			baseSJFM.setLocationForModule(location, moduleName, paths);
+		}
+
+		@Override
+		public Iterable<? extends File> getLocation(Location location) {
+			return baseSJFM.getLocation(location);
+		}
+
+		@Override
+		public Iterable<? extends Path> getLocationAsPaths(Location location) {
+			return baseSJFM.getLocationAsPaths(location);
+		}
+
+		@Override
+		public Path asPath(FileObject file) {
+			return baseSJFM.asPath(file);
+		}
+
+		@Override
+		public void setPathFactory(PathFactory f) {
+			baseSJFM.setPathFactory(f);
+		}
+
 	}
 }

@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
 Nest-Bundle-Format-Version: 1
-Nest-ClassPath-Special: jdktools
+Nest-ClassPath-Special: jdk.compiler-open
+Nest-ClassPath-Supported-Repository-Versions: [0.8.5)
 Nest-ClassPath-Supported-JRE-Versions: [14)

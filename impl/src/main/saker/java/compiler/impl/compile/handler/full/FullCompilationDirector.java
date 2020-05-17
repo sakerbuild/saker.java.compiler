@@ -45,6 +45,7 @@ import saker.java.compiler.impl.compile.handler.ExternalizableLocation;
 import saker.java.compiler.impl.compile.handler.NativeHeaderSakerFile;
 import saker.java.compiler.impl.compile.handler.invoker.SakerPathBytes;
 import saker.java.compiler.impl.compile.signature.jni.NativeSignature;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 
 public class FullCompilationDirector {
 	private FullCompilationInvoker invoker;
@@ -64,11 +65,11 @@ public class FullCompilationDirector {
 
 	private NavigableMap<String, SakerPath> processorInputLocations;
 
-	private String moduleMainClass;
-	private String moduleVersion;
 	private boolean noCommandLineClasspath = false;
 	//true by default
 	private boolean allowCommandLineBootClassPath = true;
+
+	private OutputBytecodeManipulationOption bytecodeManipulation;
 
 	public FullCompilationDirector(FullCompilationInvoker invoker) {
 		this.invoker = invoker;
@@ -78,7 +79,7 @@ public class FullCompilationDirector {
 			SakerDirectory outputNativeHeaderDirectory, SakerDirectory outputSourceDirectory,
 			SakerDirectory outputResourceDirectory, boolean generateNativeHeaders, Collection<String> options,
 			List<Processor> processors, NavigableMap<SakerPath, SakerFile> sourceFiles,
-			NavigableMap<String, SakerPath> processorInputLocations, String moduleMainClass, String moduleVersion,
+			NavigableMap<String, SakerPath> processorInputLocations, OutputBytecodeManipulationOption bytecodeManipulation,
 			boolean nocmdlineclasspath, boolean allowcommandlinebootclasspath) {
 		this.taskContext = taskContext;
 		this.outputClassDirectory = outputClassDirectory;
@@ -90,8 +91,7 @@ public class FullCompilationDirector {
 		this.processors = processors;
 		this.sourceFiles = sourceFiles;
 		this.processorInputLocations = processorInputLocations;
-		this.moduleMainClass = moduleMainClass;
-		this.moduleVersion = moduleVersion;
+		this.bytecodeManipulation = bytecodeManipulation;
 		this.noCommandLineClasspath = nocmdlineclasspath;
 		this.allowCommandLineBootClassPath = allowcommandlinebootclasspath;
 	}
@@ -100,8 +100,7 @@ public class FullCompilationDirector {
 		InputTrackingJavaCompilerDirectories directorypaths = new InputTrackingJavaCompilerDirectories(taskContext);
 		directorypaths.setNoCommandLineClassPath(noCommandLineClasspath);
 		directorypaths.setAllowCommandLineBootClassPath(allowCommandLineBootClassPath);
-		directorypaths.setModuleMainClassInjectValue(moduleMainClass);
-		directorypaths.setModuleVersionInjectValue(moduleVersion);
+		directorypaths.setBytecodeManipulation(bytecodeManipulation);
 		directorypaths.addDirectory(ExternalizableLocation.LOCATION_CLASS_OUTPUT, outputClassDirectory);
 		directorypaths.addDirectory(ExternalizableLocation.LOCATION_SOURCE_OUTPUT, outputSourceDirectory);
 		directorypaths.addDirectory(ExternalizableLocation.LOCATION_NATIVE_HEADER_OUTPUT, outputNativeHeaderDirectory);

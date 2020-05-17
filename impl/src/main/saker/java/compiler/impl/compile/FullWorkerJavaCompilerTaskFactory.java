@@ -148,7 +148,7 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 						outputResourceDirectory);
 				compilationhandler.setPassOptions(sourceVersionName, targetVersionName, javasdkreference, parameters,
 						classPath, modulePath, annotationProcessorOptions, annotationProcessors, addExports,
-						bootClassPath, sourcefiles, processorInputLocations, moduleMainClass, moduleVersion, sdkrefs,
+						bootClassPath, sourcefiles, processorInputLocations, bytecodeManipulation, sdkrefs,
 						parameterNames, debugInfo);
 				compilationhandler.setGenerateNativeHeaders(this.generateNativeHeaders);
 

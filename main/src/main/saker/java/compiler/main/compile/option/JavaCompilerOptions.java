@@ -132,6 +132,9 @@ import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 @NestFieldInformation(value = "AllowTargetReleaseMismatch",
 		info = @NestInformation(TaskDocs.COMPILE_ALLOW_TARGET_RELEASE_MISMATCH),
 		type = @NestTypeUsage(boolean.class))
+@NestFieldInformation(value = "PatchEnablePreview",
+		info = @NestInformation(TaskDocs.COMPILE_PATCH_ENABLE_PREVIEW),
+		type = @NestTypeUsage(boolean.class))
 public interface JavaCompilerOptions {
 	public CompilationIdentifierTaskOption getIdentifier();
 
@@ -178,4 +181,6 @@ public interface JavaCompilerOptions {
 	public Boolean getBuildIncremental();
 
 	public Boolean getAllowTargetReleaseMismatch();
+
+	public Boolean getPatchEnablePreview();
 }

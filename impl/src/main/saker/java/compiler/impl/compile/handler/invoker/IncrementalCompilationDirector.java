@@ -154,6 +154,7 @@ import saker.java.compiler.impl.compile.signature.change.PackageAnnotationsChang
 import saker.java.compiler.impl.compile.signature.change.PlainPackageInfoAddedABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.FieldInitializerABIChange;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.signature.Signature;
 import saker.java.compiler.impl.signature.element.AnnotatedSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
@@ -304,16 +305,15 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 	private SignatureNameChecker methodParameterNameChangeChecker;
 
-	private String prevModuleMainClass;
-	private String moduleMainClass;
-	private String prevModuleVersion;
-	private String moduleVersion;
 	private boolean noCommandLineClassPath;
 	//true by default
 	private boolean allowCommandLineBootClassPath = true;
 
 	private String sourceVersionOptionName;
 	private String targetVersionOptionName;
+
+	private OutputBytecodeManipulationOption bytecodeManipulation;
+	private OutputBytecodeManipulationOption prevBytecodeManipulation;
 
 	public IncrementalCompilationDirector(TaskContext taskContext, JavaCompilerInvocationContext invocationContext,
 			JavaCompilationInvoker invoker) {
@@ -338,8 +338,9 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			Set<DiagnosticEntry> prevDiagnosticEntries, DirectoryClearingFileRemover fileremover,
 			NavigableMap<SakerPath, ClassFileData> prevClassFileDatas,
 			NavigableMap<String, SakerPath> processorInputLocations,
-			SignatureNameChecker methodParameterNameChangeChecker, String moduleMainClass, String prevModuleMainClass,
-			String moduleVersion, String prevModuleVersion, boolean noCommandLineClassPath,
+			SignatureNameChecker methodParameterNameChangeChecker,
+			OutputBytecodeManipulationOption bytecodeManipulation,
+			OutputBytecodeManipulationOption prevBytecodeManipulation, boolean noCommandLineClassPath,
 			boolean allowcommandlinebootclasspath, String sourceVersionName, String targetVersionName) {
 		this.presentSourceFilePaths = presentSourceFilePaths;
 		this.prevSourceFileDatas = prevSourceFileDatas;
@@ -357,10 +358,8 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		this.prevDiagnosticEntries = prevDiagnosticEntries;
 		this.processorInputLocations = processorInputLocations;
 		this.methodParameterNameChangeChecker = methodParameterNameChangeChecker;
-		this.moduleMainClass = moduleMainClass;
-		this.prevModuleMainClass = prevModuleMainClass;
-		this.moduleVersion = moduleVersion;
-		this.prevModuleVersion = prevModuleVersion;
+		this.bytecodeManipulation = bytecodeManipulation;
+		this.prevBytecodeManipulation = prevBytecodeManipulation;
 		this.noCommandLineClassPath = noCommandLineClassPath;
 		this.allowCommandLineBootClassPath = allowcommandlinebootclasspath;
 		this.sourceVersionOptionName = sourceVersionName;
@@ -537,8 +536,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		}
 
 		if (!modulesignaturefileremoved && unitpaths.isEmpty() && canSkipCompilationEntirely()
-				&& Objects.equals(prevModuleMainClass, moduleMainClass)
-				&& Objects.equals(prevModuleVersion, moduleVersion)) {
+				&& Objects.equals(prevBytecodeManipulation, bytecodeManipulation)) {
 			info.setSourceFiles(ImmutableUtils.makeImmutableNavigableMap(prevSourceFileDatas));
 			putClassFilesToInfoForSource(prevSourceFileDatas);
 
@@ -557,7 +555,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 			info.setModuleClassFile(prevModuleInfoFileData);
 			info.setCompilationModuleSet(prevCompilationModuleSet);
-			info.setModuleMainClass(moduleMainClass);
+			info.setBytecodeManipulation(bytecodeManipulation);
 
 			SakerLog.log().verbose().println("No affected Java changes, skipping compilation.");
 			SakerLog.log().verbose().println();
@@ -570,8 +568,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		directoryPaths = new JavaCompilerDirectories(taskContext);
 		directoryPaths.setNoCommandLineClassPath(noCommandLineClassPath);
 		directoryPaths.setAllowCommandLineBootClassPath(allowCommandLineBootClassPath);
-		directoryPaths.setModuleMainClassInjectValue(moduleMainClass);
-		directoryPaths.setModuleVersionInjectValue(moduleVersion);
+		directoryPaths.setBytecodeManipulation(bytecodeManipulation);
 		directoryPaths.addDirectory(ExternalizableLocation.LOCATION_CLASS_OUTPUT,
 				invocationContext.getOutputClassDirectory());
 		directoryPaths.addDirectory(ExternalizableLocation.LOCATION_SOURCE_OUTPUT,
@@ -717,7 +714,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		}
 		info.setModuleClassFile(moduleInfoFileData);
 		info.setCompilationModuleSet(compilationModuleSet);
-		info.setModuleMainClass(moduleMainClass);
+		info.setBytecodeManipulation(bytecodeManipulation);
 
 		if (TestFlag.ENABLED) {
 			if (TestFlag.metric().javacCaresAboutCompilationFinish()) {

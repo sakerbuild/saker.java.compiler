@@ -1,0 +1,9 @@
+build {
+	saker.java.compile(
+		SourceDirectories: src,
+		Parameters: [
+			--enable-preview,
+		],
+		PatchEnablePreview: test.shouldpatch(),
+	)
+}

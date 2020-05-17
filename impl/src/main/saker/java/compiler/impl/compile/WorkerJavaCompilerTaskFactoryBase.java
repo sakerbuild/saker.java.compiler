@@ -52,6 +52,7 @@ import saker.java.compiler.api.compile.JavaDebugInfoType;
 import saker.java.compiler.api.modulepath.JavaModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.sdk.support.api.EnvironmentSDKDescription;
 import saker.sdk.support.api.ResolvedSDKDescription;
 import saker.sdk.support.api.SDKDescription;
@@ -90,8 +91,7 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 	protected NavigableMap<String, SakerPath> processorInputLocations;
 	protected NavigableMap<String, String> annotationProcessorOptions;
 
-	protected String moduleMainClass;
-	protected String moduleVersion;
+	protected OutputBytecodeManipulationOption bytecodeManipulation = new OutputBytecodeManipulationOption();
 	protected Set<JavaAddExports> addExports;
 
 	protected boolean generateNativeHeaders;
@@ -151,12 +151,8 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 		this.annotationProcessorOptions = annotationProcessorOptions;
 	}
 
-	public void setModuleMainClass(String moduleMainClass) {
-		this.moduleMainClass = moduleMainClass;
-	}
-
-	public void setModuleVersion(String moduleVersion) {
-		this.moduleVersion = moduleVersion;
+	public void setBytecodeManipulation(OutputBytecodeManipulationOption bytecodeManipulation) {
+		this.bytecodeManipulation = bytecodeManipulation;
 	}
 
 	public void setAddExports(Set<JavaAddExports> addExports) {
@@ -297,8 +293,7 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(sourceVersionName);
 		out.writeObject(targetVersionName);
-		out.writeObject(moduleMainClass);
-		out.writeObject(moduleVersion);
+		out.writeObject(bytecodeManipulation);
 		out.writeObject(classPath);
 		out.writeObject(bootClassPath);
 		out.writeObject(modulePath);
@@ -319,13 +314,12 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		sourceVersionName = (String) in.readObject();
-		targetVersionName = (String) in.readObject();
-		moduleMainClass = (String) in.readObject();
-		moduleVersion = (String) in.readObject();
-		classPath = (JavaClassPath) in.readObject();
-		bootClassPath = (JavaClassPath) in.readObject();
-		modulePath = (JavaModulePath) in.readObject();
+		sourceVersionName = SerialUtils.readExternalObject(in);
+		targetVersionName = SerialUtils.readExternalObject(in);
+		bytecodeManipulation = SerialUtils.readExternalObject(in);
+		classPath = SerialUtils.readExternalObject(in);
+		bootClassPath = SerialUtils.readExternalObject(in);
+		modulePath = SerialUtils.readExternalObject(in);
 		parameterNames = in.readBoolean();
 
 		annotationProcessorOptions = SerialUtils.readExternalSortedImmutableNavigableMap(in);
@@ -349,12 +343,11 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 		result = prime * result + ((annotationProcessorOptions == null) ? 0 : annotationProcessorOptions.hashCode());
 		result = prime * result + ((annotationProcessors == null) ? 0 : annotationProcessors.hashCode());
 		result = prime * result + ((bootClassPath == null) ? 0 : bootClassPath.hashCode());
+		result = prime * result + ((bytecodeManipulation == null) ? 0 : bytecodeManipulation.hashCode());
 		result = prime * result + ((classPath == null) ? 0 : classPath.hashCode());
 		result = prime * result + ((debugInfo == null) ? 0 : debugInfo.hashCode());
 		result = prime * result + (generateNativeHeaders ? 1231 : 1237);
-		result = prime * result + ((moduleMainClass == null) ? 0 : moduleMainClass.hashCode());
 		result = prime * result + ((modulePath == null) ? 0 : modulePath.hashCode());
-		result = prime * result + ((moduleVersion == null) ? 0 : moduleVersion.hashCode());
 		result = prime * result + (parameterNames ? 1231 : 1237);
 		result = prime * result + ((parameters == null) ? 0 : parameters.hashCode());
 		result = prime * result + ((processorInputLocations == null) ? 0 : processorInputLocations.hashCode());
@@ -394,6 +387,11 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 				return false;
 		} else if (!bootClassPath.equals(other.bootClassPath))
 			return false;
+		if (bytecodeManipulation == null) {
+			if (other.bytecodeManipulation != null)
+				return false;
+		} else if (!bytecodeManipulation.equals(other.bytecodeManipulation))
+			return false;
 		if (classPath == null) {
 			if (other.classPath != null)
 				return false;
@@ -406,20 +404,10 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 			return false;
 		if (generateNativeHeaders != other.generateNativeHeaders)
 			return false;
-		if (moduleMainClass == null) {
-			if (other.moduleMainClass != null)
-				return false;
-		} else if (!moduleMainClass.equals(other.moduleMainClass))
-			return false;
 		if (modulePath == null) {
 			if (other.modulePath != null)
 				return false;
 		} else if (!modulePath.equals(other.modulePath))
-			return false;
-		if (moduleVersion == null) {
-			if (other.moduleVersion != null)
-				return false;
-		} else if (!moduleVersion.equals(other.moduleVersion))
 			return false;
 		if (parameterNames != other.parameterNames)
 			return false;

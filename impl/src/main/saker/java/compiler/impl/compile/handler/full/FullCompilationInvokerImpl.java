@@ -40,12 +40,12 @@ import javax.tools.StandardJavaFileManager;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Trees;
+import com.sun.tools.javac.api.JavacTool;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
-import saker.build.util.java.JavaTools;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
 import saker.java.compiler.impl.compile.VersionKeyUtils;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
@@ -97,7 +97,7 @@ public class FullCompilationInvokerImpl implements FullCompilationInvoker {
 		System.out.println("Compiling " + sources.length + " source files.");
 		Iterable<? extends JavaFileObject> units = toCompilationSourceFileUnits(sources);
 
-		JavaCompiler compiler = JavaTools.getSystemJavaCompiler();
+		JavaCompiler compiler = JavacTool.create();
 		try (StandardJavaFileManager standardfilemanager = compiler.getStandardFileManager(null, null,
 				StandardCharsets.UTF_8);
 				JavaFileManager manager = JavaCompilationUtils.createFileManager(standardfilemanager, directoryPaths)) {

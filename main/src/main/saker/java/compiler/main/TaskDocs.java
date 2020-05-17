@@ -189,15 +189,16 @@ public class TaskDocs {
 			+ "WARNING: Using this flag may cause your class files to be binary incompatible with the platform you intend to "
 			+ "run it on. This flag uses undocumented javac API to trick it into generating bytecode for different versions than "
 			+ "it's used to. Using this may cause crashes in your application in unexpected ways.\n"
-			+ "WARNING: Binary incompatibility may occurr if you set the --release and SourceVersion values to be different in a way "
-			+ "that only one of the support Java modules. The following expression should be true: supportsModules(sourceVersion) == supportsModules(releaseVersion). "
-			+ "E.g. if the --release is 8, and source version is 9 (or vice versa), then you may get LinkageErrors when you run your application.\n"
 			+ "WARNING: Other general incompatibility errors may occurr if you intend to use bytecode instructions on older Java releases where they "
 			+ "don't exist.\n"
 			+ "By setting this to true, the compile task will directly set the specified TargetVersion, SourceVersion and --release parameter values "
 			+ "as they are specified as inputs. No compatibility validation will be performed for these.\n"
 			+ "This generally can be used to generate bytecode for older releases while sometimes using newer language features. This is "
 			+ "a completely undocumented and unreliable feature of this build task and we don't recommend using it without thorough testing or in general.";
+	public static final String COMPILE_PATCH_ENABLE_PREVIEW = "Sets if the --enable-preview requirement on the generated class files should be patched.\n"
+			+ "If this flag is set to true, then the compile task will modify the minor version of the class files from 0xFFFF to 0x0000.\n"
+			+ "As a result of this, they can be run using javac without specifying the --enable-preview flag for it.\n"
+			+ "Note that this feature may break on future versions of Java.";
 
 	public static final String COMPILE_OUTPUT_CLASS_DIRECTORY = "The directory path to the output class files of the Java compilation.\n"
 			+ "The directory contains all class files that were compiled from the Java source files and any files which were "

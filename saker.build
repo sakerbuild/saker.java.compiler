@@ -168,6 +168,7 @@ compile(
 						com.sun.tools.javac.comp,
 						com.sun.tools.javac.jvm,
 						com.sun.tools.javac.main,
+						com.sun.tools.javac.platform,
 					]
 				},
 			},

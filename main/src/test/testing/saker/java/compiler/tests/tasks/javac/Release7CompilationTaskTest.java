@@ -32,7 +32,7 @@ public class Release7CompilationTaskTest extends JavaCompilerVariablesMetricEnvi
 	protected void runNestTaskTestImpl() throws Throwable {
 		runScriptTask("releasebuild");
 		assertEquals(getMetric().getCompiledJavacPasses(), setOf("releasebuild"));
-		JavaCompilerTestUtils.assertClassBytesVersion(
+		JavaCompilerTestUtils.assertClassBytesMajorVersion(
 				files.getAllBytes(PATH_BUILD_DIRECTORY.resolve("saker.java.compile/releasebuild/bin/test/Main.class")),
 				51);
 
@@ -47,7 +47,7 @@ public class Release7CompilationTaskTest extends JavaCompilerVariablesMetricEnvi
 
 		runScriptTask("sourcetargetbuild");
 		assertEquals(getMetric().getCompiledJavacPasses(), setOf("sourcetargetbuild"));
-		JavaCompilerTestUtils.assertClassBytesVersion(files.getAllBytes(
+		JavaCompilerTestUtils.assertClassBytesMajorVersion(files.getAllBytes(
 				PATH_BUILD_DIRECTORY.resolve("saker.java.compile/sourcetargetbuild/bin/test/Main.class")), 51);
 
 		runScriptTask("sourcetargetbuild");
@@ -61,7 +61,7 @@ public class Release7CompilationTaskTest extends JavaCompilerVariablesMetricEnvi
 
 		runScriptTask("bothbuild");
 		assertEquals(getMetric().getCompiledJavacPasses(), setOf("bothbuild"));
-		JavaCompilerTestUtils.assertClassBytesVersion(
+		JavaCompilerTestUtils.assertClassBytesMajorVersion(
 				files.getAllBytes(PATH_BUILD_DIRECTORY.resolve("saker.java.compile/bothbuild/bin/test/Main.class")),
 				51);
 

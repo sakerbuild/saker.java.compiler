@@ -305,6 +305,26 @@ public interface JavaCompilationTaskBuilder {
 	public void setAllowTargetReleaseMismatch(boolean enabled);
 
 	/**
+	 * Sets if the --enable-preview requirement in the generated class files should be patched.
+	 * <p>
+	 * Setting this flag to <code>true</code> causes the compiler task to patch the minor version of the generated class
+	 * files if the <code>--enable-preview</code> parameter is also used for compilation.
+	 * <p>
+	 * It will allow you to run the classes without specifying <code>--enable-preview</code> for the <code>java</code>
+	 * command.
+	 * <p>
+	 * <b>Note</b> that this feature may break on future Java versions. This flag essentially modifies the minor version
+	 * of the class files from <code>0xFFFF</code> to <code>0x0000</code>.
+	 * <p>
+	 * See also <a href="https://openjdk.java.net/jeps/12">JEP 12: Preview Language and VM Features</a>
+	 * 
+	 * @param enabled
+	 *            <code>true</code> to enable --enable-preview patching.
+	 * @since saker.java.compiler 0.8.6
+	 */
+	public void setPatchEnablePreview(boolean enabled);
+
+	/**
 	 * Builds the task identifier that should be used to start the configured task.
 	 * <p>
 	 * The builder can be reused after this call.
