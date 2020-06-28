@@ -34,6 +34,7 @@ public class JavaSDKReference implements SDKReference, Externalizable {
 
 	public static final String DEFAULT_SDK_NAME = SakerJavaCompilerUtils.DEFAULT_SDK_NAME;
 
+	public static final String PATH_HOME = SakerJavaCompilerUtils.JAVASDK_PATH_HOME;
 	public static final String PATH_INSTALL_LOCATION = SakerJavaCompilerUtils.JAVASDK_PATH_INSTALL_LOCATION;
 	public static final String PATH_JAVA_EXE = SakerJavaCompilerUtils.JAVASDK_PATH_JAVA_EXE;
 
@@ -118,6 +119,7 @@ public class JavaSDKReference implements SDKReference, Externalizable {
 				return installLocation.resolve(relativeDefaultPlatformInclude);
 			}
 
+			case PATH_HOME:
 			case PATH_INSTALL_LOCATION: {
 				return installLocation;
 			}

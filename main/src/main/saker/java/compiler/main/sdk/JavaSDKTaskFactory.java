@@ -26,6 +26,7 @@ import saker.build.task.TaskContext;
 import saker.build.task.utils.annot.SakerInput;
 import saker.build.trace.BuildTrace;
 import saker.java.compiler.impl.sdk.CurrentJavaSDKReferenceEnvironmentProperty;
+import saker.java.compiler.impl.sdk.JavaSDKDescription;
 import saker.java.compiler.impl.sdk.JavaSDKReferenceEnvironmentProperty;
 import saker.java.compiler.main.TaskDocs.JavaVersionOption;
 import saker.java.compiler.main.compile.JavaCompilerTaskFactory;
@@ -70,7 +71,8 @@ public class JavaSDKTaskFactory extends FrontendTaskFactory<Object> {
 					BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_CONFIGURATION);
 				}
 				if (this.versionOption == null) {
-					return EnvironmentSDKDescription.create(CurrentJavaSDKReferenceEnvironmentProperty.INSTANCE);
+					return new JavaSDKDescription(
+							EnvironmentSDKDescription.create(CurrentJavaSDKReferenceEnvironmentProperty.INSTANCE));
 				}
 				Collection<String> versions = this.versionOption.get();
 				if (versions == null) {
@@ -88,7 +90,8 @@ public class JavaSDKTaskFactory extends FrontendTaskFactory<Object> {
 					taskcontext.abortExecution(new IllegalArgumentException("No suitable versions specified."));
 					return null;
 				}
-				return EnvironmentSDKDescription.create(new JavaSDKReferenceEnvironmentProperty(suitableversions));
+				return new JavaSDKDescription(
+						EnvironmentSDKDescription.create(new JavaSDKReferenceEnvironmentProperty(suitableversions)));
 			}
 		};
 	}
