@@ -19,6 +19,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import saker.build.runtime.execution.ExecutionContext;
@@ -31,6 +33,7 @@ import saker.build.task.identifier.TaskIdentifier;
 import saker.build.task.utils.SimpleStructuredObjectTaskResult;
 import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils.ThreadWorkPool;
@@ -38,7 +41,6 @@ import saker.build.trace.BuildTrace;
 import saker.build.util.property.IDEConfigurationRequiredExecutionProperty;
 import saker.java.compiler.api.classpath.ClassPathReference;
 import saker.java.compiler.main.classpath.bundle.BundleClassPathTaskFactory;
-import saker.java.compiler.main.processor.BundleProcessorTaskFactory;
 import saker.nest.bundle.BundleIdentifier;
 import saker.nest.bundle.BundleKey;
 import saker.nest.bundle.storage.StorageViewKey;
@@ -68,6 +70,14 @@ public class BundleClassPathWorkerTaskFactory
 	public ClassPathReference run(TaskContext taskcontext) throws Exception {
 		if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_006) {
 			BuildTrace.classifyTask(BuildTrace.CLASSIFICATION_WORKER);
+			if (saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_009) {
+				Map<String, Object> valmap = new LinkedHashMap<>();
+				if (!ObjectUtils.isNullOrEmpty(bundles)) {
+					valmap.put("Bundles",
+							bundles.stream().map(BundleKey::getBundleIdentifier).map(Object::toString).toArray());
+				}
+				BuildTrace.setValues(valmap, BuildTrace.VALUE_CATEGORY_TASK);
+			}
 		}
 		taskcontext.setStandardOutDisplayIdentifier(BundleClassPathTaskFactory.TASK_NAME);
 

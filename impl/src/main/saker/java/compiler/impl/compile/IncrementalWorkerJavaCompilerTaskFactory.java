@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 
 import javax.annotation.processing.Processor;
 
@@ -66,7 +65,6 @@ import saker.java.compiler.impl.compile.handler.invoker.ProcessorDetails;
 import saker.java.compiler.impl.options.SimpleAnnotationProcessorReferenceOption;
 import saker.java.compiler.impl.options.SimpleProcessorConfiguration;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
-import saker.sdk.support.api.IndeterminateSDKDescription;
 import saker.sdk.support.api.SDKDescription;
 import saker.sdk.support.api.SDKReference;
 import saker.sdk.support.api.SDKSupportUtils;
@@ -142,15 +140,7 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 			throw new SDKNotFoundException("No SDK found with name: " + JavaSDKReference.DEFAULT_SDK_NAME);
 		}
 
-		NavigableMap<String, SDKDescription> pinnedsdks = new TreeMap<>(SDKSupportUtils.getSDKNameComparator());
-		for (Entry<String, SDKReference> entry : sdkrefs.entrySet()) {
-			String sdkname = entry.getKey();
-			SDKDescription desc = sdks.get(sdkname);
-			if (desc instanceof IndeterminateSDKDescription) {
-				desc = ((IndeterminateSDKDescription) desc).pinSDKDescription(entry.getValue());
-			}
-			pinnedsdks.put(sdkname, desc);
-		}
+		NavigableMap<String, SDKDescription> pinnedsdks = SDKSupportUtils.pinSDKSelection(sdks, sdkrefs);
 
 		String modulename;
 		try {

@@ -77,6 +77,16 @@ public final class SakerJavaCompilerUtils {
 	 */
 	public static final String JAVASDK_PATH_INSTALL_LOCATION = "install.location";
 	/**
+	 * Java SDK path identifier for the install location.
+	 * <p>
+	 * Points to the install directory. E.g. <code>c:\Program Files\Java\jdk1.8.0_221</code>
+	 * <p>
+	 * Same as {@link #JAVASDK_PATH_INSTALL_LOCATION}.
+	 * 
+	 * @since saker.java.compiler 0.8.7
+	 */
+	public static final String JAVASDK_PATH_HOME = "home";
+	/**
 	 * Java SDK path identifier for the <code>java</code> executable.
 	 * <p>
 	 * E.g. <code>c:\Program Files\Java\jdk1.8.0_221\bin\java.exe</code>

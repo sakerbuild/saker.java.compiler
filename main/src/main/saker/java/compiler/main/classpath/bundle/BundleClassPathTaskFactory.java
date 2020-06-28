@@ -57,6 +57,7 @@ import saker.nest.utils.FrontendTaskFactory;
 		+ "appropriate source bundles and reports the accordingly.\n"
 		+ "This task doesn't perform any dependency resolution for the specified bundles.")
 @NestParameterInformation(value = "Bundles",
+		aliases = { "", "Bundle" },
 		required = true,
 		type = @NestTypeUsage(value = Collection.class, elementTypes = BundleIdentifier.class),
 		info = @NestInformation("Specifies the bundles to create the class path for.\n"
