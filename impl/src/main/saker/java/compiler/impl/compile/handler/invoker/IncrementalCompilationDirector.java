@@ -2668,7 +2668,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 	private void initElementsTypes() {
 		this.elemTypes = JavaCompilationUtils.createElementsTypes(invoker.getElements(), javacSync,
-				getSourceVersionName(), cache);
+				CompilationContextInformation.of(invoker), cache);
 		if (moduleInfoFileData != null) {
 			this.elemTypes.initCompilationModule(moduleInfoFileData);
 		} else {

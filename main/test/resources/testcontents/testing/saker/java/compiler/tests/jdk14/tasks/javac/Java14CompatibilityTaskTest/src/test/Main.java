@@ -9,4 +9,16 @@ public class Main {
 			System.out.println("Main.main() " + s);
 		}
 	}
+
+	protected record ProtRecord(int i) {
+	}
+
+	record DefRecord(int i) {
+	}
+
+	public record PublicRecord(int i) {
+	}
+
+	private record PrivateRecord(int i) {
+	}
 }

@@ -48,7 +48,7 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 	public List<TypeMirror> erasure(List<? extends TypeMirror> types);
 
 	public DeclaredType getJavaLangObjectTypeMirror();
-	
+
 	public DeclaredType getJavaLangRecordTypeMirror();
 
 	public DeclaredType getJavaLangCloneableTypeMirror();
@@ -157,4 +157,6 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 	public ResolutionScope createResolutionScope(Element resolutionelement);
 
 	public IncrementalElement<?> createRecordComponentElement(IncrementalTypeElement recordtype, FieldSignature m);
+
+	public int getCompilerJVMJavaMajorVersion();
 }

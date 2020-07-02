@@ -50,6 +50,7 @@ import saker.java.compiler.impl.compile.handler.incremental.model.CommonExecutab
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.mirror.ForwardingTypeMirrorBase;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingFileData;
+import saker.java.compiler.impl.compile.handler.invoker.CompilationContextInformation;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -88,8 +89,9 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 
 	private Set<? extends ModuleElement> allModuleElements = null;
 
-	public IncrementalElementsTypes9(Elements realelements, Object javacsync, ParserCache cache) {
-		super(realelements, javacsync, cache);
+	public IncrementalElementsTypes9(Elements realelements, Object javacsync, ParserCache cache,
+			CompilationContextInformation context) {
+		super(realelements, javacsync, cache, context);
 
 		unnamedModule = new IncrementalUnnamedModuleElement(this, realelements.getModuleElement(""));
 	}

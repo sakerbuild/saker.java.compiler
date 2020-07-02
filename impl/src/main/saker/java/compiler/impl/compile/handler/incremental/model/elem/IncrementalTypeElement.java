@@ -66,6 +66,9 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 	private static final MethodSignature RECORD_IMLICIT_TOSTRING_SIGNATURE = FullMethodSignature.create("toString",
 			IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null, CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING,
 			null, ElementKind.METHOD, null, null, false, null);
+	private static final MethodSignature RECORD_IMLICIT_FINAL_TOSTRING_SIGNATURE = FullMethodSignature.create(
+			"toString", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null, null,
+			CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null, null, false, null);
 	private static final MethodSignature RECORD_IMLICIT_EQUALS_SIGNATURE = FullMethodSignature.create("equals",
 			IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL,
 			Collections.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
@@ -268,25 +271,25 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 				paramtypes.add(elemTypes.getTypeMirror(f.getTypeSignature(), this));
 			}
 			if (!hasCanonicalConstructorWithParameterTypes(paramtypes, thisenclosedelements)) {
-				thisenclosedelements.add(new IncrementalExecutableElement(
-						FullMethodSignature.create(IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME,
-								IncrementalElementsTypes.MODIFIERS_PUBLIC, paramsignatures, null, null, null,
-								ElementKind.CONSTRUCTOR, null, null, false, null),
-						this, elemTypes));
+				Set<Modifier> constructormodifiers = getRecordImplicitCanonicalConstructorModifiers();
+
+				thisenclosedelements.add(new IncrementalExecutableElement(FullMethodSignature.create(
+						IncrementalElementsTypes.CONSTRUCTOR_METHOD_NAME, constructormodifiers, paramsignatures, null,
+						null, null, ElementKind.CONSTRUCTOR, null, null, false, null), this, elemTypes));
 			}
 
 			//handle implicit members
 			if (!ClassSignatureImpl.hasSimpleNoArgMethodWithName("toString", members)) {
 				thisenclosedelements
-						.add(new IncrementalExecutableElement(RECORD_IMLICIT_TOSTRING_SIGNATURE, this, elemTypes));
+						.add(new IncrementalExecutableElement(getRecordImplicitToStringSignature(), this, elemTypes));
 			}
 			if (!ClassSignatureImpl.hasSimpleNoArgMethodWithName("hashCode", members)) {
 				thisenclosedelements
-						.add(new IncrementalExecutableElement(RECORD_IMPLICIT_HASHCODE_SIGNATURE, this, elemTypes));
+						.add(new IncrementalExecutableElement(getRecordImplicitHashCodeSignature(), this, elemTypes));
 			}
 			if (getEqualsMethod(thisenclosedelements) == null) {
 				thisenclosedelements
-						.add(new IncrementalExecutableElement(RECORD_IMLICIT_EQUALS_SIGNATURE, this, elemTypes));
+						.add(new IncrementalExecutableElement(getRecordImplicitEqualsSignature(), this, elemTypes));
 			}
 			for (FieldSignature f : fields) {
 				if (!ClassSignatureImpl.hasSimpleNoArgMethodWithName(f.getSimpleName(), members)) {
@@ -302,6 +305,52 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 			return immutableenclosedelements;
 		}
 		return this.enclosedElements;
+	}
+
+	private MethodSignature getRecordImplicitEqualsSignature() {
+		return RECORD_IMLICIT_EQUALS_SIGNATURE;
+	}
+
+	private MethodSignature getRecordImplicitHashCodeSignature() {
+		return RECORD_IMPLICIT_HASHCODE_SIGNATURE;
+	}
+
+	private MethodSignature getRecordImplicitToStringSignature() {
+		switch (elemTypes.getCompilerJVMJavaMajorVersion()) {
+			case 14: {
+				return RECORD_IMLICIT_TOSTRING_SIGNATURE;
+			}
+			default: {
+				return RECORD_IMLICIT_FINAL_TOSTRING_SIGNATURE;
+			}
+		}
+	}
+
+	private Set<Modifier> getRecordImplicitCanonicalConstructorModifiers() {
+		//the mechanism of the constructor modifier determination changed between preview versions.
+		//14: always public
+		//15: same as the declaring record
+		Set<Modifier> constructormodifiers;
+		switch (elemTypes.getCompilerJVMJavaMajorVersion()) {
+			case 14: {
+				constructormodifiers = IncrementalElementsTypes.MODIFIERS_PUBLIC;
+				break;
+			}
+			default: {
+				Set<Modifier> modifiers = getModifiers();
+				if (modifiers.contains(Modifier.PUBLIC)) {
+					constructormodifiers = IncrementalElementsTypes.MODIFIERS_PUBLIC;
+				} else if (modifiers.contains(Modifier.PROTECTED)) {
+					constructormodifiers = IncrementalElementsTypes.MODIFIERS_PROTECTED;
+				} else if (modifiers.contains(Modifier.PRIVATE)) {
+					constructormodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
+				} else {
+					constructormodifiers = ImmutableModifierSet.empty();
+				}
+				break;
+			}
+		}
+		return constructormodifiers;
 	}
 
 	private IncrementalElement<?> getEqualsMethod(List<IncrementalElement<?>> thisenclosedelements) {

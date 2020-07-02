@@ -36,6 +36,7 @@ import com.sun.source.util.Trees;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.info.RealizedSignatureData;
+import saker.java.compiler.impl.compile.handler.invoker.CompilationContextInformation;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
@@ -60,9 +61,9 @@ public class JavaCompilationUtils {
 		return new AbiUsageParser(trees, srcver, cache);
 	}
 
-	public static IncrementalElementsTypes createElementsTypes(Elements realelements, Object javacsync, String srcver,
-			ParserCache cache) {
-		return new IncrementalElementsTypes(realelements, javacsync, cache);
+	public static IncrementalElementsTypes createElementsTypes(Elements realelements, Object javacsync,
+			CompilationContextInformation context, ParserCache cache) {
+		return new IncrementalElementsTypes(realelements, javacsync, cache, context);
 	}
 
 	public static RealizedSignatureData getRealizedSignatures(CompilationUnitTree unit, Trees trees, String filename,

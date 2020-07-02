@@ -1,8 +1,10 @@
 package saker.java.compiler.impl.compat;
 
+import java.util.Arrays;
+
 import javax.lang.model.element.ElementKind;
 
-import saker.java.compiler.jdk.impl.JavaCompilationUtils;
+import saker.java.compiler.api.processing.exc.ElementKindNotFoundException;
 
 public class KindCompatUtils {
 	private KindCompatUtils() {
@@ -11,18 +13,15 @@ public class KindCompatUtils {
 
 	// ONLY ADDITIONAL MODIFICATIONS TO THESE ARRAYS
 	//  for backward compatibility
-	
+
 	private static final String[] ELEMENTKIND_NAMES = { "PACKAGE", "ENUM", "CLASS", "ANNOTATION_TYPE", "INTERFACE",
 			"ENUM_CONSTANT", "FIELD", "PARAMETER", "LOCAL_VARIABLE", "EXCEPTION_PARAMETER", "METHOD", "CONSTRUCTOR",
 			"STATIC_INIT", "INSTANCE_INIT", "TYPE_PARAMETER", "OTHER", "RESOURCE_VARIABLE", "MODULE", "RECORD",
 			"RECORD_COMPONENT" };
 
-	private static final ElementKind[] ELEMENTKINDS = { ElementKind.PACKAGE, ElementKind.ENUM, ElementKind.CLASS,
-			ElementKind.ANNOTATION_TYPE, ElementKind.INTERFACE, ElementKind.ENUM_CONSTANT, ElementKind.FIELD,
-			ElementKind.PARAMETER, ElementKind.LOCAL_VARIABLE, ElementKind.EXCEPTION_PARAMETER, ElementKind.METHOD,
-			ElementKind.CONSTRUCTOR, ElementKind.STATIC_INIT, ElementKind.INSTANCE_INIT, ElementKind.TYPE_PARAMETER,
-			ElementKind.OTHER, ElementKind.RESOURCE_VARIABLE, JavaCompilationUtils.getModuleElementKind(),
-			JavaCompilationUtils.getRecordElementKind(), JavaCompilationUtils.getRecordComponentElementKind(), };
+	private static final ElementKind[] ELEMENTKINDS = new ElementKind[ELEMENTKIND_NAMES.length];
+
+	private static final IllegalArgumentException[] ELEMENTKIND_NOTFOUND_EXCEPTIONS = new IllegalArgumentException[ELEMENTKIND_NAMES.length];
 
 	public static final byte ELEMENTKIND_INDEX_PACKAGE = 0;
 	public static final byte ELEMENTKIND_INDEX_ENUM = 1;
@@ -47,8 +46,17 @@ public class KindCompatUtils {
 
 	private static final byte[] ELEMENTKIND_ORDINAL_INDEX_LOOKUP;
 	static {
-		ElementKind[] vals = ElementKind.values();
-		ELEMENTKIND_ORDINAL_INDEX_LOOKUP = new byte[vals.length];
+		for (int i = 0; i < ELEMENTKIND_NAMES.length; i++) {
+			try {
+				ELEMENTKINDS[i] = ElementKind.valueOf(ELEMENTKIND_NAMES[i]);
+			} catch (IllegalArgumentException e) {
+				//an enum was not found in the current JVM
+				//running on older version, not supported				
+				ELEMENTKIND_NOTFOUND_EXCEPTIONS[i] = e;
+			}
+		}
+		ELEMENTKIND_ORDINAL_INDEX_LOOKUP = new byte[Math.max(ELEMENTKIND_NAMES.length, ElementKind.values().length)];
+		Arrays.fill(ELEMENTKIND_ORDINAL_INDEX_LOOKUP, (byte) -1);
 		for (int i = 0; i < ELEMENTKINDS.length; i++) {
 			ElementKind ek = ELEMENTKINDS[i];
 			if (ek != null) {
@@ -62,7 +70,11 @@ public class KindCompatUtils {
 		if (kind == null) {
 			return -1;
 		}
-		return ELEMENTKIND_ORDINAL_INDEX_LOOKUP[kind.ordinal()];
+		byte idx = ELEMENTKIND_ORDINAL_INDEX_LOOKUP[kind.ordinal()];
+		if (idx < 0) {
+			throw new AssertionError("Failed to determine ElementKind index for: " + kind);
+		}
+		return idx;
 	}
 
 	public static String getElementKindName(byte index) {
@@ -85,9 +97,10 @@ public class KindCompatUtils {
 			if (result != null) {
 				return result;
 			}
-			throw new IllegalArgumentException(ELEMENTKIND_NAMES[index]);
+			throw new ElementKindNotFoundException(ELEMENTKIND_NAMES[index], ELEMENTKIND_NOTFOUND_EXCEPTIONS[index]);
 		}
 		//this could only happen if someones uses an older version of the saker.java.compiler package
-		throw new IllegalArgumentException("Element kind not found for index: " + index + " (Using an older version?)");
+		throw new UnsupportedOperationException(
+				"Unrecognized index for ElementKind: " + index + " (Using older saker.java.compiler version?)");
 	}
 }

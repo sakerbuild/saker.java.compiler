@@ -125,6 +125,11 @@ public interface JavaCompilationInvoker {
 		return JavaTools.getCurrentJavaVersionProperty();
 	}
 
+	@RMICacheResult
+	public default int getCompilerJVMJavaMajorVersion() {
+		return JavaTools.getCurrentJavaMajorVersion();
+	}
+
 	/**
 	 * Gets the name of the {@link SourceVersion} enumeration that is being accepted by this compilation.
 	 * 

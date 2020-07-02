@@ -17,11 +17,13 @@ package saker.java.compiler.jdk.impl.incremental.model;
 
 import javax.lang.model.util.Elements;
 
+import saker.java.compiler.impl.compile.handler.invoker.CompilationContextInformation;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.util14.impl.model.IncrementalElementsTypes14;
 
 public class IncrementalElementsTypes extends IncrementalElementsTypes14 {
-	public IncrementalElementsTypes(Elements realelements, Object javacsync, ParserCache cache) {
-		super(realelements, javacsync, cache);
+	public IncrementalElementsTypes(Elements realelements, Object javacsync, ParserCache cache,
+			CompilationContextInformation context) {
+		super(realelements, javacsync, cache, context);
 	}
 }

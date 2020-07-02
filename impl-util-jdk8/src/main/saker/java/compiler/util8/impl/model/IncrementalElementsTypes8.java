@@ -157,6 +157,7 @@ import saker.java.compiler.impl.compile.handler.incremental.model.scope.Enclosin
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.MethodResolutionScope;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingFileData;
+import saker.java.compiler.impl.compile.handler.invoker.CompilationContextInformation;
 import saker.java.compiler.impl.compile.signature.annot.val.AnnotValueImpl;
 import saker.java.compiler.impl.compile.signature.annot.val.ArrayValueImpl;
 import saker.java.compiler.impl.compile.signature.annot.val.TypeValueImpl;
@@ -405,11 +406,14 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	private final ThreadLocal<Set<? super DocumentedElement<?>>> docCommentTrackerThreadLocal = new InheritableThreadLocal<>();
 
 	protected final ParserCache cache;
+	private CompilationContextInformation compilationContext;
 
-	public IncrementalElementsTypes8(Elements realelements, Object javacsync, ParserCache cache) {
+	public IncrementalElementsTypes8(Elements realelements, Object javacsync, ParserCache cache,
+			CompilationContextInformation context) {
 		this.realElements = realelements;
 		this.javacSync = javacsync;
 		this.cache = cache;
+		this.compilationContext = context;
 
 		this.javaLangObjectElement = getTypeElementFromRealElements(JAVA_LANG_OBJECT);
 		this.javaLangEnumElement = getTypeElementFromRealElements(JAVA_LANG_ENUM);
@@ -417,13 +421,18 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		this.javaLangCloneableElement = getTypeElementFromRealElements(JAVA_LANG_CLONEABLE);
 		this.javaLangRecordElementSupplier = LazySupplier.of(() -> getTypeElementFromRealElements(JAVA_LANG_RECORD));
 	}
-	
+
 	protected void setForwardingElementVisitor(ForwardingElementVisitor forwardingElementVisitor) {
 		this.forwardingElementVisitor = forwardingElementVisitor;
 	}
 
 	public void setDocCommentTrackerThreadLocal(Set<? super DocumentedElement<?>> elements) {
 		docCommentTrackerThreadLocal.set(elements);
+	}
+
+	@Override
+	public int getCompilerJVMJavaMajorVersion() {
+		return compilationContext.getCompilerJVMJavaMajorVersion();
 	}
 
 	@Override

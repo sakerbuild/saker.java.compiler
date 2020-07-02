@@ -602,6 +602,23 @@ testjava14(){
 		],
 	)
 }
+testjava15(){
+	include(
+		test, 
+		jre: saker.java.sdk(15),
+		testclasses: [
+			testing.saker.java.compiler.tests.tasks.**.*Test,
+			testing.saker.java.compiler.tests.only.jdk15.**.*Test,
+			testing.saker.java.compiler.tests.jdk9.**.*Test,
+			testing.saker.java.compiler.tests.jdk10.**.*Test,
+			testing.saker.java.compiler.tests.jdk11.**.*Test,
+			testing.saker.java.compiler.tests.jdk12.**.*Test,
+			testing.saker.java.compiler.tests.jdk13.**.*Test,
+			testing.saker.java.compiler.tests.jdk14.**.*Test,
+			testing.saker.java.compiler.tests.jdk15.**.*Test,
+		],
+	)
+}
 
 _testapicompile(
 	in enabled = false,

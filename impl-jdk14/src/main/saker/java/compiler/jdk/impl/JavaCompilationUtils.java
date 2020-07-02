@@ -30,6 +30,7 @@ import com.sun.source.util.Trees;
 import saker.build.thirdparty.saker.rmi.connection.RMITransferProperties;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.info.RealizedSignatureData;
+import saker.java.compiler.impl.compile.handler.invoker.CompilationContextInformation;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignatureParser;
@@ -54,9 +55,9 @@ public class JavaCompilationUtils {
 		return new AbiUsageParser(trees, srcver, cache);
 	}
 
-	public static IncrementalElementsTypes createElementsTypes(Elements realelements, Object javacsync, String srcver,
-			ParserCache cache) {
-		return new IncrementalElementsTypes(realelements, javacsync, cache);
+	public static IncrementalElementsTypes createElementsTypes(Elements realelements, Object javacsync,
+			CompilationContextInformation context, ParserCache cache) {
+		return new IncrementalElementsTypes(realelements, javacsync, cache, context);
 	}
 
 	public static RealizedSignatureData getRealizedSignatures(CompilationUnitTree unit, Trees trees, String filename,
@@ -81,6 +82,7 @@ public class JavaCompilationUtils {
 		return Java9LanguageUtils.getModuleNameOf(elem);
 	}
 
+//TODO remove element kind related functions
 	public static boolean isModuleElementKind(ElementKind kind) {
 		return Java9LanguageUtils.isModuleElementKind(kind);
 	}

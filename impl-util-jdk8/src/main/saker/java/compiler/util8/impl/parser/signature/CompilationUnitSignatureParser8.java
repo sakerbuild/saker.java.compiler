@@ -1179,7 +1179,12 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 			}
 			default: {
 				if (JavaCompilationUtils.isRecordElementKind(kind)) {
-					return ImmutableModifierSet.get(classmodifiers.getFlags()).added(Modifier.FINAL);
+					ImmutableModifierSet res = ImmutableModifierSet.get(classmodifiers.getFlags())
+							.added(Modifier.FINAL);
+					if (enclosingclasssignature != null) {
+						res = res.added(Modifier.STATIC);
+					}
+					return res;
 				}
 				return classmodifiers.getFlags();
 			}

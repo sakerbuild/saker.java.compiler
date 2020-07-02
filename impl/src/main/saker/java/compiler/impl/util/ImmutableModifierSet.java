@@ -19,6 +19,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -29,35 +30,54 @@ import java.util.function.Predicate;
 
 import javax.lang.model.element.Modifier;
 
+import saker.java.compiler.api.processing.exc.ModifierNotFoundException;
+
 public final class ImmutableModifierSet extends AbstractSet<Modifier> implements Set<Modifier> {
 	private static final ImmutableModifierSet EMPTY_INSTANCE = new ImmutableModifierSet((short) 0);
 
 	//define our own modifier values array, as newer JDKs can add new values, which can distrupt order or ordinal values
-	//XXX if new values are introduced, export this array to a JDK version dependent bundle. only appending to it
+	//if new values are introduced, export this array to a JDK version dependent bundle. only appending to it
 	//      THE ORDER IN THIS ARRAY IS NOT TO BE MODIFIED FOR SERIALIZATION COMPATIBILITY
-	private static final Modifier[] MODIFIERS = { Modifier.PUBLIC, Modifier.PROTECTED, Modifier.PRIVATE,
-			Modifier.ABSTRACT, Modifier.DEFAULT, Modifier.STATIC, Modifier.FINAL, Modifier.TRANSIENT, Modifier.VOLATILE,
-			Modifier.SYNCHRONIZED, Modifier.NATIVE, Modifier.STRICTFP };
+	private static final String[] MODIFIERS_NAMES = { "PUBLIC", "PROTECTED", "PRIVATE", "ABSTRACT", "DEFAULT", "STATIC",
+			"FINAL", "TRANSIENT", "VOLATILE", "SYNCHRONIZED", "NATIVE", "STRICTFP", "SEALED", "NON_SEALED" };
+	private static final Modifier[] MODIFIERS = new Modifier[MODIFIERS_NAMES.length];
+
+	private static final IllegalArgumentException[] MODIFIER_NOTFOUND_EXCEPTIONS = new IllegalArgumentException[MODIFIERS_NAMES.length];
 
 	//this array is a dynamic lookup table that converts the ordinals of Modifier enums to the index in MODIFIERS
 	private static final int[] MODIFIER_ORDINAL_INDEX_LOOKUP;
 
-	private static final short ALL_FLAGS_MASK;
+	private static final short ALL_RECOGNIZED_FLAGS_MASK;
 	static {
 		if (MODIFIERS.length > 16) {
 			throw new AssertionError("Too many modifiers. Need higher precision representation: " + MODIFIERS.length);
 		}
-		MODIFIER_ORDINAL_INDEX_LOOKUP = new int[MODIFIERS.length];
-		short allmask = 0;
-		for (int i = 0; i < MODIFIERS.length; i++) {
-			short f = (short) (1 << i);
-			MODIFIER_ORDINAL_INDEX_LOOKUP[MODIFIERS[i].ordinal()] = i;
-			allmask |= f;
+		for (int i = 0; i < MODIFIERS_NAMES.length; i++) {
+			try {
+				MODIFIERS[i] = Modifier.valueOf(MODIFIERS_NAMES[i]);
+			} catch (IllegalArgumentException e) {
+				//an enum was not found in the current JVM
+				//running on older version, not supported 
+				MODIFIER_NOTFOUND_EXCEPTIONS[i] = e;
+			}
 		}
-		ALL_FLAGS_MASK = allmask;
+
+		MODIFIER_ORDINAL_INDEX_LOOKUP = new int[Math.max(MODIFIERS.length, Modifier.values().length)];
+		Arrays.fill(MODIFIER_ORDINAL_INDEX_LOOKUP, -1);
+		short allrecognized = 0;
+		for (int i = 0; i < MODIFIERS.length; i++) {
+			Modifier m = MODIFIERS[i];
+			short f = (short) (1 << i);
+			if (m != null) {
+				//a modifier may not be supported in the current VM
+				MODIFIER_ORDINAL_INDEX_LOOKUP[m.ordinal()] = i;
+			}
+			allrecognized |= f;
+		}
+		ALL_RECOGNIZED_FLAGS_MASK = allrecognized;
 	}
 
-	private short flags;
+	private final short flags;
 
 	private ImmutableModifierSet(short flags) {
 		this.flags = flags;
@@ -85,7 +105,12 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 		Objects.requireNonNull(modifiers, "modifiers");
 		short f = 0;
 		for (Modifier m : modifiers) {
-			f |= 1 << MODIFIER_ORDINAL_INDEX_LOOKUP[m.ordinal()];
+			Objects.requireNonNull(m, "modifier");
+			int ordinal = MODIFIER_ORDINAL_INDEX_LOOKUP[m.ordinal()];
+			if (ordinal < 0) {
+				throw new AssertionError("Modifier not found in ordinal lookup: " + m);
+			}
+			f |= 1 << ordinal;
 		}
 		return new ImmutableModifierSet(f);
 	}
@@ -97,16 +122,18 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 		}
 		short f = 0;
 		for (Modifier m : modifiers) {
-			f |= 1 << MODIFIER_ORDINAL_INDEX_LOOKUP[m.ordinal()];
+			Objects.requireNonNull(m, "modifier");
+			int ordinal = MODIFIER_ORDINAL_INDEX_LOOKUP[m.ordinal()];
+			if (ordinal < 0) {
+				throw new AssertionError("Modifier not found in ordinal lookup: " + m);
+			}
+			f |= 1 << ordinal;
 		}
 		return f;
 	}
 
 	public static ImmutableModifierSet forFlags(short flags) {
-		if ((flags & ~ALL_FLAGS_MASK) != 0) {
-			throw new IllegalArgumentException("Modifier flags contain unrecognized modifiers: 0x"
-					+ Integer.toHexString(flags) + " with mask: 0x" + Integer.toHexString(ALL_FLAGS_MASK));
-		}
+		checkFlagsSupport(flags);
 		return new ImmutableModifierSet(flags);
 	}
 
@@ -116,20 +143,23 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 
 	public static short readExternalFlag(DataInput in) throws IOException {
 		short flags = in.readShort();
-		if ((flags & ~ALL_FLAGS_MASK) != 0) {
-			throw new IllegalArgumentException("Modifier flags contain unrecognized modifiers: 0x"
-					+ Integer.toHexString(flags) + " with mask: 0x" + Integer.toHexString(ALL_FLAGS_MASK));
-		}
+		checkFlagsSupport(flags);
 		return flags;
 	}
 
 	public static ImmutableModifierSet readExternalFlagSet(DataInput in) throws IOException {
 		short flags = in.readShort();
-		if ((flags & ~ALL_FLAGS_MASK) != 0) {
-			throw new IllegalArgumentException("Modifier flags contain unrecognized modifiers: 0x"
-					+ Integer.toHexString(flags) + " with mask: 0x" + Integer.toHexString(ALL_FLAGS_MASK));
-		}
+		checkFlagsSupport(flags);
 		return new ImmutableModifierSet(flags);
+	}
+
+	private static void checkFlagsSupport(short flags) {
+		int unsupportedflags = flags & ~ALL_RECOGNIZED_FLAGS_MASK;
+		if (unsupportedflags == 0) {
+			return;
+		}
+		throw new IllegalArgumentException("Modifier flags contain unrecognized modifiers: 0x"
+				+ Integer.toHexString(flags) + " with mask: 0x" + Integer.toHexString(ALL_RECOGNIZED_FLAGS_MASK));
 	}
 
 	public short getFlags() {
@@ -137,7 +167,12 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 	}
 
 	public ImmutableModifierSet added(Modifier modifier) {
-		short f = (short) (1 << MODIFIER_ORDINAL_INDEX_LOOKUP[modifier.ordinal()]);
+		Objects.requireNonNull(modifier, "modifier");
+		int ordinal = MODIFIER_ORDINAL_INDEX_LOOKUP[modifier.ordinal()];
+		if (ordinal < 0) {
+			throw new AssertionError("Modifier not found in ordinal lookup: " + modifier);
+		}
+		short f = (short) (1 << ordinal);
 		short nf = (short) (this.flags | f);
 		if (nf == this.flags) {
 			return this;
@@ -145,10 +180,26 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 		return new ImmutableModifierSet(nf);
 	}
 
+	public ImmutableModifierSet added(Set<Modifier> modifiers) {
+		Objects.requireNonNull(modifiers, "modifiers");
+		short nf = getFlag(modifiers);
+		nf |= this.flags;
+		if (nf == this.flags) {
+			return this;
+		}
+		return new ImmutableModifierSet(nf);
+	}
+
 	public ImmutableModifierSet added(Modifier... modifiers) {
+		Objects.requireNonNull(modifiers, "modifiers");
 		short nf = this.flags;
 		for (Modifier m : modifiers) {
-			short f = (short) (1 << MODIFIER_ORDINAL_INDEX_LOOKUP[m.ordinal()]);
+			Objects.requireNonNull(m, "modifier");
+			int ordinal = MODIFIER_ORDINAL_INDEX_LOOKUP[m.ordinal()];
+			if (ordinal < 0) {
+				throw new AssertionError("Modifier not found in ordinal lookup: " + m);
+			}
+			short f = (short) (1 << ordinal);
 			nf |= f;
 		}
 		if (nf == this.flags) {
@@ -172,9 +223,13 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 					++idx;
 					itFlags >>= 1;
 				}
-				Modifier result = MODIFIERS[idx];
+				int modidx = idx;
+				Modifier result = MODIFIERS[modidx];
 				idx++;
 				itFlags >>= 1;
+				if (result == null) {
+					throw new ModifierNotFoundException(MODIFIERS_NAMES[modidx], MODIFIER_NOTFOUND_EXCEPTIONS[modidx]);
+				}
 				return result;
 			}
 
@@ -190,12 +245,20 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 		if (!(o instanceof Modifier)) {
 			return false;
 		}
-		short f = (short) (1 << MODIFIER_ORDINAL_INDEX_LOOKUP[((Modifier) o).ordinal()]);
+		int ordinal = MODIFIER_ORDINAL_INDEX_LOOKUP[((Modifier) o).ordinal()];
+		if (ordinal < 0) {
+			throw new AssertionError("Modifier not found in ordinal lookup: " + o);
+		}
+		short f = (short) (1 << ordinal);
 		return ((flags & f) == f);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
+		if (c instanceof ImmutableModifierSet) {
+			short cflags = ((ImmutableModifierSet) c).flags;
+			return (flags & cflags) == cflags;
+		}
 		for (Object o : c) {
 			if (!contains(o)) {
 				return false;
@@ -215,7 +278,11 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 				++idx;
 				f >>= 1;
 			}
-			action.accept(MODIFIERS[idx]);
+			Modifier m = MODIFIERS[idx];
+			if (m == null) {
+				throw new ModifierNotFoundException(MODIFIERS_NAMES[idx], MODIFIER_NOTFOUND_EXCEPTIONS[idx]);
+			}
+			action.accept(m);
 			idx++;
 			f >>= 1;
 		}
@@ -257,6 +324,27 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 	}
 
 	//hashCode from AbstractSet
+	@Override
+	public int hashCode() {
+		if (flags == 0) {
+			return 0;
+		}
+		int h = 0;
+		for (int i = 0; i < MODIFIERS.length; i++) {
+			short f = (short) (1 << i);
+			if (((this.flags & f) == f)) {
+				Modifier m = MODIFIERS[i];
+				if (m == null) {
+					//if the modifier not found, then add some hash
+					//violates Set contract, but the Set is not even valid so...
+					h += f;
+				} else {
+					h += m.hashCode();
+				}
+			}
+		}
+		return h;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -279,5 +367,25 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 		} catch (ClassCastException | NullPointerException unused) {
 			return false;
 		}
+	}
+
+	@Override
+	public String toString() {
+		if (flags == 0) {
+			return "[]";
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append('[');
+		for (int i = 0; i < MODIFIERS_NAMES.length; i++) {
+			short f = (short) (1 << i);
+			if (((this.flags & f) == f)) {
+				if (sb.length() > 1) {
+					sb.append(", ");
+				}
+				sb.append(MODIFIERS_NAMES[i]);
+			}
+		}
+		sb.append(']');
+		return sb.toString();
 	}
 }

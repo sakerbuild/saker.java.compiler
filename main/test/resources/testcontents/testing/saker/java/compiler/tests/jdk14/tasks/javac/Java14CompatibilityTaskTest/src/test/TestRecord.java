@@ -1,10 +1,21 @@
 package test;
 
 public record TestRecord(int i) {
+	//don't declare constructor
 }
 
 record WithConstructor(long j) {
 	WithConstructor(int i){
+		this((long)i);
+	}
+}
+record WithPublicConstructor(long j) {
+	public WithPublicConstructor(int i){
+		this((long)i);
+	}
+}
+record WithProtectedConstructor(long j) {
+	protected WithProtectedConstructor(int i){
 		this((long)i);
 	}
 }
