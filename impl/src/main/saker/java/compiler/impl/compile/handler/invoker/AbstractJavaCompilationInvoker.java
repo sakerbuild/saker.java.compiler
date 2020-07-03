@@ -41,12 +41,14 @@ import com.sun.source.util.Trees;
 import com.sun.tools.javac.api.JavacTool;
 
 import saker.build.file.path.SakerPath;
+import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.java.compiler.impl.compile.file.JavaCompilerJavaFileObject;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.diagnostic.CompilerDiagnosticListener;
+import saker.java.compiler.impl.compile.handler.diagnostic.DiagnosticEntry;
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.ImportScope;
 import saker.java.compiler.impl.compile.handler.info.ClassFileData;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
@@ -74,19 +76,10 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 	private ConcurrentNavigableMap<String, SakerPath> classBinaryNameSourcePaths = new ConcurrentSkipListMap<>();
 
 	protected JavaFileManager fileManager;
-	private boolean errorDiagnosticReported = false;
 
 	protected ParserCache cache = new ParserCache();
 
-	private DiagnosticListener<JavaFileObject> diagnosticListener = new DiagnosticListener<JavaFileObject>() {
-		@Override
-		public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-			if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
-				errorDiagnosticReported = true;
-			}
-			director.reportDiagnostic(CompilerDiagnosticListener.convertToDiagnosticEntry(diagnostic));
-		}
-	};
+	private DelayedReportingDiagnosticListener diagnosticListener = new DelayedReportingDiagnosticListener();
 
 	public AbstractJavaCompilationInvoker() {
 	}
@@ -105,12 +98,16 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 
 	@Override
 	public void invokeCompilation(SakerPathBytes[] units) throws IOException {
-		JavaCompilerJavaFileObject[] unitobjects = new JavaCompilerJavaFileObject[units.length];
-		for (int i = 0; i < unitobjects.length; i++) {
-			unitobjects[i] = new SakerPathBytesJavaInputFileObject(units[i], Kind.SOURCE, null);
+		try {
+			JavaCompilerJavaFileObject[] unitobjects = new JavaCompilerJavaFileObject[units.length];
+			for (int i = 0; i < unitobjects.length; i++) {
+				unitobjects[i] = new SakerPathBytesJavaInputFileObject(units[i], Kind.SOURCE, null);
+			}
+			invokeCompilationImpl(unitobjects);
+			director.addGeneratedClassFilesForSourceFiles(classBinaryNameSourcePaths);
+		} finally {
+			director.reportDiagnostics(diagnosticListener.entries.clearAndIterable());
 		}
-		invokeCompilationImpl(unitobjects);
-		director.addGeneratedClassFilesForSourceFiles(classBinaryNameSourcePaths);
 	}
 
 	@Override
@@ -125,11 +122,11 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 	}
 
 	protected boolean isAnyErrorRaised() {
-		if (errorDiagnosticReported) {
+		if (diagnosticListener.errorDiagnosticReported) {
 			return true;
 		}
-		errorDiagnosticReported = director.isAnyErrorRaised();
-		return errorDiagnosticReported;
+		diagnosticListener.errorDiagnosticReported = director.isAnyErrorRaised();
+		return diagnosticListener.errorDiagnosticReported;
 	}
 
 	public boolean compilationRound() {
@@ -322,5 +319,20 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 
 			classes = SerialUtils.readExternalSortedImmutableNavigableMap(in);
 		}
+	}
+
+	private static class DelayedReportingDiagnosticListener implements DiagnosticListener<JavaFileObject> {
+		protected boolean errorDiagnosticReported = false;
+		protected ConcurrentPrependAccumulator<DiagnosticEntry> entries = new ConcurrentPrependAccumulator<>();
+
+		@Override
+		public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+			if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+				errorDiagnosticReported = true;
+			}
+			DiagnosticEntry diagentry = CompilerDiagnosticListener.convertToDiagnosticEntry(diagnostic);
+			entries.add(diagentry);
+		}
+
 	}
 }

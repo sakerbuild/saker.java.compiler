@@ -319,8 +319,7 @@ public class FullCompilationHandler extends CompilationHandler {
 							+ compilationJavaSDKReference + " : " + JavaSDKReference.PATH_JAVA_EXE + ")");
 				}
 				SakerEnvironment env = taskContext.getExecutionContext().getEnvironment();
-				RemoteJavaCompilerCacheKey key = new RemoteJavaCompilerCacheKey(env, javaexe.toString(),
-						env.getEnvironmentJarPath());
+				RemoteJavaCompilerCacheKey key = new RemoteJavaCompilerCacheKey(env, javaexe.toString());
 				RemoteCompiler remotecompiler;
 				try {
 					remotecompiler = env.getCachedData(key);
@@ -401,8 +400,7 @@ public class FullCompilationHandler extends CompilationHandler {
 		FullCompilationDirector director = new FullCompilationDirector(invoker);
 		director.setOptions(taskContext, outputClassDirectory, outputNativeHeaderDirectory, outputSourceDirectory,
 				outputResourceDirectory, generateNativeHeaders, options, processors, sourceFiles,
-				processorInputLocations, bytecodeManipulation, nocmdlineclasspath,
-				allowcommandlinebootclasspath);
+				processorInputLocations, bytecodeManipulation, nocmdlineclasspath, allowcommandlinebootclasspath);
 		director.invokeCompilation();
 		this.outputFileContents = director.getOutputFileContents();
 		this.processorAccessedFileContents = director.getProcessorAccessedFileContents();

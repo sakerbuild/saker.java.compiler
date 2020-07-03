@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import saker.build.meta.PropertyNames;
 import saker.build.runtime.environment.SakerEnvironment;
 import saker.build.runtime.repository.RepositoryEnvironment;
 import saker.build.thirdparty.saker.util.DateUtils;
@@ -36,10 +37,17 @@ public class RemoteJavaCompilerCacheKey implements CacheKey<RemoteCompiler, Remo
 	private static final Class<JavaCompilerDaemon> JAVA_COMPILER_DAEMON_MAIN_CLASS = saker.java.compiler.impl.launching.JavaCompilerDaemon.class;
 	private static final String JAVA_COMPILER_DAEMON_MAIN_CLASS_NAME = JAVA_COMPILER_DAEMON_MAIN_CLASS.getName();
 
+	public static final boolean COLLECT_RMI_STATS = System
+			.getProperty(PropertyNames.PROPERTY_COLLECT_RMI_STATISTICS) != null || TestFlag.ENABLED;
+
 	private SakerEnvironment environment;
 	private String javaExe;
 	private Path sakerJar;
 	private final Map<String, String> executionUserParameters;
+
+	public RemoteJavaCompilerCacheKey(SakerEnvironment environment, String javaExe) {
+		this(environment, javaExe, environment.getEnvironmentJarPath());
+	}
 
 	public RemoteJavaCompilerCacheKey(SakerEnvironment environment, String javaExe, Path sakerJar) {
 		this.environment = environment;
@@ -61,6 +69,9 @@ public class RemoteJavaCompilerCacheKey implements CacheKey<RemoteCompiler, Remo
 	public RemoteJavaRMIProcess allocate() throws Exception {
 		List<String> commands = ObjectUtils.newArrayList(javaExe, "-cp",
 				sakerJar.toAbsolutePath().normalize().toString());
+		if (COLLECT_RMI_STATS) {
+			commands.add("-D" + PropertyNames.PROPERTY_COLLECT_RMI_STATISTICS + "=true");
+		}
 		NestBundleClassLoader cl = (NestBundleClassLoader) IncrementalCompilationHandler.class.getClassLoader();
 		RepositoryEnvironment repoenv = cl.getRepository().getRepositoryEnvironment();
 		commands.add(saker.build.launching.Main.class.getName());

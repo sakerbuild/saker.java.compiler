@@ -20,8 +20,10 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ElementVisitor;
@@ -35,6 +37,7 @@ import javax.lang.model.element.ModuleElement.ProvidesDirective;
 import javax.lang.model.element.ModuleElement.RequiresDirective;
 import javax.lang.model.element.ModuleElement.UsesDirective;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -104,6 +107,14 @@ public class Java9LanguageUtils {
 	}
 
 	public static void applyRMIProperties(RMITransferProperties.Builder builder) {
+		builder.add(MethodTransferProperties
+				.builder(ReflectUtils.getMethodAssert(RoundEnvironment.class, "getElementsAnnotatedWithAny",
+						TypeElement[].class))
+				.returnWriter(new WrapperRMIObjectWriteHandler(RMIIdentityHashSetRemoteElementWrapper.class)).build());
+		builder.add(MethodTransferProperties
+				.builder(ReflectUtils.getMethodAssert(RoundEnvironment.class, "getElementsAnnotatedWithAny", Set.class))
+				.returnWriter(new WrapperRMIObjectWriteHandler(RMIIdentityHashSetRemoteElementWrapper.class)).build());
+
 		builder.add(MethodTransferProperties
 				.builder(ReflectUtils.getMethodAssert(Elements.class, "getAllPackageElements", CharSequence.class))
 				.returnWriter(new WrapperRMIObjectWriteHandler(RMIIdentityHashSetRemoteElementWrapper.class)).build());

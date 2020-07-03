@@ -3199,6 +3199,17 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		return ImmutableUtils.unmodifiableArrayList(elems);
 	}
 
+	private List<? extends AnnotationValue> forwardAnnotationValueListLockedImpl(List<? extends AnnotationValue> list,
+			int size) {
+		AnnotationValue[] elems = new AnnotationValue[size];
+		int i = 0;
+		for (AnnotationValue t : list) {
+			elems[i++] = forward(t);
+		}
+		List<? extends AnnotationValue> result = ImmutableUtils.unmodifiableArrayList(elems);
+		return result;
+	}
+
 	private <E extends Element> List<? extends E> forwardElementListLockedImpl(List<? extends E> list, int size) {
 		Element[] elems = new Element[size];
 		int i = 0;
@@ -3208,6 +3219,17 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		@SuppressWarnings("unchecked")
 		List<? extends E> result = ImmutableUtils.unmodifiableArrayList((E[]) elems);
 		return result;
+	}
+
+	@Override
+	public List<? extends AnnotationValue> forwardAnnotationValues(List<? extends AnnotationValue> list) {
+		int size = list.size();
+		if (size == 0) {
+			return Collections.emptyList();
+		}
+		synchronized (javacSync) {
+			return forwardAnnotationValueListLockedImpl(list, size);
+		}
 	}
 
 	@Override

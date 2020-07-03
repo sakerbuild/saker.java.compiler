@@ -1646,6 +1646,12 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		public String getSourceVersionName() {
 			return sourceVersionName;
 		}
+
+		//@Override only on Java 13+
+		public boolean isPreviewEnabled() {
+			//TODO return a valid value for this
+			return false;
+		}
 	}
 
 	private static abstract class SourceClassGeneratedJavaFileObject extends ByteArrayBufferingJavaFileObject {

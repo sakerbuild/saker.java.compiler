@@ -17,6 +17,8 @@ package saker.java.compiler.impl.launching;
 
 import java.io.IOException;
 
+import saker.java.compiler.impl.JavaUtil;
+
 public class JavaCompilerDaemon {
 	private static class Arguments {
 		private int port = 0;
@@ -44,6 +46,7 @@ public class JavaCompilerDaemon {
 		SakerRMIDaemon daemon = new SakerRMIDaemon();
 		daemon.setBaseClassLoader(JavaCompilerDaemon.class.getClassLoader());
 		daemon.setPort(args.port);
+		daemon.setTransferProperties(JavaUtil.getCompilationRMIProperties());
 		daemon.run();
 	}
 

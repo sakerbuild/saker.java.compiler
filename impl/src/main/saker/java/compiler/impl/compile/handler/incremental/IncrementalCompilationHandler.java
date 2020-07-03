@@ -1702,8 +1702,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 								+ compilationJavaSDKReference + " : " + JavaSDKReference.PATH_JAVA_EXE + ")");
 					}
 					SakerEnvironment env = executionContext.getEnvironment();
-					RemoteJavaCompilerCacheKey key = new RemoteJavaCompilerCacheKey(env, javaexe.toString(),
-							env.getEnvironmentJarPath());
+					RemoteJavaCompilerCacheKey key = new RemoteJavaCompilerCacheKey(env, javaexe.toString());
 					RemoteCompiler remotecompiler = env.getCachedData(key);
 					RemoteJavaRMIProcess proc = remotecompiler.getRmiProcess();
 

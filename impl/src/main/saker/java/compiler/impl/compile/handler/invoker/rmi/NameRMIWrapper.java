@@ -25,28 +25,36 @@ import saker.build.thirdparty.saker.rmi.io.wrap.RMIWrapper;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 
 public class NameRMIWrapper implements RMIWrapper {
-	private Name name;
+	private String name;
 
 	public NameRMIWrapper() {
 	}
 
 	public NameRMIWrapper(Name name) {
-		this.name = name;
+		this.name = name.toString();
+	}
+
+	public NameRMIWrapper(CharSequence name) {
+		this.name = name.toString();
+	}
+
+	public NameRMIWrapper(String name) {
+		this.name = name.toString();
 	}
 
 	@Override
 	public void writeWrapped(RMIObjectOutput out) throws IOException {
-		out.writeObject(name.toString());
+		out.writeObject(name);
 	}
 
 	@Override
 	public void readWrapped(RMIObjectInput in) throws IOException, ClassNotFoundException {
-		this.name = new IncrementalName((String) in.readObject());
+		this.name = (String) in.readObject();
 	}
 
 	@Override
 	public Object resolveWrapped() {
-		return name;
+		return new IncrementalName(name);
 	}
 
 	@Override

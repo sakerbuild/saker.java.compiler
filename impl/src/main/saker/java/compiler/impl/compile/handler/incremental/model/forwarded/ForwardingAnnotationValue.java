@@ -16,6 +16,7 @@
 package saker.java.compiler.impl.compile.handler.incremental.model.forwarded;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -23,14 +24,18 @@ import javax.lang.model.element.AnnotationValueVisitor;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.AbstractAnnotationValueVisitor8;
-import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 
 public class ForwardingAnnotationValue implements ForwardingObject<AnnotationValue>, AnnotationValue {
+	private static final AtomicReferenceFieldUpdater<ForwardingAnnotationValue, Object> ARFU_value = AtomicReferenceFieldUpdater
+			.newUpdater(ForwardingAnnotationValue.class, Object.class, "value");
+
 	protected IncrementalElementsTypesBase elemTypes;
 	protected AnnotationValue subject;
+
+	private volatile transient Object value;
 
 	public ForwardingAnnotationValue(IncrementalElementsTypesBase elemTypes, AnnotationValue subject) {
 		this.elemTypes = elemTypes;
@@ -44,49 +49,97 @@ public class ForwardingAnnotationValue implements ForwardingObject<AnnotationVal
 
 	@Override
 	public Object getValue() {
-		//XXX cache this?
-		return elemTypes.javac(() -> subject.accept(ValueVisitor.INSTANCE, null));
+		Object val = this.value;
+		if (val != null) {
+			return val;
+		}
+		Object javacval = elemTypes.javac(subject::getValue);
+		if (javacval == null) {
+			//shouldn't happen but anyway..
+			return null;
+		}
+		val = forwardJavacValue(javacval);
+		if (ARFU_value.compareAndSet(this, null, val)) {
+			return val;
+		}
+		return this.value;
+	}
+
+	private Object forwardJavacValue(Object javacval) {
+		if (javacval instanceof TypeMirror) {
+			return elemTypes.forwardType((TypeMirror) javacval);
+		}
+		if (javacval instanceof AnnotationMirror) {
+			return elemTypes.forward((AnnotationMirror) javacval);
+		}
+		if (javacval instanceof VariableElement) {
+			return elemTypes.forwardElement((VariableElement) javacval);
+		}
+		if (javacval instanceof List<?>) {
+			@SuppressWarnings("unchecked")
+			List<? extends AnnotationValue> l = (List<? extends AnnotationValue>) javacval;
+			return elemTypes.forwardAnnotationValues(l);
+		}
+		if (javacval instanceof AnnotationValue) {
+			//shouldn't happen, but just in case
+			return elemTypes.forward((AnnotationValue) javacval);
+		}
+		return javacval;
 	}
 
 	@Override
 	public <R, P> R accept(AnnotationValueVisitor<R, P> v, P p) {
-		return elemTypes.javac(() -> subject.accept(new VisitorForwarder<>(v), p));
+		Object javacval = getValue();
+		if (javacval instanceof TypeMirror) {
+			return v.visitType((TypeMirror) javacval, p);
+		}
+		if (javacval instanceof AnnotationMirror) {
+			return v.visitAnnotation((AnnotationMirror) javacval, p);
+		}
+		if (javacval instanceof VariableElement) {
+			return v.visitEnumConstant((VariableElement) javacval, p);
+		}
+		if (javacval instanceof List<?>) {
+			@SuppressWarnings("unchecked")
+			List<? extends AnnotationValue> l = (List<? extends AnnotationValue>) javacval;
+			return v.visitArray(l, p);
+		}
+		if (javacval instanceof Integer) {
+			return v.visitInt((int) javacval, p);
+		}
+		if (javacval instanceof Character) {
+			return v.visitChar((char) javacval, p);
+		}
+		if (javacval instanceof Boolean) {
+			return v.visitBoolean((boolean) javacval, p);
+		}
+		if (javacval instanceof Long) {
+			return v.visitLong((long) javacval, p);
+		}
+		if (javacval instanceof Short) {
+			return v.visitShort((short) javacval, p);
+		}
+		if (javacval instanceof Byte) {
+			return v.visitByte((byte) javacval, p);
+		}
+		if (javacval instanceof Float) {
+			return v.visitFloat((float) javacval, p);
+		}
+		if (javacval instanceof Double) {
+			return v.visitDouble((double) javacval, p);
+		}
+		if (javacval instanceof String) {
+			return v.visitString((String) javacval, p);
+		}
+		if (javacval instanceof AnnotationValue) {
+			return v.visitUnknown((AnnotationValue) javacval, p);
+		}
+		return v.visitUnknown(this, p);
 	}
 
 	@Override
 	public String toString() {
 		return elemTypes.javac(subject::toString);
-	}
-
-	private static class ValueVisitor extends SimpleAnnotationValueVisitor8<Object, ForwardingAnnotationValue> {
-		public static final ValueVisitor INSTANCE = new ValueVisitor();
-
-		@Override
-		protected Object defaultAction(Object o, ForwardingAnnotationValue p) {
-			return o;
-		}
-
-		@Override
-		public TypeMirror visitType(TypeMirror t, ForwardingAnnotationValue p) {
-			return p.elemTypes.forwardType(t);
-		}
-
-		@Override
-		public VariableElement visitEnumConstant(VariableElement c, ForwardingAnnotationValue p) {
-			return p.elemTypes.forwardElement(c);
-		}
-
-		@Override
-		public AnnotationMirror visitAnnotation(AnnotationMirror a, ForwardingAnnotationValue p) {
-			return p.elemTypes.forward(a);
-		}
-
-		@Override
-		public List<? extends AnnotationValue> visitArray(List<? extends AnnotationValue> vals,
-				ForwardingAnnotationValue p) {
-			return forward(vals, p.elemTypes);
-		}
-
 	}
 
 	private static List<? extends AnnotationValue> forward(List<? extends AnnotationValue> vals,

@@ -26,8 +26,12 @@ import javax.lang.model.element.VariableElement;
 
 import com.sun.source.tree.Tree;
 
+import saker.build.thirdparty.saker.rmi.connection.MethodTransferProperties;
 import saker.build.thirdparty.saker.rmi.connection.RMITransferProperties;
+import saker.build.thirdparty.saker.rmi.io.writer.WrapperRMIObjectWriteHandler;
+import saker.build.thirdparty.saker.util.ReflectUtils;
 import saker.build.thirdparty.saker.util.function.TriFunction;
+import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListRemoteElementWrapper;
 import saker.java.compiler.impl.JavaUtil;
 
 public class Java14LanguageUtils {
@@ -37,6 +41,10 @@ public class Java14LanguageUtils {
 
 	public static void applyRMIProperties(RMITransferProperties.Builder builder) {
 		JavaUtil.addCommonElementClassRMIProperties(builder, RecordComponentElement.class);
+
+		builder.add(MethodTransferProperties
+				.builder(ReflectUtils.getMethodAssert(TypeElement.class, "getRecordComponents"))
+				.returnWriter(new WrapperRMIObjectWriteHandler(RMIArrayListRemoteElementWrapper.class)).build());
 	}
 
 	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {

@@ -37,10 +37,13 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.AnnotatedConstruct;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.Parameterizable;
 import javax.lang.model.element.QualifiedNameable;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -72,11 +75,13 @@ import saker.build.thirdparty.saker.rmi.connection.RMITransferProperties;
 import saker.build.thirdparty.saker.rmi.io.RMIObjectInput;
 import saker.build.thirdparty.saker.rmi.io.RMIObjectOutput;
 import saker.build.thirdparty.saker.rmi.io.wrap.RMIWrapper;
+import saker.build.thirdparty.saker.rmi.io.writer.RMIObjectWriteHandler;
 import saker.build.thirdparty.saker.rmi.io.writer.WrapperRMIObjectWriteHandler;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.ReflectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListRemoteElementWrapper;
+import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMIIdentityHashSetRemoteElementWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMILinkedHashSetStringElementWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMITreeSetStringElementWrapper;
@@ -505,6 +510,11 @@ public class JavaUtil {
 							.build());
 
 					builder.add(MethodTransferProperties
+							.builder(ReflectUtils.getMethodAssert(AnnotationValue.class, "getValue"))
+							.returnWriter(new WrapperRMIObjectWriteHandler(AnnotationValueValueRMIWrapper.class))
+							.build());
+
+					builder.add(MethodTransferProperties
 							.builder(ReflectUtils.getMethodAssert(ProcessingEnvironment.class, "getOptions"))
 							.returnWriter(new WrapperRMIObjectWriteHandler(RMILinkedHashSetStringElementWrapper.class))
 							.build());
@@ -528,19 +538,35 @@ public class JavaUtil {
 									Element.class))
 							.returnWriter(new WrapperRMIObjectWriteHandler(RMIArrayListRemoteElementWrapper.class))
 							.build());
+					builder.add(MethodTransferProperties
+							.builder(ReflectUtils.getMethodAssert(Elements.class, "getTypeElement", CharSequence.class))
+							.parameterWriter(0, RMIObjectWriteHandler.wrapper(CharSequenceStringizeRMIWrapper.class))
+							.build());
+
+					builder.add(MethodTransferProperties
+							.builder(ReflectUtils.getMethodAssert(Name.class, "contentEquals", CharSequence.class))
+							.parameterWriter(0, RMIObjectWriteHandler.wrapper(CharSequenceStringizeRMIWrapper.class))
+							.build());
 
 					addCommonAnnotatedConstructRMIProperties(builder, AnnotatedConstruct.class);
 
 					addCommonElementClassRMIProperties(builder, Element.class);
+					addCommonElementClassRMIProperties(builder, Parameterizable.class);
 					addCommonElementClassRMIProperties(builder, ExecutableElement.class);
 					addCommonElementClassRMIProperties(builder, PackageElement.class);
 					addCommonElementClassRMIProperties(builder, TypeElement.class);
 					addCommonElementClassRMIProperties(builder, TypeParameterElement.class);
 					addCommonElementClassRMIProperties(builder, VariableElement.class);
+					addCommonElementClassRMIProperties(builder, QualifiedNameable.class);
 
 					addCommonQualifiedNameableRMIProperties(builder, QualifiedNameable.class);
 					addCommonQualifiedNameableRMIProperties(builder, PackageElement.class);
 					addCommonQualifiedNameableRMIProperties(builder, TypeElement.class);
+
+					builder.add(MethodTransferProperties
+							.builder(ReflectUtils.getMethodAssert(Parameterizable.class, "getTypeParameters"))
+							.returnWriter(new WrapperRMIObjectWriteHandler(RMIArrayListRemoteElementWrapper.class))
+							.build());
 
 					builder.add(MethodTransferProperties
 							.builder(ReflectUtils.getMethodAssert(ExecutableElement.class, "getTypeParameters"))
@@ -561,6 +587,11 @@ public class JavaUtil {
 							.build());
 					builder.add(MethodTransferProperties
 							.builder(ReflectUtils.getMethodAssert(TypeElement.class, "getInterfaces"))
+							.returnWriter(new WrapperRMIObjectWriteHandler(RMIArrayListRemoteElementWrapper.class))
+							.build());
+
+					builder.add(MethodTransferProperties
+							.builder(ReflectUtils.getMethodAssert(TypeParameterElement.class, "getBounds"))
 							.returnWriter(new WrapperRMIObjectWriteHandler(RMIArrayListRemoteElementWrapper.class))
 							.build());
 
@@ -739,6 +770,71 @@ public class JavaUtil {
 		public Object getWrappedObject() {
 			throw new UnsupportedOperationException();
 		}
+	}
 
+	private static class AnnotationValueValueRMIWrapper implements RMIWrapper {
+		private Object value;
+
+		public AnnotationValueValueRMIWrapper() {
+		}
+
+		public AnnotationValueValueRMIWrapper(Object value) {
+			this.value = value;
+		}
+
+		@Override
+		public void writeWrapped(RMIObjectOutput out) throws IOException {
+			if (value instanceof List<?>) {
+				out.writeWrappedObject(value, RMIArrayListWrapper.class);
+			} else {
+				out.writeObject(value);
+			}
+		}
+
+		@Override
+		public void readWrapped(RMIObjectInput in) throws IOException, ClassNotFoundException {
+			this.value = in.readObject();
+		}
+
+		@Override
+		public Object resolveWrapped() {
+			return value;
+		}
+
+		@Override
+		public Object getWrappedObject() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private static class CharSequenceStringizeRMIWrapper implements RMIWrapper {
+		private CharSequence cs;
+
+		public CharSequenceStringizeRMIWrapper() {
+		}
+
+		public CharSequenceStringizeRMIWrapper(CharSequence cd) {
+			this.cs = cd;
+		}
+
+		@Override
+		public Object getWrappedObject() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void readWrapped(RMIObjectInput in) throws IOException, ClassNotFoundException {
+			cs = (CharSequence) in.readObject();
+		}
+
+		@Override
+		public Object resolveWrapped() {
+			return cs;
+		}
+
+		@Override
+		public void writeWrapped(RMIObjectOutput out) throws IOException {
+			out.writeObject(cs.toString());
+		}
 	}
 }

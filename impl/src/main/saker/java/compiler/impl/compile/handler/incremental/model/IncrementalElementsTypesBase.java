@@ -71,6 +71,8 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 
 	public Object getAnnotationValue(Value value, TypeMirror targettype, Element enclosingresolutionelement);
 
+	public List<? extends AnnotationValue> forwardAnnotationValues(List<? extends AnnotationValue> list);
+
 	public <E extends Element> List<? extends E> forwardElements(List<? extends E> list);
 
 	public <E extends Element> List<? extends E> forwardElements(Supplier<List<? extends E>> javaclistsupplier);

@@ -23,6 +23,7 @@ import saker.build.file.FileHandle;
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.rmi.annot.invoke.RMICacheResult;
 import saker.build.thirdparty.saker.rmi.annot.transfer.RMIWrap;
+import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMITreeMapSerializeKeySerializeValueWrapper;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
@@ -52,6 +53,13 @@ public interface JavaCompilerInvocationDirector {
 	public boolean isAnyErrorRaised();
 
 	public void reportDiagnostic(DiagnosticEntry entry);
+
+	public default void reportDiagnostics(
+			@RMIWrap(RMIArrayListWrapper.class) Iterable<? extends DiagnosticEntry> entries) {
+		for (DiagnosticEntry de : entries) {
+			reportDiagnostic(de);
+		}
+	}
 
 	/**
 	 * The user provided source version name in <code>RELEASE_*</code> format
