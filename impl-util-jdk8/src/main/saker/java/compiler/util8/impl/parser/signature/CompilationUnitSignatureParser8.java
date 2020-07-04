@@ -514,26 +514,22 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		ExpressionTree initer = tree.getInitializer();
 		byte declaringkindindex = context.getDeclaringKindIndex();
 
+		FieldSignature sig;
 		//detect if the variable is an enum constant
-		ElementKind elemkind;
-		ConstantValueResolver constantvalue;
 		if (isEnumConstant(tree, varmodifierflagss, declaringkindindex, context.unit)) {
-			elemkind = ElementKind.ENUM_CONSTANT;
-			constantvalue = null;
+			sig = FieldSignatureImpl.createEnumSignature(vartypesig, varname, doccomment);
 		} else if (isRecordComponent(varmodifierflagss, declaringkindindex)) {
-			elemkind = JavaCompilationUtils.getRecordComponentElementKind();
-			constantvalue = null;
+			sig = FieldSignatureImpl.createRecordComponent(varmodifierflagss, vartypesig, varname, doccomment);
 		} else {
-			elemkind = ElementKind.FIELD;
+			ConstantValueResolver constantvalue;
 			if (shouldIncludeConstantValue(tree, declaringkindindex, context)) {
 				constantvalue = getConstantValueForType(initer, context, type);
 			} else {
 				constantvalue = null;
 			}
+			sig = FieldSignatureImpl.createField(varmodifierflagss, vartypesig, varname, constantvalue, doccomment);
 		}
 
-		FieldSignature sig = FieldSignatureImpl.create(elemkind, varmodifierflagss, vartypesig, varname, constantvalue,
-				doccomment);
 		context.treeSignatures.put(tree, sig);
 
 		sigpath.setSignature(sig);
@@ -1178,7 +1174,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				return classmodifierflags;
 			}
 			default: {
-				if (JavaCompilationUtils.isRecordElementKind(kind)) {
+				if (KindCompatUtils.isRecordElementKind(kind)) {
 					ImmutableModifierSet res = ImmutableModifierSet.get(classmodifiers.getFlags())
 							.added(Modifier.FINAL);
 					if (enclosingclasssignature != null) {

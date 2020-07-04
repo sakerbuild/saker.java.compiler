@@ -34,6 +34,7 @@ import saker.build.thirdparty.saker.util.io.IOUtils;
 import saker.build.thirdparty.saker.util.io.ProcessUtils;
 import saker.build.thirdparty.saker.util.io.StreamUtils;
 import saker.build.thirdparty.saker.util.io.UnsyncByteArrayOutputStream;
+import saker.java.compiler.impl.compile.handler.incremental.RemoteJavaCompilerCacheKey;
 
 public class RemoteJavaRMIProcess implements Closeable {
 	private Process proc;
@@ -71,8 +72,20 @@ public class RemoteJavaRMIProcess implements Closeable {
 				port = Integer.parseInt(portnumbuf.toString());
 			}
 			address = new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
-			connection = new RMIOptions().classLoader(cloader).transferProperties(rmiproperties)
-					.workerThreadGroup(connectionThreadGroup).connect(address);
+			RMIOptions options = new RMIOptions().classLoader(cloader).transferProperties(rmiproperties)
+					.workerThreadGroup(connectionThreadGroup);
+			if (RemoteJavaCompilerCacheKey.COLLECT_RMI_STATS) {
+				options.collectStatistics(true);
+			}
+			connection = options.connect(address);
+			if (RemoteJavaCompilerCacheKey.COLLECT_RMI_STATS) {
+				connection.addCloseListener(new RMIConnection.CloseListener() {
+					@Override
+					public void onConnectionClosed() {
+						connection.getStatistics().dumpSummary(System.err, null);
+					}
+				});
+			}
 			shutdownHook = new Thread(connectionThreadGroup, "RMI process shutdown hook") {
 				@Override
 				public void run() {
@@ -114,6 +127,9 @@ public class RemoteJavaRMIProcess implements Closeable {
 				RMIServer.shutdownServer(address);
 			} finally {
 				waitDestroyForcibly();
+			}
+			if (RemoteJavaCompilerCacheKey.COLLECT_RMI_STATS) {
+				printProcessStreams();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

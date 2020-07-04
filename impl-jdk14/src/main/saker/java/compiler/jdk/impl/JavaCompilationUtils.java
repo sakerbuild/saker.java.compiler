@@ -82,31 +82,6 @@ public class JavaCompilationUtils {
 		return Java9LanguageUtils.getModuleNameOf(elem);
 	}
 
-//TODO remove element kind related functions
-	public static boolean isModuleElementKind(ElementKind kind) {
-		return Java9LanguageUtils.isModuleElementKind(kind);
-	}
-
-	public static boolean isRecordElementKind(ElementKind kind) {
-		return kind == ElementKind.RECORD;
-	}
-
-	public static boolean isRecordComponentElementKind(ElementKind kind) {
-		return kind == ElementKind.RECORD_COMPONENT;
-	}
-
-	public static ElementKind getModuleElementKind() {
-		return ElementKind.MODULE;
-	}
-
-	public static ElementKind getRecordElementKind() {
-		return ElementKind.RECORD;
-	}
-
-	public static ElementKind getRecordComponentElementKind() {
-		return ElementKind.RECORD_COMPONENT;
-	}
-
 	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
 		Java14LanguageUtils.addTreeKindToElementKindMapping(map);
 	}

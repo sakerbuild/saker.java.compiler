@@ -97,6 +97,7 @@ import saker.java.compiler.api.processing.exc.SourceVersionNotFoundException;
 import saker.java.compiler.api.processor.ProcessorCreator;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaUtil;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.file.JavaCompilerDirectories;
 import saker.java.compiler.impl.compile.file.SakerFileWrapperFileObject;
@@ -1178,7 +1179,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 				return new PackageDocReference(sig.getName());
 			}
 			default: {
-				if (JavaCompilationUtils.isModuleElementKind(elem.getKind())) {
+				if (KindCompatUtils.isModuleElementKind(elem.getKind())) {
 					ModuleSignature ms = (ModuleSignature) elem.getSignature();
 					return new ModuleDocReference(ms.getName());
 				}

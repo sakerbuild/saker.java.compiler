@@ -26,10 +26,10 @@ import javax.lang.model.element.Modifier;
 
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.java.compiler.impl.JavaUtil;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
-import saker.java.compiler.jdk.impl.JavaCompilationUtils;
 
 public class FieldSignatureImpl extends SimpleFieldSignature {
 	private static final long serialVersionUID = 1L;
@@ -51,7 +51,7 @@ public class FieldSignatureImpl extends SimpleFieldSignature {
 			}
 			return new DocumentedSimpleEnumConstantFieldSignature(type, name, docComment);
 		}
-		if (JavaCompilationUtils.isRecordComponentElementKind(kind)) {
+		if (KindCompatUtils.isRecordComponentElementKind(kind)) {
 			return new RecordComponentSignatureImpl(modifiers, type, name, docComment);
 		}
 		if (docComment == null && constantValue == null) {

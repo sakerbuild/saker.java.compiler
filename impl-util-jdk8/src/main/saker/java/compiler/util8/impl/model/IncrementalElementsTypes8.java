@@ -288,7 +288,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 	static {
 		ELEMENT_KIND_PACKAGE_MODULE = EnumSet.of(ElementKind.PACKAGE);
-		ElementKind moduleelemkind = JavaCompilationUtils.getModuleElementKind();
+		ElementKind moduleelemkind = KindCompatUtils.ELEMENTKIND_MODULE;
 		if (moduleelemkind != null) {
 			ELEMENT_KIND_PACKAGE_MODULE.add(moduleelemkind);
 		}
@@ -714,7 +714,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	public static Element getOuterMostEnclosingElement(Element elem) {
-		if (elem.getKind() == ElementKind.PACKAGE || JavaCompilationUtils.isModuleElementKind(elem.getKind())) {
+		if (elem.getKind() == ElementKind.PACKAGE || KindCompatUtils.isModuleElementKind(elem.getKind())) {
 			return elem;
 		}
 		while (!(elem.getKind().isClass() || elem.getKind().isInterface())) {
@@ -3959,7 +3959,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		ClassHoldingFileData file = elementsToFilesMap.get(resolutionelement);
 		if (file != null) {
 			//either a module, package, or top level type
-			if (kind == ElementKind.PACKAGE || JavaCompilationUtils.isModuleElementKind(kind)) {
+			if (kind == ElementKind.PACKAGE || KindCompatUtils.isModuleElementKind(kind)) {
 				return createUnitResolutionScope(file);
 			}
 			if (ELEMENT_KIND_TYPES.contains(kind)) {
@@ -3967,7 +3967,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 				return createTypeHeaderResolutionScopeWithFile((TypeElement) resolutionelement, file);
 			}
 		}
-		if (kind == ElementKind.PACKAGE || JavaCompilationUtils.isModuleElementKind(kind)) {
+		if (kind == ElementKind.PACKAGE || KindCompatUtils.isModuleElementKind(kind)) {
 			//no file found for top level kind.
 			return null;
 		}
@@ -4024,10 +4024,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			}
 
 			default: {
-				if (JavaCompilationUtils.isRecordComponentElementKind(kind)) {
+				if (KindCompatUtils.isRecordComponentElementKind(kind)) {
 					return createTypeHeaderResolutionScope((TypeElement) resolutionelement.getEnclosingElement());
 				}
-				if (JavaCompilationUtils.isRecordElementKind(kind)) {
+				if (KindCompatUtils.isRecordElementKind(kind)) {
 					return createTypeHeaderResolutionScope((TypeElement) resolutionelement);
 				}
 				//unrecognized element type for resolution

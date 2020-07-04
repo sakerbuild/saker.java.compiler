@@ -47,6 +47,7 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.VersionKeyUtils;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.file.JavaCompilerOutputJavaFileObject;
@@ -126,7 +127,7 @@ public class FullCompilationInvokerImpl implements FullCompilationInvoker {
 
 			//find the module name if any that was compiled
 			for (Element elem : analyzedelements) {
-				if (!JavaCompilationUtils.isModuleElementKind(elem.getKind())) {
+				if (!KindCompatUtils.isModuleElementKind(elem.getKind())) {
 					continue;
 				}
 				outModuleName = ((QualifiedNameable) elem).getQualifiedName().toString();

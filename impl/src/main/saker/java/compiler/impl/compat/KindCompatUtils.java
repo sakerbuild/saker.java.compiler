@@ -14,10 +14,29 @@ public class KindCompatUtils {
 	// ONLY ADDITIONAL MODIFICATIONS TO THESE ARRAYS
 	//  for backward compatibility
 
-	private static final String[] ELEMENTKIND_NAMES = { "PACKAGE", "ENUM", "CLASS", "ANNOTATION_TYPE", "INTERFACE",
-			"ENUM_CONSTANT", "FIELD", "PARAMETER", "LOCAL_VARIABLE", "EXCEPTION_PARAMETER", "METHOD", "CONSTRUCTOR",
-			"STATIC_INIT", "INSTANCE_INIT", "TYPE_PARAMETER", "OTHER", "RESOURCE_VARIABLE", "MODULE", "RECORD",
-			"RECORD_COMPONENT" };
+	private static final String[] ELEMENTKIND_NAMES = { // 
+			"PACKAGE", // 0 
+			"ENUM", // 1
+			"CLASS", // 2 
+			"ANNOTATION_TYPE", // 3 
+			"INTERFACE", // 4
+			"ENUM_CONSTANT", // 5
+			"FIELD", // 6
+			"PARAMETER", // 7
+			"LOCAL_VARIABLE", // 8
+			"EXCEPTION_PARAMETER", // 9
+			"METHOD", // 10
+			"CONSTRUCTOR", // 11
+			"STATIC_INIT", // 12
+			"INSTANCE_INIT", // 13
+			"TYPE_PARAMETER", // 14
+			"OTHER", // 15
+			"RESOURCE_VARIABLE", // 16 
+			"MODULE", // 17
+			"RECORD", // 18
+			"RECORD_COMPONENT", // 19
+			"BINDING_VARIABLE", // 20
+	};
 
 	private static final ElementKind[] ELEMENTKINDS = new ElementKind[ELEMENTKIND_NAMES.length];
 
@@ -43,6 +62,11 @@ public class KindCompatUtils {
 	public static final byte ELEMENTKIND_INDEX_MODULE = 17;
 	public static final byte ELEMENTKIND_INDEX_RECORD = 18;
 	public static final byte ELEMENTKIND_INDEX_RECORD_COMPONENT = 19;
+	public static final byte ELEMENTKIND_INDEX_BINDING_VARIABLE = 20;
+
+	public static final ElementKind ELEMENTKIND_MODULE;
+	public static final ElementKind ELEMENTKIND_RECORD;
+	public static final ElementKind ELEMENTKIND_RECORD_COMPONENT;
 
 	private static final byte[] ELEMENTKIND_ORDINAL_INDEX_LOOKUP;
 	static {
@@ -64,6 +88,21 @@ public class KindCompatUtils {
 				ELEMENTKIND_ORDINAL_INDEX_LOOKUP[ek.ordinal()] = (byte) i;
 			}
 		}
+		ELEMENTKIND_MODULE = ELEMENTKINDS[ELEMENTKIND_INDEX_MODULE];
+		ELEMENTKIND_RECORD = ELEMENTKINDS[ELEMENTKIND_INDEX_RECORD];
+		ELEMENTKIND_RECORD_COMPONENT = ELEMENTKINDS[ELEMENTKIND_INDEX_RECORD_COMPONENT];
+	}
+
+	public static boolean isModuleElementKind(ElementKind kind) {
+		return kind != null && kind == ELEMENTKIND_MODULE;
+	}
+
+	public static boolean isRecordElementKind(ElementKind kind) {
+		return kind != null && kind == ELEMENTKIND_RECORD;
+	}
+
+	public static boolean isRecordComponentElementKind(ElementKind kind) {
+		return kind != null && kind == ELEMENTKIND_RECORD_COMPONENT;
 	}
 
 	public static byte getElementKindIndex(ElementKind kind) {

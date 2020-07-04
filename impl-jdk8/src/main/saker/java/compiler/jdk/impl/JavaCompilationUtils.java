@@ -84,30 +84,6 @@ public class JavaCompilationUtils {
 		return null;
 	}
 
-	public static boolean isModuleElementKind(ElementKind kind) {
-		return false;
-	}
-
-	public static boolean isRecordElementKind(ElementKind kind) {
-		return false;
-	}
-
-	public static boolean isRecordComponentElementKind(ElementKind kind) {
-		return false;
-	}
-
-	public static ElementKind getModuleElementKind() {
-		return null;
-	}
-
-	public static ElementKind getRecordElementKind() {
-		return null;
-	}
-
-	public static ElementKind getRecordComponentElementKind() {
-		return null;
-	}
-
 	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
 	}
 }

@@ -16,9 +16,11 @@
 package saker.java.compiler.impl.launching;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.Socket;
 
+import saker.build.meta.PropertyNames;
 import saker.build.thirdparty.saker.rmi.connection.RMIConnection;
 import saker.build.thirdparty.saker.rmi.connection.RMIOptions;
 import saker.build.thirdparty.saker.rmi.connection.RMIServer;
@@ -27,8 +29,12 @@ import saker.build.thirdparty.saker.util.io.ByteSource;
 import saker.build.thirdparty.saker.util.io.ReadWriteBufferOutputStream;
 import saker.build.thirdparty.saker.util.io.StreamUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
+import testing.saker.java.compiler.TestFlag;
 
 public class SakerRMIDaemon {
+	private static final boolean COLLECT_RMI_STATS = saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_015
+			&& (System.getProperty(PropertyNames.PROPERTY_COLLECT_RMI_STATISTICS) != null || TestFlag.ENABLED);
+
 	public static final String CONTEXT_VARIABLE_BASE_CLASSLOADER = "daemon.base.classloader";
 
 	private int port = 0;
@@ -62,7 +68,12 @@ public class SakerRMIDaemon {
 		try (RMIServer server = new RMIServer(null, port, null) {
 			@Override
 			protected RMIOptions getRMIOptionsForAcceptedConnection(Socket acceptedsocket, int protocolversion) {
-				return new RMIOptions().transferProperties(transferProperties).classLoader(baseClassLoader);
+				RMIOptions options = new RMIOptions().transferProperties(transferProperties)
+						.classLoader(baseClassLoader);
+				if (COLLECT_RMI_STATS) {
+					options.collectStatistics(true);
+				}
+				return options;
 			}
 
 			@Override
@@ -70,6 +81,19 @@ public class SakerRMIDaemon {
 					throws IOException, RuntimeException {
 				super.setupConnection(acceptedsocket, connection);
 				connection.putContextVariable(CONTEXT_VARIABLE_BASE_CLASSLOADER, baseClassLoader);
+				if (COLLECT_RMI_STATS) {
+					connection.addCloseListener(new RMIConnection.CloseListener() {
+						@Override
+						public void onConnectionClosed() {
+							try (OutputStreamWriter writer = new OutputStreamWriter(
+									StreamUtils.closeProtectedOutputStream(stderrin))) {
+								connection.getStatistics().dumpSummary(writer, null);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
+				}
 			}
 		}) {
 			portprintout.println(server.getPort());

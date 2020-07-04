@@ -37,8 +37,8 @@ public class RemoteJavaCompilerCacheKey implements CacheKey<RemoteCompiler, Remo
 	private static final Class<JavaCompilerDaemon> JAVA_COMPILER_DAEMON_MAIN_CLASS = saker.java.compiler.impl.launching.JavaCompilerDaemon.class;
 	private static final String JAVA_COMPILER_DAEMON_MAIN_CLASS_NAME = JAVA_COMPILER_DAEMON_MAIN_CLASS.getName();
 
-	public static final boolean COLLECT_RMI_STATS = System
-			.getProperty(PropertyNames.PROPERTY_COLLECT_RMI_STATISTICS) != null || TestFlag.ENABLED;
+	public static final boolean COLLECT_RMI_STATS = saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_015
+			&& (System.getProperty(PropertyNames.PROPERTY_COLLECT_RMI_STATISTICS) != null || TestFlag.ENABLED);
 
 	private SakerEnvironment environment;
 	private String javaExe;

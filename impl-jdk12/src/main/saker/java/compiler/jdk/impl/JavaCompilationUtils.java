@@ -80,30 +80,6 @@ public class JavaCompilationUtils {
 		return Java9LanguageUtils.getModuleNameOf(elem);
 	}
 
-	public static boolean isModuleElementKind(ElementKind kind) {
-		return Java9LanguageUtils.isModuleElementKind(kind);
-	}
-
-	public static boolean isRecordElementKind(ElementKind kind) {
-		return false;
-	}
-
-	public static boolean isRecordComponentElementKind(ElementKind kind) {
-		return false;
-	}
-
-	public static ElementKind getModuleElementKind() {
-		return ElementKind.MODULE;
-	}
-
-	public static ElementKind getRecordElementKind() {
-		return null;
-	}
-
-	public static ElementKind getRecordComponentElementKind() {
-		return null;
-	}
-
 	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
 	}
 }
