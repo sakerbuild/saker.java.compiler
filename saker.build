@@ -636,7 +636,7 @@ _testapicompile(
 			"testapi/api/{ $enabled ? enabled : disabled }",
 		],
 		ClassPath: [
-			$instrumentedjar,
+			($enabled ? $instrumentedjar : saker.java.classpath.bundle("saker.build-api-v{ static(VERSION_saker.build) }")),
 		],
 		Identifier: "saker.java.compiler-testapi-{ $enabled ? enabled : disabled }",
 		CompilerOptions: global(TOOLS_OPTIONS),
