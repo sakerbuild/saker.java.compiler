@@ -35,6 +35,7 @@ import saker.build.thirdparty.saker.util.io.ProcessUtils;
 import saker.build.thirdparty.saker.util.io.StreamUtils;
 import saker.build.thirdparty.saker.util.io.UnsyncByteArrayOutputStream;
 import saker.java.compiler.impl.compile.handler.incremental.RemoteJavaCompilerCacheKey;
+import saker.java.compiler.impl.util.RMICompatUtil;
 
 public class RemoteJavaRMIProcess implements Closeable {
 	private Process proc;
@@ -79,12 +80,7 @@ public class RemoteJavaRMIProcess implements Closeable {
 			}
 			connection = options.connect(address);
 			if (RemoteJavaCompilerCacheKey.COLLECT_RMI_STATS) {
-				connection.addCloseListener(new RMIConnection.CloseListener() {
-					@Override
-					public void onConnectionClosed() {
-						connection.getStatistics().dumpSummary(System.err, null);
-					}
-				});
+				RMICompatUtil.addDumpCloseListener(connection);
 			}
 			shutdownHook = new Thread(connectionThreadGroup, "RMI process shutdown hook") {
 				@Override

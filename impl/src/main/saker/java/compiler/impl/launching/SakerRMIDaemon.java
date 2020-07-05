@@ -16,7 +16,6 @@
 package saker.java.compiler.impl.launching;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.Socket;
 
@@ -29,6 +28,7 @@ import saker.build.thirdparty.saker.util.io.ByteSource;
 import saker.build.thirdparty.saker.util.io.ReadWriteBufferOutputStream;
 import saker.build.thirdparty.saker.util.io.StreamUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
+import saker.java.compiler.impl.util.RMICompatUtil;
 import testing.saker.java.compiler.TestFlag;
 
 public class SakerRMIDaemon {
@@ -82,17 +82,7 @@ public class SakerRMIDaemon {
 				super.setupConnection(acceptedsocket, connection);
 				connection.putContextVariable(CONTEXT_VARIABLE_BASE_CLASSLOADER, baseClassLoader);
 				if (COLLECT_RMI_STATS) {
-					connection.addCloseListener(new RMIConnection.CloseListener() {
-						@Override
-						public void onConnectionClosed() {
-							try (OutputStreamWriter writer = new OutputStreamWriter(
-									StreamUtils.closeProtectedOutputStream(stderrin))) {
-								connection.getStatistics().dumpSummary(writer, null);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-						}
-					});
+					RMICompatUtil.addDumpCloseListener(stderrin, connection);
 				}
 			}
 		}) {
@@ -129,4 +119,5 @@ public class SakerRMIDaemon {
 	public void setTransferProperties(RMITransferProperties transferProperties) {
 		this.transferProperties = transferProperties;
 	}
+
 }
