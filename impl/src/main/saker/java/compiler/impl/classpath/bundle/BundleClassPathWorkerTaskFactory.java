@@ -22,6 +22,8 @@ import java.io.ObjectOutput;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import saker.build.runtime.execution.ExecutionContext;
 import saker.build.runtime.execution.ExecutionProperty;
@@ -82,6 +84,7 @@ public class BundleClassPathWorkerTaskFactory
 		taskcontext.setStandardOutDisplayIdentifier(BundleClassPathTaskFactory.TASK_NAME);
 
 		BundleClassPathEntry[] entries = new BundleClassPathEntry[bundles.size()];
+		ConcurrentMap<TaskIdentifier, TaskFactory<?>> starttasks = new ConcurrentHashMap<>();
 		try (ThreadWorkPool workpool = ThreadUtils.newDynamicWorkPool()) {
 			int i = 0;
 			for (BundleKey bk : bundles) {
@@ -97,18 +100,19 @@ public class BundleClassPathWorkerTaskFactory
 					StorageViewKey storageviewkey = bk.getStorageViewKey();
 					AttachmentIDEConfigurationBundlePathTaskFactory docattachmenttask = new AttachmentIDEConfigurationBundlePathTaskFactory(
 							storageviewkey, BundlePropertyUtils.documentationAttachmentExecutionProperty(bk));
-					taskcontext.startTask(docattachmenttask, docattachmenttask, null);
+					starttasks.put(docattachmenttask, docattachmenttask);
 					entry.setDocumentationAttachment(new SimpleStructuredObjectTaskResult(docattachmenttask));
 
 					AttachmentIDEConfigurationBundlePathTaskFactory sourceattachmenttask = new AttachmentIDEConfigurationBundlePathTaskFactory(
 							storageviewkey, BundlePropertyUtils.sourceAttachmentExecutionProperty(bk));
-					taskcontext.startTask(sourceattachmenttask, sourceattachmenttask, null);
+					starttasks.put(sourceattachmenttask, sourceattachmenttask);
 					entry.setSourceAttachment(new SimpleStructuredObjectTaskResult(sourceattachmenttask));
 
 					entries[idx] = entry;
 				});
 			}
 		}
+		taskcontext.getTaskUtilities().startTasks(starttasks);
 
 		return new BundlesClassPathReference(ImmutableUtils.makeImmutableLinkedHashSet(entries));
 	}

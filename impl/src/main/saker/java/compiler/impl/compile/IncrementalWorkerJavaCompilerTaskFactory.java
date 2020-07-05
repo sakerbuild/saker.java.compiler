@@ -231,8 +231,6 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 		try (ThreadWorkPool pool = ThreadUtils.newFixedWorkPool("javac-")) {
 			pool.offer(() -> {
 				outputDirectory.synchronize();
-				taskcontext.startTask(JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(taskid),
-						new JavaCompilationConfigLiteralTaskFactory(outputconfig), null);
 			});
 			pool.offer(() -> reportOutputFileDependencies(taskcontext, CompileFileTags.OUTPUT_CLASS,
 					info.getClassFiles()));
@@ -258,8 +256,10 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 					});
 				}
 			}
-			return output;
 		}
+		taskcontext.startTask(JavaTaskUtils.createJavaCompilationConfigurationOutputTaskIdentifier(taskid),
+				new JavaCompilationConfigLiteralTaskFactory(outputconfig), null);
+		return output;
 	}
 
 	static void reportInputFileDependencies(TaskContext taskcontext, Object tag,
