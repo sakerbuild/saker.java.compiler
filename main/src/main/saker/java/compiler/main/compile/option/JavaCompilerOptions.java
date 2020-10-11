@@ -35,7 +35,6 @@ import saker.java.compiler.main.TaskDocs.ProcessorInputLocationNameOption;
 import saker.java.compiler.main.compile.JavaCompilerTaskFactory;
 import saker.nest.scriptinfo.reflection.annot.NestFieldInformation;
 import saker.nest.scriptinfo.reflection.annot.NestInformation;
-import saker.nest.scriptinfo.reflection.annot.NestParameterInformation;
 import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 

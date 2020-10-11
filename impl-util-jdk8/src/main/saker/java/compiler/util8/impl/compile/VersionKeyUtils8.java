@@ -27,18 +27,20 @@ import saker.java.compiler.impl.compile.VersionKeyUtils;
 import saker.java.compiler.impl.compile.VersionKeyUtils.ClassFileHasher;
 import saker.java.compiler.impl.compile.VersionKeyUtils.NotAbiClassException;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.AnnotationVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Attribute;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.FieldVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.MethodVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ModuleVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Opcodes;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.RecordComponentVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Type;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.TypePath;
 import testing.saker.java.compiler.TestFlag;
 
 public class VersionKeyUtils8 {
-	public static final int ASM_API_VERSION = Opcodes.ASM7;
+	public static final int ASM_API_VERSION = Opcodes.ASM9;
 
 	public static class AbiHasherClassVisitor8 extends ClassVisitor implements ClassFileHasher {
 		protected MessageDigest digest;
@@ -51,8 +53,15 @@ public class VersionKeyUtils8 {
 		private String moduleStr;
 		private StringBuilder sb = new StringBuilder();
 
+		private NavigableSet<String> records = null;
+		private StringBuilder recordSb = null;
+
 		public AbiHasherClassVisitor8(int api) {
 			super(api);
+		}
+
+		public AbiHasherClassVisitor8() {
+			this(ASM_API_VERSION);
 		}
 
 		@Override
@@ -113,6 +122,56 @@ public class VersionKeyUtils8 {
 			classStr = sb.toString();
 
 			super.visit(version, access, name, signature, superName, interfaces);
+		}
+
+		@Override
+		public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+			if (records == null) {
+				records = new TreeSet<>();
+				recordSb = new StringBuilder();
+			} else {
+				recordSb.setLength(0);
+			}
+			StringBuilder sb = this.recordSb;
+			sb.setLength(0);
+			sb.append("r:");
+			sb.append(name);
+			sb.append('\r');
+			sb.append(descriptor);
+			sb.append('\r');
+			sb.append(ObjectUtils.nullDefault(signature, (String) null));
+			return new RecordComponentVisitor(api, super.visitRecordComponent(name, descriptor, signature)) {
+				private NavigableSet<String> componentAnnotations = new TreeSet<>();
+
+				@Override
+				public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+					return new AbiHasherAnnotationVisitor8(api, super.visitAnnotation(descriptor, visible),
+							componentAnnotations, "a:" + descriptor + "\r");
+				}
+
+				@Override
+				public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor,
+						boolean visible) {
+					return new AbiHasherAnnotationVisitor8(api,
+							super.visitTypeAnnotation(typeRef, typePath, descriptor, visible), componentAnnotations,
+							"ta:" + Integer.toHexString(typeRef) + "\r" + typePath + "\r" + descriptor + "\r");
+				}
+
+				@Override
+				public void visitAttribute(Attribute attribute) {
+					// non-standard. probably can be ignored 
+					super.visitAttribute(attribute);
+				}
+
+				@Override
+				public void visitEnd() {
+					super.visitEnd();
+					for (String ca : componentAnnotations) {
+						sb.append(ca);
+					}
+					records.add(sb.toString());
+				}
+			};
 		}
 
 		@Override
@@ -296,6 +355,11 @@ public class VersionKeyUtils8 {
 			}
 			for (String m : methods) {
 				digest.update(m.getBytes(StandardCharsets.UTF_8));
+			}
+			if (records != null) {
+				for (String r : records) {
+					digest.update(r.getBytes(StandardCharsets.UTF_8));
+				}
 			}
 		}
 

@@ -45,6 +45,12 @@ global(TOOLS_OPTIONS) = [
 			Java: saker.java.sdk(14),
 		},
 	},
+	{
+		Identifier: jdk15,
+		SDKs: {
+			Java: saker.java.sdk(15),
+		},
+	},
 ]
 
 static(TARGET_JDKS) = [
@@ -75,6 +81,10 @@ static(TARGET_JDKS) = [
 	{
 		Id: jdk14,
 		Major: 14,
+	},
+	{
+		Id: jdk15,
+		Major: 15,
 	},
 ]
 static(JDK_ID_TO_MAJOR) = foreach $jdk in static(TARGET_JDKS) : { $jdk[Id]: $jdk[Major] }
@@ -185,7 +195,6 @@ export(
 	out apijar,
 	out sourcejar,
 	out impljdkjar,
-	out implutiljar,
 	out implsourcejar,
 ){
 	if $jdk == jdk8 {
@@ -248,12 +257,6 @@ export(
 				Directory: $compile[testapi][javac][ClassDirectory],
 				Resources: **/*.class,
 			}] : []),
-			Manifest: {
-				MainAttributes: {
-					Nest-Bundle-Identifier: "saker.java.compiler-impl-v{ global(VERSION_saker.java.compiler) }",
-					Nest-Bundle-Source: "saker.java.compiler-sources-v{ global(VERSION_saker.java.compiler) }",
-				},
-			},
 		)
 		$sourcejar = saker.jar.create(
 			Output: "saker.java.compiler.{ $jdk }/saker.java.compiler-sources.jar",
@@ -267,17 +270,7 @@ export(
 					],
 					Resources: **/*.java,
 				},
-				{
-					Files: LICENSE,
-					TargetDirectory: META-INF,
-				},
 			],
-			Manifest: {
-				MainAttributes: {
-					Nest-Bundle-Format-Version: 1,
-					Nest-Bundle-Identifier: "saker.java.compiler-sources-v{ global(VERSION_saker.java.compiler) }",
-				},
-			},
 		)
 	} else {
 		$apijar = null
@@ -289,50 +282,17 @@ export(
 		Output: "saker.java.compiler.{ $jdk }/saker.java.compiler-impl-{ $jdk }.jar",
 		Resources: [
 			{
-				Directory: "impl-{ $jdk }/resources/",
-				Resources: **,
-			},
-			{
 				Directory: $compile[javac][ClassDirectory],
 				Resources: saker/java/compiler/jdk/impl/**,
-			},
-			{
-				Files: LICENSE,
-				TargetDirectory: META-INF,
-			},
-		],
-		Manifest: {
-			MainAttributes: {
-				Nest-Bundle-Identifier: "saker.java.compiler-impl-{ $jdk }-v{ global(VERSION_saker.java.compiler) }",
-				Nest-Bundle-Source: "saker.java.compiler-impl-sources-{ $jdk }-v{ global(VERSION_saker.java.compiler) }",
-			},
-		},
-	)
-	$implutiljar = saker.jar.create(
-		Output: "saker.java.compiler.{ $jdk }/saker.java.compiler-impl-util-{ $jdk }.jar",
-		Resources: [
-			{
-				Directory: "impl-util-{ $jdk }/resources/",
-				Resources: **,
 			},
 			{
 				Directory: $compile[javac][ClassDirectory],
 				Resources: "saker/java/compiler/util{ static(JDK_ID_TO_MAJOR)[$jdk] }/impl/**",
 			},
-			{
-				Files: LICENSE,
-				TargetDirectory: META-INF,
-			},
 		],
-		Manifest: {
-			MainAttributes: {
-				Nest-Bundle-Identifier: "saker.java.compiler-impl-util-{ $jdk }-v{ global(VERSION_saker.java.compiler) }",
-				Nest-Bundle-Source: "saker.java.compiler-impl-sources-{ $jdk }-v{ global(VERSION_saker.java.compiler) }",
-			},
-		},
 	)
 	$implsourcejar = saker.jar.create(
-		Output: "saker.java.compiler.{ $jdk }/saker.java.compiler-impl-sources.jar",
+		Output: "saker.java.compiler.{ $jdk }/saker.java.compiler-impl-sources-{ $jdk }.jar",
 		Resources: [
 			{
 				Directory: [
@@ -341,17 +301,7 @@ export(
 				],
 				Resources: **/*.java,
 			},
-			{
-				Files: LICENSE,
-				TargetDirectory: META-INF,
-			},
 		],
-		Manifest: {
-			MainAttributes: {
-				Nest-Bundle-Format-Version: 1,
-				Nest-Bundle-Identifier: "saker.java.compiler-impl-sources-{ $jdk }-v{ global(VERSION_saker.java.compiler) }",
-			},
-		},
 	)
 }
 compile9() {
@@ -381,20 +331,53 @@ exportall(
 ){
 	$exportbyjdkid = foreach $jdk in $jdkids 
 		with $export {
-		$export = include(export, compile: include(compile, testapi: $testapi, jdk: $jdk))
+		$export = export(compile: compile(testapi: $testapi, jdk: $jdk))
 	}: {
 		$jdk: $export
 	}
+	$impljar = saker.jar.create(
+		Output: saker.java.compiler-impl.jar,
+		Includes: $exportbyjdkid[jdk8][impljar][Path],
+		MultiReleaseContents: foreach $jdkid, $export in $exportbyjdkid: {
+			static(JDK_ID_TO_MAJOR)[$jdkid] : {
+				Includes: $export[impljdkjar][Path]
+			} 
+		}
+		Manifest: {
+			MainAttributes: {
+				Nest-Bundle-Identifier: "saker.java.compiler-impl-v{global(VERSION_saker.java.compiler)}"
+				Nest-Bundle-Source: "saker.java.compiler-sources-v{ global(VERSION_saker.java.compiler) }"
+			}
+		}
+	)
+	$sourcejar = saker.jar.create(
+		Output: saker.java.compiler-sources.jar,
+		Includes: $exportbyjdkid[jdk8][sourcejar][Path],
+		Resources: [
+			{
+				Files: LICENSE,
+				TargetDirectory: META-INF,
+			},
+		],
+		MultiReleaseContents: foreach $jdkid, $export in $exportbyjdkid: {
+			static(JDK_ID_TO_MAJOR)[$jdkid] : {
+				Includes: $export[implsourcejar][Path]
+			} 
+		}
+		Manifest: {
+			MainAttributes: {
+				Nest-Bundle-Format-Version: 1,
+				Nest-Bundle-Identifier: "saker.java.compiler-sources-v{ global(VERSION_saker.java.compiler) }",
+			},
+		},
+	)
+	
 	$bundlepaths = [ 
 		$exportbyjdkid[jdk8][mainjar][Path],
-		$exportbyjdkid[jdk8][impljar][Path],
 		$exportbyjdkid[jdk8][apijar][Path],
-		$exportbyjdkid[jdk8][sourcejar][Path],
-	] + foreach $jdkid, $export in $exportbyjdkid: [ 
-		$export[impljdkjar][Path], 
-		$export[implutiljar][Path],
-		$export[implsourcejar][Path],
-	]
+		$impljar[Path],
+		$sourcejar[Path],
+	] 
 }
 install(
 	out exportall = include(exportall)

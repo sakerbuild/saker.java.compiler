@@ -20,7 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
-import saker.java.compiler.jdk.impl.compile.VersionKeyLangUtils;
+import saker.java.compiler.util8.impl.compile.VersionKeyUtils8;
 
 public class VersionKeyUtils {
 	public interface ClassFileHasher {
@@ -28,11 +28,7 @@ public class VersionKeyUtils {
 	}
 
 	public static boolean updateAbiHashOfClassBytes(ByteArrayRegion classbytes, MessageDigest hasher) {
-		return VersionKeyLangUtils.createAbiHashingClassVisitor().update(classbytes, hasher);
-	}
-
-	private VersionKeyUtils() {
-		throw new UnsupportedOperationException();
+		return new VersionKeyUtils8.AbiHasherClassVisitor8().update(classbytes, hasher);
 	}
 
 	public static MessageDigest getMD5() throws AssertionError {
@@ -70,4 +66,7 @@ public class VersionKeyUtils {
 		return c;
 	}
 
+	private VersionKeyUtils() {
+		throw new UnsupportedOperationException();
+	}
 }

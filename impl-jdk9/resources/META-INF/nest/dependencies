@@ -1,5 +1,0 @@
-saker.java.compiler-impl
-	classpath: [this]
-
-saker.java.compiler-impl-util-jdk9
-	classpath: [this]

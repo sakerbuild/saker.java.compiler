@@ -5,22 +5,3 @@ saker.compiler.utils-api
 nest.repository.support-api
 	classpath: [0)
 
-saker.java.compiler-impl-jdk8
-	classpath: [this]
-		jre-version: 8
-
-saker.java.compiler-impl-jdk9
-	classpath: [this]
-		jre-version: [9, 12)
-
-saker.java.compiler-impl-jdk12
-	classpath: [this]
-		jre-version: 12
-		
-saker.java.compiler-impl-jdk13
-	classpath: [this]
-		jre-version: 13
-
-saker.java.compiler-impl-jdk14
-	classpath: [this]
-		jre-version: [14)
