@@ -15,10 +15,14 @@
  */
 package saker.java.compiler.jdk.impl;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.JavaFileManager;
 import javax.tools.StandardJavaFileManager;
@@ -82,7 +86,7 @@ public class JavaCompilationUtils {
 		return Java9LanguageUtils.getModuleNameOf(elem);
 	}
 
-	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
-		Java14LanguageUtils.addTreeKindToElementKindMapping(map);
+	public static List<? extends TypeMirror> getPermittedSubclasses(TypeElement elem) {
+		return Collections.emptyList();
 	}
 }

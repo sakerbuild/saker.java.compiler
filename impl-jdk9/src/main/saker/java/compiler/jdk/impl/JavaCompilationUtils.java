@@ -19,6 +19,8 @@ import java.util.Collection;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.JavaFileManager;
 import javax.tools.StandardJavaFileManager;
@@ -46,6 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -101,7 +104,8 @@ public class JavaCompilationUtils {
 		return IncrementalElementsTypes9.getModuleOfImpl(elem).getQualifiedName().toString();
 	}
 
-	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
+	public static List<? extends TypeMirror> getPermittedSubclasses(TypeElement elem) {
+		return Collections.emptyList();
 	}
 
 	//when --release option is used, only Java 9 requires the file manager to implement StandardJavaFileManager

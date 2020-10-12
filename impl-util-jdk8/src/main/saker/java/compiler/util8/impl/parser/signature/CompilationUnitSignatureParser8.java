@@ -142,6 +142,7 @@ import saker.java.compiler.impl.compile.signature.value.VariableConstantMemberRe
 import saker.java.compiler.impl.signature.Signature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
+import saker.java.compiler.impl.signature.element.ClassSignature.PermittedSubclassesList;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
@@ -416,7 +417,9 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.CLASS, ElementKind.CLASS);
 		TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.ENUM, ElementKind.ENUM);
 		TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.INTERFACE, ElementKind.INTERFACE);
-		JavaCompilationUtils.addTreeKindToElementKindMapping(TREEKIND_TO_ELEMENTKIND_MAP);
+		if (KindCompatUtils.ELEMENTKIND_RECORD != null) {
+			TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.valueOf("RECORD"), KindCompatUtils.ELEMENTKIND_RECORD);
+		}
 	}
 
 	private static ElementKind treeKindToElementKind(Kind kind) {
@@ -1087,9 +1090,11 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		List<TypeParameterTypeSignature> typeparamsignatures = JavaTaskUtils.cloneImmutableList(typeparametertrees,
 				param -> createTypeParameterTypeSignature(param, context));
 
+		PermittedSubclassesList permittedsubclasses = getPermittedSubclasses(tree, context);
+
 		ClassSignature classsignature = ClassSignatureImpl.create(modifiers, packagename, name, membersignatures,
 				enclosingclasssignature, supertypesignature, superinterfacesignatures, kind, currentnestingkind,
-				typeparamsignatures, annotationsignatures, doccomment);
+				typeparamsignatures, annotationsignatures, doccomment, permittedsubclasses);
 		context.treeSignatures.put(tree, classsignature);
 		context.pushClassSignature(classsignature);
 		context.setNestingKind(NestingKind.MEMBER);
@@ -1111,6 +1116,10 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		context.popSignaturePath(tree);
 
 		return classsignature;
+	}
+
+	protected PermittedSubclassesList getPermittedSubclasses(ClassTree tree, ParseContext context) {
+		return null;
 	}
 
 	private boolean hasAnonymousEnumConstant(ClassTree tree, ParseContext context) {

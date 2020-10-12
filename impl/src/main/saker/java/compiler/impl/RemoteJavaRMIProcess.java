@@ -152,18 +152,22 @@ public class RemoteJavaRMIProcess implements Closeable {
 	}
 
 	private void printProcessStreams() {
+		String cmd = StringUtils.toStringJoin("\"", "\" \"", commands, "\"");
+		System.err.println(" ---- StdOut from command: " + cmd);
 		try {
-			String cmd = StringUtils.toStringJoin("\"", "\" \"", commands, "\"");
-			System.err.println(" ---- StdOut from command: " + cmd);
 			StreamUtils.copyStream(proc.getInputStream(), System.err);
-			System.err.println();
-			System.err.println(" ---- StdErr from command: " + cmd);
-			StreamUtils.copyStream(proc.getErrorStream(), System.err);
-			System.err.println();
-			System.err.println(" -------- ");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.err.println();
+		System.err.println(" ---- StdErr from command: " + cmd);
+		try {
+			StreamUtils.copyStream(proc.getErrorStream(), System.err);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.err.println();
+		System.err.println(" -------- ");
 	}
 
 	public RMIConnection getConnection() {

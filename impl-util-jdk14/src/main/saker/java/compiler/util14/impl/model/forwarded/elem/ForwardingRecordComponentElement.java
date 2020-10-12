@@ -26,7 +26,7 @@ public class ForwardingRecordComponentElement extends ForwardingElementBase<Reco
 		if (accessor != null) {
 			return accessor;
 		}
-		accessor = elemTypes.forwardElement(subject::getAccessor);
+		accessor = elemTypes.forwardRecordComponentAccessor(this, subject::getAccessor);
 		if (ARFU_accessor.compareAndSet(this, null, accessor)) {
 			return accessor;
 		}

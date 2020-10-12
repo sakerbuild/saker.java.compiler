@@ -19,10 +19,10 @@ import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalEle
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.DocumentedIncrementalElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalElement;
-import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalExecutableElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
 import saker.java.compiler.impl.compile.signature.impl.FullMethodSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
+import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
 public class IncrementalRecordComponentElement extends IncrementalElement<FieldSignature>
@@ -35,11 +35,13 @@ public class IncrementalRecordComponentElement extends IncrementalElement<FieldS
 	private IncrementalElement<?> enclosingElement;
 	private ExecutableElement accessor;
 
-	public IncrementalRecordComponentElement(IncrementalElementsTypesBase elemTypes, IncrementalTypeElement enclosingElement, FieldSignature signature) {
+	public IncrementalRecordComponentElement(IncrementalElementsTypesBase elemTypes,
+			IncrementalTypeElement enclosingElement, FieldSignature signature) {
 		super(elemTypes, signature);
-		accessor = new IncrementalExecutableElement(FullMethodSignature.create(signature.getSimpleName(),
+		MethodSignature accessormethodsig = FullMethodSignature.create(signature.getSimpleName(),
 				IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null, signature.getTypeSignature(), null,
-				ElementKind.METHOD, null, null, false, null), enclosingElement, elemTypes);
+				ElementKind.METHOD, null, null, false, null);
+		accessor = new IncrementalRecordComponentAccessorElement(accessormethodsig, enclosingElement, elemTypes, this);
 		this.enclosingElement = enclosingElement;
 	}
 
@@ -60,7 +62,7 @@ public class IncrementalRecordComponentElement extends IncrementalElement<FieldS
 	public byte getKindIndex() {
 		return KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT;
 	}
-	
+
 	@Override
 	public ElementKind getKind() {
 		return ElementKind.RECORD_COMPONENT;

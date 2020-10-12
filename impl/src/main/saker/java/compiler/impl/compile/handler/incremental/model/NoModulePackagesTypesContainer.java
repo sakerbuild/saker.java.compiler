@@ -86,7 +86,7 @@ public class NoModulePackagesTypesContainer implements PackagesTypesContainer {
 				p -> new DualPackageElement(elemTypes, this, p));
 		IncrementalTypeElement result = canonicalTypeElements.compute(c.getCanonicalName(), (k, v) -> {
 			if (v == null) {
-				return new IncrementalTypeElement(c, elemTypes);
+				return elemTypes.createIncrementalTypeElement(c);
 			}
 			v.setSignature(c);
 			return v;

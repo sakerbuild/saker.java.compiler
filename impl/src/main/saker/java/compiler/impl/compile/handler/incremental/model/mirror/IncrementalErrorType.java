@@ -27,10 +27,11 @@ import javax.lang.model.type.TypeVisitor;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementallyModelled;
-import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedConstruct;
+import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedTypeMirror;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
-public class IncrementalErrorType implements IncrementallyModelled, ErrorType, NonAnnotatedConstruct, CommonTypeMirror {
+public class IncrementalErrorType
+		implements IncrementallyModelled, ErrorType, NonAnnotatedTypeMirror, CommonTypeMirror {
 	private Object cause;
 	private Element elem;
 	private TypeMirror enclosingType;

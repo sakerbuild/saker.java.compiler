@@ -16,8 +16,12 @@
 package testing.saker.java.compiler.tests.tasks.javac.compatibility;
 
 import java.lang.annotation.Annotation;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,11 +59,32 @@ import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
+import saker.build.thirdparty.saker.util.ArrayUtils;
 import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import testing.saker.java.compiler.CompilerCollectingTestMetric;
 
 public class JavacElementCompatibilityCollectingTestMetric extends CompilerCollectingTestMetric {
+
+	private static final MethodHandle METHOD_GETPERMITTEDSUBCLASSES;
+	private static final MethodHandle METHOD_GETRECORDCOMPONENTS;
+	static {
+		METHOD_GETPERMITTEDSUBCLASSES = getMethodHandle(TypeElement.class, "getPermittedSubclasses");
+		METHOD_GETRECORDCOMPONENTS = getMethodHandle(TypeElement.class, "getRecordComponents");
+	}
+
+	private static MethodHandle getMethodHandle(Class<?> c, String mname, Class<?>... argtypes) throws AssertionError {
+		MethodHandle mh = null;
+		try {
+			Method m = c.getMethod(mname, argtypes);
+			mh = MethodHandles.lookup().unreflect(m);
+		} catch (NoSuchMethodException e) {
+		} catch (IllegalAccessException e) {
+			throw new AssertionError(e);
+		}
+		return mh;
+	}
+
 	private static class Utils {
 		protected Elements elems;
 		protected Types types;
@@ -127,7 +152,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 				return "null";
 			}
 			StringBuilder sb = new StringBuilder();
-			sb.append(e.getClass());
+			sb.append(e.getClass().getName());
 			if (e instanceof TypeMirror) {
 				sb.append("(");
 				sb.append(((TypeMirror) e).getKind());
@@ -150,7 +175,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 			if (t == null) {
 				return "null";
 			}
-			return t.getClass() + "(" + t.getKind() + ")" + ": " + t;
+			return t.getClass().getName() + "(" + t.getKind() + ")" + ": " + t;
 		}
 	}
 
@@ -243,6 +268,30 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 		new TypeComparingVisitor(javact).visit(t, utils);
 	}
 
+	protected void compareRecordComponents(TypeElement e, TypeElement javace, Utils p) {
+		if (METHOD_GETRECORDCOMPONENTS == null) {
+			return;
+		}
+		try {
+			compareElements((List<? extends Element>) METHOD_GETRECORDCOMPONENTS.invokeExact(e),
+					(List<? extends Element>) METHOD_GETRECORDCOMPONENTS.invokeExact(javace), p);
+		} catch (Throwable ee) {
+			throw ObjectUtils.sneakyThrow(ee);
+		}
+	}
+
+	protected void comparePermittedSubclasses(TypeElement e, TypeElement javace, Utils p) {
+		if (METHOD_GETPERMITTEDSUBCLASSES == null) {
+			return;
+		}
+		try {
+			compareTypesUnordered((List<? extends TypeMirror>) METHOD_GETPERMITTEDSUBCLASSES.invokeExact(e),
+					(List<? extends TypeMirror>) METHOD_GETPERMITTEDSUBCLASSES.invokeExact(javace), p);
+		} catch (Throwable ee) {
+			throw ObjectUtils.sneakyThrow(ee);
+		}
+	}
+
 	protected void compareTypes(List<? extends TypeMirror> t, List<? extends TypeMirror> javact, Utils utils) {
 		if ((t == null) != (javact == null)) {
 			throw new ElementDifferenceException(t + " - " + javact);
@@ -253,6 +302,44 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 		try {
 			for (int i = 0; i < t.size(); i++) {
 				compareTypes(t.get(i), javact.get(i), utils);
+			}
+		} catch (RuntimeException e) {
+			throw new ElementDifferenceException(t + " - " + javact, e);
+		}
+	}
+
+	protected void compareTypesUnordered(List<? extends TypeMirror> t, List<? extends TypeMirror> javact, Utils utils) {
+		if ((t == null) != (javact == null)) {
+			throw new ElementDifferenceException(t + " - " + javact);
+		}
+		if (t.size() != javact.size()) {
+			throw new ElementDifferenceException(t + " - " + javact);
+		}
+		try {
+			List<TypeMirror> njavact = new ArrayList<>(javact);
+			for (int i = 0; i < t.size(); i++) {
+				TypeMirror tm = t.get(i);
+				boolean found = false;
+				ElementDifferenceException[] exc = new ElementDifferenceException[0];
+				for (Iterator<TypeMirror> it = njavact.iterator(); it.hasNext();) {
+					TypeMirror jtm = it.next();
+					try {
+						compareTypes(tm, jtm, utils);
+						found = true;
+						it.remove();
+						break;
+					} catch (ElementDifferenceException e) {
+						exc = ArrayUtils.appended(exc, e);
+						continue;
+					}
+				}
+				if (!found) {
+					ElementDifferenceException thr = new ElementDifferenceException(tm + " in remaining " + njavact);
+					for (ElementDifferenceException ex : exc) {
+						thr.addSuppressed(ex);
+					}
+					throw thr;
+				}
 			}
 		} catch (RuntimeException e) {
 			throw new ElementDifferenceException(t + " - " + javact, e);
@@ -450,6 +537,9 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 			compareTypes(e.getInterfaces(), javace.getInterfaces(), p);
 			compareTypes(e.getSuperclass(), javace.getSuperclass(), p);
 			compare(p.elems.getBinaryName(e), p.javacElems.getBinaryName(javace));
+
+			compareRecordComponents(e, javace, p);
+			comparePermittedSubclasses(e, javace, p);
 			return null;
 		}
 
@@ -495,7 +585,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 
 		@Override
 		public Void visitUnknown(Element e, Utils p) {
-			if ("RECORD_COMPONENT".contentEquals(e.getKind().name())) {
+			if ("RECORD_COMPONENT".equals(e.getKind().name())) {
 				compareElements(getRecordComponentElementAccessor(e), getRecordComponentElementAccessor(javacElem), p);
 				compareElements(e.getEnclosedElements(), javacElem.getEnclosedElements(), p);
 				return null;

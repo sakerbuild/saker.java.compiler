@@ -16,6 +16,8 @@
 package saker.java.compiler.jdk.impl;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -24,6 +26,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.JavaFileManager;
 import javax.tools.StandardJavaFileManager;
@@ -84,6 +87,8 @@ public class JavaCompilationUtils {
 		return null;
 	}
 
-	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
+	public static List<? extends TypeMirror> getPermittedSubclasses(TypeElement elem) {
+		return Collections.emptyList();
 	}
+
 }

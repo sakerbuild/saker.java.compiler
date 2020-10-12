@@ -91,8 +91,8 @@ import saker.java.compiler.api.modulepath.SDKModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaTaskUtils.LocalDirectoryClassFilesExecutionProperty;
-import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.RemoteJavaRMIProcess;
+import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.ClassPathIDEConfigurationEntry;
 import saker.java.compiler.impl.compile.CompileFileTags;
 import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
@@ -140,6 +140,7 @@ import saker.java.compiler.impl.options.SimpleJavaSourceDirectoryOption;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
 import saker.java.compiler.impl.signature.element.AnnotatedSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
+import saker.java.compiler.impl.signature.element.ClassSignature.PermittedSubclassesList;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
@@ -157,10 +158,7 @@ import saker.std.api.file.location.LocalFileLocation;
 import testing.saker.java.compiler.TestFlag;
 
 public class IncrementalCompilationHandler extends CompilationHandler {
-	public static final boolean LOGGING_ENABLED;
-	static {
-		LOGGING_ENABLED = TestFlag.ENABLED;
-	}
+	public static final boolean LOGGING_ENABLED = TestFlag.ENABLED;
 
 	private final class InvocationContextImpl implements JavaCompilerInvocationContext {
 		private final NavigableMap<SakerPath, SakerDirectory> passClassPaths;
@@ -1764,6 +1762,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 				|| !ObjectUtils.collectionOrderedEquals(thiz.getSuperInterfaces(), prev.getSuperInterfaces(),
 						TypeSignature::signatureEquals)) {
 			result.accept(new ClassInheritanceABIChange(thiz));
+		} else {
+			detectPermittedSubclassInheritanceAbiChange(prev, thiz, result);
 		}
 		if (thiz.getKindIndex() != prev.getKindIndex()) {
 			result.accept(new ClassTypeChange(thiz));
@@ -1792,6 +1792,35 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 
 		detectMemberChanges(fields, methods, types, prevfields, prevmethods, prevtypes, parameterchecker, prev, thiz,
 				result);
+	}
+
+	private static void detectPermittedSubclassInheritanceAbiChange(ClassSignature prev, ClassSignature thiz,
+			Consumer<AbiChange> result) {
+		PermittedSubclassesList thispermittedsubclasses = thiz.getPermittedSubclasses();
+		PermittedSubclassesList prevpermittedsubclasses = prev.getPermittedSubclasses();
+		if (!ObjectUtils.objectsEquals(thispermittedsubclasses, prevpermittedsubclasses,
+				PermittedSubclassesList::signatureEquals)) {
+			result.accept(new ClassInheritanceABIChange(thiz));
+			return;
+		}
+		//the permitted subclass list equals
+		//check if the current one is an inferred permitted list, and if so
+		//then add an inheritance change to trigger recompilation of classes that use
+		//this class
+		//TODO this could be done better, but should be fine for now, or until sealed classes are out of preview
+		//     this is a bad solution only for inferred permitted classes in the same compilation unit
+		if (thispermittedsubclasses != null) {
+			thispermittedsubclasses.accept(new PermittedSubclassesList.Visitor() {
+				@Override
+				public void visitUnspecified() {
+					result.accept(new ClassInheritanceABIChange(thiz));
+				}
+
+				@Override
+				public void visitExplicit(List<? extends TypeSignature> types) {
+				}
+			});
+		}
 	}
 
 	private static void detectMemberChanges(NavigableMap<String, FieldSignature> fields,

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -68,11 +69,30 @@ public interface ClassHoldingData extends ClassGenerationInfo, RealizedSignature
 	}
 
 	@Override
-	public default SortedMap<SakerPath, String> getGeneratedClassBinaryNames() {
-		SortedMap<SakerPath, String> result = new TreeMap<>();
+	public default NavigableMap<SakerPath, String> getGeneratedClassBinaryNames() {
+		NavigableMap<SakerPath, String> result = new TreeMap<>();
 		for (Entry<SakerPath, ClassFileData> entry : getGeneratedClassDatas().entrySet()) {
 			result.put(entry.getKey(), entry.getValue().getClassBinaryName());
 		}
+		return result;
+	}
+
+	@Override
+	public default NavigableMap<String, ClassSignature> getClassesByBinaryNames() {
+		NavigableMap<String, ClassSignature> result = new TreeMap<>();
+		collectAllClassBinaryNames(result, getClassSignatures());
+		return result;
+	}
+
+	public default NavigableSet<String> getAllClassBinaryNames() {
+		TreeSet<String> result = new TreeSet<>();
+		collectAllClassBinaryNames(result, getClassSignatures());
+		return result;
+	}
+
+	public default NavigableSet<String> getAllClassCanonicalNames() {
+		TreeSet<String> result = new TreeSet<>();
+		collectAllClassCanonicalNames(result, getClassSignatures());
 		return result;
 	}
 
@@ -91,16 +111,19 @@ public interface ClassHoldingData extends ClassGenerationInfo, RealizedSignature
 		}
 	}
 
-	public default Set<String> getAllClassBinaryNames() {
-		TreeSet<String> result = new TreeSet<>();
-		collectAllClassBinaryNames(result, getClassSignatures());
-		return result;
+	public static void collectAllClassCanonicalNames(Set<String> result, Iterable<? extends ClassSignature> classes) {
+		for (ClassSignature c : classes) {
+			result.add(c.getCanonicalName());
+			collectAllClassCanonicalNames(result, c.getEnclosedTypes());
+		}
 	}
 
-	@Override
-	public default SortedMap<String, ClassSignature> getClassesByBinaryNames() {
-		SortedMap<String, ClassSignature> result = new TreeMap<>();
-		collectAllClassBinaryNames(result, getClassSignatures());
-		return result;
+	public static void collectAllClassCanonicalNames(Map<String, ClassSignature> result,
+			Collection<? extends ClassSignature> classes) {
+		for (ClassSignature c : classes) {
+			result.put(c.getCanonicalName(), c);
+			collectAllClassCanonicalNames(result, c.getEnclosedTypes());
+		}
 	}
+
 }

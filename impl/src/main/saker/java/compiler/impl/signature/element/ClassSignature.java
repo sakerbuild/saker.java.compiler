@@ -46,6 +46,8 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 
 	public List<? extends ClassMemberSignature> getMembers();
 
+	public PermittedSubclassesList getPermittedSubclasses();
+
 	public ParameterizedTypeSignature getTypeSignature();
 
 	public ParameterizedTypeSignature getTypeSignature(List<? extends TypeSignature> typeparameters);
@@ -171,4 +173,17 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 		return result;
 	}
 
+	public interface PermittedSubclassesList {
+		public void accept(Visitor visitor);
+		
+		public default boolean signatureEquals(PermittedSubclassesList other) {
+			return this.equals(other);
+		}
+
+		public interface Visitor {
+			public void visitExplicit(List<? extends TypeSignature> types);
+
+			public void visitUnspecified();
+		}
+	}
 }

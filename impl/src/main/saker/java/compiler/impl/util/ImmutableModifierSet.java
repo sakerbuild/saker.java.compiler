@@ -38,14 +38,31 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 	//define our own modifier values array, as newer JDKs can add new values, which can distrupt order or ordinal values
 	//if new values are introduced, export this array to a JDK version dependent bundle. only appending to it
 	//      THE ORDER IN THIS ARRAY IS NOT TO BE MODIFIED FOR SERIALIZATION COMPATIBILITY
-	private static final String[] MODIFIERS_NAMES = { "PUBLIC", "PROTECTED", "PRIVATE", "ABSTRACT", "DEFAULT", "STATIC",
-			"FINAL", "TRANSIENT", "VOLATILE", "SYNCHRONIZED", "NATIVE", "STRICTFP", "SEALED", "NON_SEALED" };
+	private static final String[] MODIFIERS_NAMES = { "PUBLIC", // 0 
+			"PROTECTED", // 1
+			"PRIVATE", // 2
+			"ABSTRACT", // 3
+			"DEFAULT", // 4
+			"STATIC", // 5
+			"FINAL", // 6
+			"TRANSIENT", // 7
+			"VOLATILE", // 8
+			"SYNCHRONIZED", // 9
+			"NATIVE", // 10
+			"STRICTFP", // 11
+			"SEALED", // 12
+			"NON_SEALED" // 13
+	};
 	private static final Modifier[] MODIFIERS = new Modifier[MODIFIERS_NAMES.length];
 
 	private static final IllegalArgumentException[] MODIFIER_NOTFOUND_EXCEPTIONS = new IllegalArgumentException[MODIFIERS_NAMES.length];
 
 	//this array is a dynamic lookup table that converts the ordinals of Modifier enums to the index in MODIFIERS
 	private static final int[] MODIFIER_ORDINAL_INDEX_LOOKUP;
+
+	private static final int INDEX_SEALED = 12;
+
+	public static final Modifier MODIFIER_SEALED;
 
 	private static final short ALL_RECOGNIZED_FLAGS_MASK;
 	static {
@@ -75,6 +92,7 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 			allrecognized |= f;
 		}
 		ALL_RECOGNIZED_FLAGS_MASK = allrecognized;
+		MODIFIER_SEALED = MODIFIERS[INDEX_SEALED];
 	}
 
 	private final short flags;

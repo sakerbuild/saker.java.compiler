@@ -481,13 +481,22 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 			sigcontext = new ParseContext(param, sigusage);
 		}
 
+		for (Tree member : tree.getMembers()) {
+			descend(member, param);
+		}
+
+		visitClassContext(tree, sigcontext);
+		if (membersig != null) {
+			param.popClassSignature();
+		}
+		return null;
+	}
+
+	protected void visitClassContext(ClassTree tree, ParseContext sigcontext) {
 		descend(tree.getModifiers(), sigcontext);
 
 //		TypeElement element = (TypeElement) getElementOf(param.getCurrentPath());
 
-		for (Tree member : tree.getMembers()) {
-			descend(member, param);
-		}
 		for (TypeParameterTree tpt : tree.getTypeParameters()) {
 			descend(tpt, sigcontext);
 		}
@@ -506,10 +515,6 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 				addTypeInheritanceHierarchy(sigcontext.usage, te);
 			});
 		}
-		if (membersig != null) {
-			param.popClassSignature();
-		}
-		return null;
 	}
 
 	@Override
@@ -769,8 +774,9 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 		Tree type = tree.getType();
 		ExpressionTree expression = tree.getExpression();
 
-		descend(expression, param);
-		//we dont need to add expression type as usage, as changing it doesnt affect the compilation result
+		//add the expression type as used type as it may cause different optimizations by the compiler?
+		TreePath exprpath = descend(expression, param);
+		withExpressionType(exprpath, param.typeElementAddUsedTypeConsumer);
 
 		TreePath typepath = descend(type, param);
 		withExpressionType(typepath, param.typeElementAddUsedTypeConsumer);

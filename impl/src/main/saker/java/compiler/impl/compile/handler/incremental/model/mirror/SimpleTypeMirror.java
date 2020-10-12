@@ -22,9 +22,9 @@ import javax.lang.model.type.TypeMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementallyModelled;
-import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedConstruct;
+import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedTypeMirror;
 
-public abstract class SimpleTypeMirror implements IncrementallyModelled, CommonTypeMirror, NonAnnotatedConstruct {
+public abstract class SimpleTypeMirror implements IncrementallyModelled, CommonTypeMirror, NonAnnotatedTypeMirror {
 	private static final AtomicReferenceFieldUpdater<SimpleTypeMirror, TypeMirror> ARFU_erasedType = AtomicReferenceFieldUpdater
 			.newUpdater(SimpleTypeMirror.class, TypeMirror.class, "erasedType");
 

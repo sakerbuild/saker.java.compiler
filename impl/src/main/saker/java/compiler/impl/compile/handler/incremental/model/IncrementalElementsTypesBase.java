@@ -36,10 +36,12 @@ import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalAnnotationMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
+import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.elem.ForwardingElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.mirror.ForwardingDeclaredType;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalDeclaredType;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
+import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.ResolutionScope;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -81,6 +83,12 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 
 	public <E extends Element> E forwardElement(Supplier<E> javacelementsupplier);
 
+	public default ExecutableElement forwardRecordComponentAccessor(
+			ForwardingElement<?> forwardingrecordcomponentelement,
+			Supplier<? extends ExecutableElement> javacelementsupplier) {
+		return forwardElement(javacelementsupplier);
+	}
+
 	public VariableElement forwardElement(VariableElement element);
 
 	public ExecutableElement forwardElement(ExecutableElement element);
@@ -112,7 +120,7 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 
 	public <T> T javac(Supplier<T> function);
 
-	public <T> T javacElements(Function<Elements, T> function);
+	public <T> T javacElements(Function<? super Elements, ? extends T> function);
 
 	public DeclaredType getAnnotationDeclaredType(AnnotationSignature signature, Element enclosingresolutionelement);
 
@@ -161,4 +169,10 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 	public IncrementalElement<?> createRecordComponentElement(IncrementalTypeElement recordtype, FieldSignature m);
 
 	public int getCompilerJVMJavaMajorVersion();
+
+	public default IncrementalTypeElement createIncrementalTypeElement(ClassSignature sig) {
+		return new IncrementalTypeElement(sig, this);
+	}
+
+	public List<TypeMirror> resolveUnspecifiedPermitSubclasses(IncrementalTypeElement type);
 }

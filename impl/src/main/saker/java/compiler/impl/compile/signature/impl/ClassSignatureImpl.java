@@ -58,6 +58,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	private List<TypeParameterTypeSignature> typeParameters = Collections.emptyList();
 	private List<AnnotationSignature> annotations = Collections.emptyList();
 	private String docComment;
+	private PermittedSubclassesList permittedSubclasses;
 
 	public ClassSignatureImpl() {
 	}
@@ -67,6 +68,15 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 			TypeSignature superTypeSignature, List<TypeSignature> superInterfaces, ElementKind kind,
 			NestingKind nestingKind, List<TypeParameterTypeSignature> typeParameters,
 			List<AnnotationSignature> annotations, String docComment) {
+		return create(modifiers, packageName, name, members, enclosingClass, superTypeSignature, superInterfaces, kind,
+				nestingKind, typeParameters, annotations, docComment, null);
+	}
+
+	public static ClassSignature create(Set<Modifier> modifiers, String packageName, String name,
+			List<? extends ClassMemberSignature> members, ClassSignature enclosingClass,
+			TypeSignature superTypeSignature, List<TypeSignature> superInterfaces, ElementKind kind,
+			NestingKind nestingKind, List<TypeParameterTypeSignature> typeParameters,
+			List<AnnotationSignature> annotations, String docComment, PermittedSubclassesList permittedsubclasses) {
 		if (TestFlag.ENABLED) {
 			if ((enclosingClass == null && nestingKind != NestingKind.TOP_LEVEL)
 					|| (enclosingClass != null && nestingKind != NestingKind.MEMBER)) {
@@ -80,7 +90,8 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 			return new ExtendedAnnotationInterfaceSignature(modifiers, packageName, name, members, enclosingClass,
 					annotations, docComment);
 		}
-		if (docComment == null && ObjectUtils.isNullOrEmpty(annotations) && ObjectUtils.isNullOrEmpty(typeParameters)) {
+		if (docComment == null && ObjectUtils.isNullOrEmpty(annotations) && ObjectUtils.isNullOrEmpty(typeParameters)
+				&& permittedsubclasses == null) {
 			if (superTypeSignature == null && ObjectUtils.isNullOrEmpty(superInterfaces)) {
 				return new SimpleClassSignature(modifiers, packageName, name, members, enclosingClass, kind);
 			}
@@ -88,17 +99,19 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 					superInterfaces, superTypeSignature);
 		}
 		return new ClassSignatureImpl(modifiers, packageName, name, members, enclosingClass, kind, superInterfaces,
-				superTypeSignature, typeParameters, annotations, docComment);
+				superTypeSignature, typeParameters, annotations, docComment, permittedsubclasses);
 	}
 
 	private ClassSignatureImpl(Set<Modifier> modifiers, String packageName, String name,
 			List<? extends ClassMemberSignature> members, ClassSignature enclosingClass, ElementKind kind,
 			List<? extends TypeSignature> superInterfaces, TypeSignature superClass,
-			List<TypeParameterTypeSignature> typeParameters, List<AnnotationSignature> annotations, String docComment) {
+			List<TypeParameterTypeSignature> typeParameters, List<AnnotationSignature> annotations, String docComment,
+			PermittedSubclassesList permittedsubclasses) {
 		super(modifiers, packageName, name, members, enclosingClass, kind, superInterfaces, superClass);
 		this.typeParameters = typeParameters;
 		this.annotations = annotations;
 		this.docComment = docComment;
+		this.permittedSubclasses = permittedsubclasses;
 	}
 
 	@Override
@@ -129,6 +142,11 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	@Override
 	public final List<TypeParameterTypeSignature> getTypeParameters() {
 		return typeParameters;
+	}
+
+	@Override
+	public PermittedSubclassesList getPermittedSubclasses() {
+		return permittedSubclasses;
 	}
 
 	protected static boolean hasAnyConstructor(List<? extends ClassMemberSignature> members) {
@@ -166,7 +184,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 		//Note: don't add implicit members for records here as we cannot detect duplicate equals(Object) method
 		//the implicit members are added in IncrementalTypeElement
-		
+
 		if (!hasAnyConstructor(result)) {
 			if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
 				//don't add here, but in IncrementalTypeElement
@@ -215,6 +233,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 		SerialUtils.writeExternalCollection(out, annotations);
 		SerialUtils.writeExternalCollection(out, typeParameters);
+		out.writeObject(permittedSubclasses);
 		out.writeObject(docComment);
 	}
 
@@ -224,6 +243,8 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 		annotations = SerialUtils.readExternalImmutableList(in);
 		typeParameters = SerialUtils.readExternalImmutableList(in);
+		permittedSubclasses = (PermittedSubclassesList) in.readObject();
+		;
 		docComment = (String) in.readObject();
 	}
 
@@ -245,6 +266,11 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 			if (other.docComment != null)
 				return false;
 		} else if (!docComment.equals(other.docComment))
+			return false;
+		if (permittedSubclasses == null) {
+			if (other.permittedSubclasses != null)
+				return false;
+		} else if (!permittedSubclasses.equals(other.permittedSubclasses))
 			return false;
 		if (typeParameters == null) {
 			if (other.typeParameters != null)

@@ -22,9 +22,9 @@ import javax.lang.model.type.TypeVisitor;
 
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementallyModelled;
-import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedConstruct;
+import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedTypeMirror;
 
-public class IncrementalNoType implements IncrementallyModelled, NoType, NonAnnotatedConstruct, CommonTypeMirror {
+public class IncrementalNoType implements IncrementallyModelled, NoType, NonAnnotatedTypeMirror, CommonTypeMirror {
 	public static final IncrementalNoType INSTANCE_ERROR = new IncrementalNoType(TypeKind.ERROR);
 	public static final IncrementalNoType INSTANCE_VOID = new IncrementalNoType(TypeKind.VOID);
 	public static final IncrementalNoType INSTANCE_NONE = new IncrementalNoType(TypeKind.NONE);

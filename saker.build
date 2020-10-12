@@ -163,6 +163,16 @@ compile(
 					impl-util-jdk13/src/main/,
 				],
 			},
+			{
+				Identifier: jdk15,
+				SourceDirectories: [
+					impl-util-jdk8/src/main/,
+					impl-util-jdk9/src/main/,
+					impl-util-jdk12/src/main/,
+					impl-util-jdk13/src/main/,
+					impl-util-jdk14/src/main/,
+				],
+			},
 		] + [
 			$jdk == jdk8 ? {
 				ClassPath: lib/jdk8_tools.jar,
@@ -324,7 +334,7 @@ export12(){
 }
 exportall(
 	in testapi = include(_testapicompile),
-	in jdkids = [ jdk8, jdk9, jdk12, jdk13, jdk14 ],
+	in jdkids = [ jdk8, jdk9, jdk12, jdk13, jdk14, jdk15 ],
 	
 	out bundlepaths,
 	out exportbyjdkid,
@@ -590,8 +600,9 @@ testjava15(){
 		test, 
 		jre: saker.java.sdk(15),
 		testclasses: [
-			testing.saker.java.compiler.tests.tasks.**.*Test,
+			#testing.saker.java.compiler.tests.tasks.**.*Test,
 			testing.saker.java.compiler.tests.only.jdk15.**.*Test,
+			###
 			testing.saker.java.compiler.tests.jdk9.**.*Test,
 			testing.saker.java.compiler.tests.jdk10.**.*Test,
 			testing.saker.java.compiler.tests.jdk11.**.*Test,
@@ -599,6 +610,7 @@ testjava15(){
 			testing.saker.java.compiler.tests.jdk13.**.*Test,
 			testing.saker.java.compiler.tests.jdk14.**.*Test,
 			testing.saker.java.compiler.tests.jdk15.**.*Test,
+			###
 		],
 	)
 }

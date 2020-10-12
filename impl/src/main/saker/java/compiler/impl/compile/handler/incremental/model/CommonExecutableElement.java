@@ -15,8 +15,13 @@
  */
 package saker.java.compiler.impl.compile.handler.incremental.model;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 
 public interface CommonExecutableElement extends ExecutableElement, CommonElement {
 	public boolean isBridge();
+
+	public default Element getRecordComponentForAccessor() {
+		return null;
+	}
 }

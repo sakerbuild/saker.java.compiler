@@ -164,6 +164,7 @@ import saker.java.compiler.impl.compile.signature.annot.val.TypeValueImpl;
 import saker.java.compiler.impl.compile.signature.annot.val.UnknownValueImpl;
 import saker.java.compiler.impl.compile.signature.annot.val.VariableValueImpl;
 import saker.java.compiler.impl.compile.signature.impl.ClassSignatureImpl;
+import saker.java.compiler.impl.compile.signature.impl.ExplicitPermittedSubclassesList;
 import saker.java.compiler.impl.compile.signature.impl.FieldSignatureImpl;
 import saker.java.compiler.impl.compile.signature.impl.FullMethodSignature;
 import saker.java.compiler.impl.compile.signature.impl.MethodParameterSignatureImpl;
@@ -192,6 +193,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.VariableValue;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
+import saker.java.compiler.impl.signature.element.ClassSignature.PermittedSubclassesList;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
@@ -605,6 +607,42 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		} else {
 			throw new IllegalArgumentException("Unknown element class: " + ObjectUtils.classOf(e));
 		}
+	}
+
+	@Override
+	public List<TypeMirror> resolveUnspecifiedPermitSubclasses(IncrementalTypeElement type) {
+		Objects.requireNonNull(type, "type");
+		ClassHoldingFileData file = elementsToFilesMap.get(type);
+		if (file == null) {
+			throw new IllegalArgumentException("Containing file not found for type: " + type);
+		}
+		boolean searchextend = type.getKind().isClass();
+		List<TypeMirror> result = new ArrayList<>();
+		for (String typename : file.getAllClassCanonicalNames()) {
+			TypeElement te = getTypeElement(typename);
+			if (te == type) {
+				continue;
+			}
+			if (searchextend) {
+				TypeMirror sc = te.getSuperclass();
+				if (sc.getKind() == TypeKind.DECLARED) {
+					if (((DeclaredType) sc).asElement() == type) {
+						result.add(te.asType());
+					}
+				}
+			} else {
+				for (TypeMirror sc : te.getInterfaces()) {
+					if (sc.getKind() == TypeKind.DECLARED) {
+						if (((DeclaredType) sc).asElement() == type) {
+							result.add(te.asType());
+							break;
+						}
+					}
+				}
+			}
+
+		}
+		return result;
 	}
 
 	@Override
@@ -3168,7 +3206,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	@Override
-	public final <T> T javacElements(Function<Elements, T> function) {
+	public final <T> T javacElements(Function<? super Elements, ? extends T> function) {
 		synchronized (javacSync) {
 			return function.apply(realElements);
 		}
@@ -5016,7 +5054,6 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		public ClassSignature visitType(TypeElement e, Void p) {
 			List<? extends Element> enclosedelems = e.getEnclosedElements();
 			TypeMirror sc = e.getSuperclass();
-			List<? extends TypeMirror> itfs = e.getInterfaces();
 			PackageElement pack = getPackageOfImpl(e);
 			ElementKind kind = e.getKind();
 			NestingKind nestingkind = e.getNestingKind();
@@ -5035,19 +5072,20 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			} else {
 				superclasssignature = null;
 			}
-			List<TypeSignature> superinterfacesignatures;
-			if (!itfs.isEmpty()) {
-				superinterfacesignatures = new ArrayList<>(itfs.size());
-				for (TypeMirror itf : itfs) {
-					superinterfacesignatures.add(createTypeSignature(itf, cache));
-				}
-			} else {
-				superinterfacesignatures = Collections.emptyList();
-			}
+			List<TypeSignature> superinterfacesignatures = JavaTaskUtils.cloneImmutableList(e.getInterfaces(),
+					tm -> createTypeSignature(tm, cache));
 
+			PermittedSubclassesList permittedsubclasses;
+			if (modifiers.contains(ImmutableModifierSet.MODIFIER_SEALED)) {
+				List<? extends TypeMirror> psc = JavaCompilationUtils.getPermittedSubclasses(e);
+				permittedsubclasses = new ExplicitPermittedSubclassesList(
+						JavaTaskUtils.cloneImmutableList(psc, tm -> createTypeSignature(tm, cache)));
+			} else {
+				permittedsubclasses = null;
+			}
 			ClassSignature result = ClassSignatureImpl.create(modifiers, packname, name, members,
 					(ClassSignature) enclosingSignature, superclasssignature, superinterfacesignatures, kind,
-					nestingkind, typeparamsignatures, annotationsignatures, null);
+					nestingkind, typeparamsignatures, annotationsignatures, null, permittedsubclasses);
 
 			if (!enclosedelems.isEmpty()) {
 				for (Element enclosed : enclosedelems) {

@@ -55,6 +55,7 @@ public class VersionKeyUtils8 {
 
 		private NavigableSet<String> records = null;
 		private StringBuilder recordSb = null;
+		private NavigableSet<String> permittedSubclasses = null;
 
 		public AbiHasherClassVisitor8(int api) {
 			super(api);
@@ -91,6 +92,15 @@ public class VersionKeyUtils8 {
 				return false;
 			}
 			return true;
+		}
+
+		@Override
+		public void visitPermittedSubclass(String permittedSubclass) {
+			if (permittedSubclasses == null) {
+				permittedSubclasses = new TreeSet<>();
+			}
+			permittedSubclasses.add(permittedSubclass);
+			super.visitPermittedSubclass(permittedSubclass);
 		}
 
 		@Override
@@ -359,6 +369,11 @@ public class VersionKeyUtils8 {
 			if (records != null) {
 				for (String r : records) {
 					digest.update(r.getBytes(StandardCharsets.UTF_8));
+				}
+			}
+			if (permittedSubclasses != null) {
+				for (String sc : permittedSubclasses) {
+					digest.update(sc.getBytes(StandardCharsets.UTF_8));
 				}
 			}
 		}

@@ -22,9 +22,9 @@ import javax.lang.model.type.TypeVisitor;
 
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementallyModelled;
-import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedConstruct;
+import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedTypeMirror;
 
-public class IncrementalNullType implements IncrementallyModelled, NullType, NonAnnotatedConstruct, CommonTypeMirror {
+public class IncrementalNullType implements IncrementallyModelled, NullType, NonAnnotatedTypeMirror, CommonTypeMirror {
 	public static final IncrementalNullType INSTANCE = new IncrementalNullType();
 
 	public IncrementalNullType() {

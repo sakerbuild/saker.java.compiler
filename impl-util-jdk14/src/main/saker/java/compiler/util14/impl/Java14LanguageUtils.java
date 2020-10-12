@@ -47,10 +47,6 @@ public class Java14LanguageUtils {
 				.returnWriter(new WrapperRMIObjectWriteHandler(RMIArrayListRemoteElementWrapper.class)).build());
 	}
 
-	public static void addTreeKindToElementKindMapping(Map<Tree.Kind, ElementKind> map) {
-		map.put(Tree.Kind.RECORD, ElementKind.RECORD);
-	}
-
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void addJava14KindBasedElementVisitorFunctions(
 			Map<ElementKind, TriFunction<ElementVisitor, ? extends Element, Object, Object>> result) {

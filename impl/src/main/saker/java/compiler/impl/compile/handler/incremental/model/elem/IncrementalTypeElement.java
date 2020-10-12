@@ -115,8 +115,7 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 	@Override
 	public void invalidate() {
 		super.invalidate();
-		// fine to use direct assignment as this will not be called from multi-threaded
-		// code
+		// fine to use direct assignment as this will not be called from multi-threaded code
 		this.typeParameters = null;
 		this.enclosedElements = null;
 		this.asType = null;

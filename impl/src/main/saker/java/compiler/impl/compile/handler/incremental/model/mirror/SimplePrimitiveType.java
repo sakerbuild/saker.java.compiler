@@ -24,10 +24,10 @@ import javax.lang.model.type.TypeVisitor;
 
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeMirror;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementallyModelled;
-import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedConstruct;
+import saker.java.compiler.impl.compile.handler.incremental.model.NonAnnotatedTypeMirror;
 
 public class SimplePrimitiveType
-		implements PrimitiveType, IncrementallyModelled, CommonTypeMirror, NonAnnotatedConstruct {
+		implements PrimitiveType, IncrementallyModelled, CommonTypeMirror, NonAnnotatedTypeMirror {
 	private TypeKind kind;
 
 	public SimplePrimitiveType(TypeKind kind) {

@@ -130,6 +130,11 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 	}
 
 	@Override
+	public PermittedSubclassesList getPermittedSubclasses() {
+		return null;
+	}
+
+	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(packageName);
 		out.writeUTF(name);
@@ -137,7 +142,6 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 		SerialUtils.writeExternalCollection(out, members);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		packageName = (String) in.readObject();
