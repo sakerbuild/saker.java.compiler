@@ -19,8 +19,7 @@ import java.io.Externalizable;
 
 import saker.build.file.path.SakerPath;
 
-public class InstalledJdkVersionEnvironmentProperty extends EchoJavaEnvironmentProperty<String>
-		implements Externalizable {
+public class InstalledJdkVersionEnvironmentProperty extends EchoJavaEnvironmentProperty<String> {
 	private static final long serialVersionUID = 1L;
 
 	/**

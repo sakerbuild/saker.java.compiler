@@ -81,6 +81,10 @@ public class JavaSDKReference implements SDKReference, Externalizable {
 		return relativeExePath;
 	}
 
+	public SakerPath getRelativeDefaultPlatformInclude() {
+		return relativeDefaultPlatformInclude;
+	}
+
 	public JavaSDKReference(String javaVersion, String javaMajor, SakerPath installLocation, SakerPath relativeExePath,
 			SakerPath relativedefaultplatforminclude) {
 		this.javaVersion = javaVersion;

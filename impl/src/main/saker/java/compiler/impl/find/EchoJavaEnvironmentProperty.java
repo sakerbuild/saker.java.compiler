@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -84,25 +83,25 @@ public abstract class EchoJavaEnvironmentProperty<T> implements EnvironmentPrope
 		//as the process doesn't modify anything, don't change the working directory, so we can start the process.
 		pb.environment().clear();
 		pb.redirectErrorStream(true);
+		int exitcode;
+		String result;
 		try {
 			Process proc = pb.start();
-			String result = StreamUtils.readStreamStringFully(proc.getInputStream()).trim();
-			int rescode;
+			result = StreamUtils.readStreamStringFully(proc.getInputStream()).trim();
 			try {
-				rescode = proc.waitFor();
+				exitcode = proc.waitFor();
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				throw e;
 			}
-			if (rescode == 0 && !result.isEmpty()) {
-				return parseOutput(result);
-			}
-			throw new IOException("Failed to execute java process at: " + jdkPath + " (" + getClass().getName() + ") ("
-					+ Arrays.toString(command) + ") (process exited with: " + rescode + ") StdOut & Err: \n" + result);
 		} catch (IOException | InterruptedException e) {
-			throw new IOException("Failed to execute java process at: " + jdkPath + " (" + getClass().getName() + ") ("
-					+ Arrays.toString(command) + ") (" + e + ")", e);
+			throw new IOException("Failed to execute java process at: " + exepath, e);
 		}
+		if (exitcode == 0 && !result.isEmpty()) {
+			return parseOutput(result);
+		}
+		throw new IOException("Failed to execute java process at: " + exepath + " (exit code: " + exitcode + ")"
+				+ (result.isEmpty() ? "" : " StdOut & Err: \n" + result));
 	}
 
 	@Override
@@ -363,8 +362,11 @@ public abstract class EchoJavaEnvironmentProperty<T> implements EnvironmentPrope
 
 	private static void asmPrintlnJavaMajorBefore9(MethodVisitor main) {
 		main.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-		main.visitLdcInsn("8");
-		main.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+		//TODO this doesn't support Java 5, as SourceVersion was introduced in Java 6
+		main.visitMethodInsn(Opcodes.INVOKESTATIC, "javax/lang/model/SourceVersion", "latest",
+				"()Ljavax/lang/model/SourceVersion;", false);
+		main.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
+		main.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
 	}
 
 	private static void asmPrintlnJavaMajorAfter9(MethodVisitor main) {
