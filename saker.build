@@ -495,7 +495,10 @@ test(
 		IgnoreFileChanges: [
 			std.file.place(test/build),
 		],
-		#ProcessJVMParameters: [ "-agentlib:jdwp=transport=dt_socket,address=localhost:5432,server=y,suspend=y,quiet=y" ],
+		ProcessJVMParameters: [
+			#"-agentlib:jdwp=transport=dt_socket,address=localhost:5432,server=y,suspend=y,quiet=y",
+			--illegal-access=deny
+		],
 		WorkingDirectory: main,
 		MaxJVMCount: 1,
 		FailFast: true,
@@ -505,8 +508,7 @@ test(
 	)
 }
 testjava8(){
-	include(
-		test,
+	test(
 		jre: saker.java.sdk(8),
 		testclasses: [
 			testing.saker.java.compiler.tests.tasks.**.*Test,
@@ -515,8 +517,7 @@ testjava8(){
 	)
 }
 testjava9(){
-	include(
-		test, 
+	test(
 		jre: saker.java.sdk(9),
 		testclasses: [
 			testing.saker.java.compiler.tests.tasks.**.*Test,
@@ -526,8 +527,7 @@ testjava9(){
 	)
 }
 testjava10(){
-	include(
-		test, 
+	test(
 		jre: saker.java.sdk(10),
 		testclasses: [
 			testing.saker.java.compiler.tests.tasks.**.*Test,
@@ -538,8 +538,7 @@ testjava10(){
 	)
 }
 testjava11(){
-	include(
-		test, 
+	test(
 		jre: saker.java.sdk(11),
 		testclasses: [
 			testing.saker.java.compiler.tests.tasks.**.*Test,
@@ -551,8 +550,7 @@ testjava11(){
 	)
 }
 testjava12(){
-	include(
-		test, 
+	test(
 		jre: saker.java.sdk(12),
 		testclasses: [
 			testing.saker.java.compiler.tests.tasks.**.*Test,
@@ -565,8 +563,7 @@ testjava12(){
 	)
 }
 testjava13(){
-	include(
-		test, 
+	test(
 		jre: saker.java.sdk(13),
 		testclasses: [
 			testing.saker.java.compiler.tests.tasks.**.*Test,
@@ -580,8 +577,7 @@ testjava13(){
 	)
 }
 testjava14(){
-	include(
-		test, 
+	test(
 		jre: saker.java.sdk(14),
 		testclasses: [
 			testing.saker.java.compiler.tests.tasks.**.*Test,
@@ -596,13 +592,11 @@ testjava14(){
 	)
 }
 testjava15(){
-	include(
-		test, 
+	test(
 		jre: saker.java.sdk(15),
 		testclasses: [
-			#testing.saker.java.compiler.tests.tasks.**.*Test,
+			testing.saker.java.compiler.tests.tasks.**.*Test,
 			testing.saker.java.compiler.tests.only.jdk15.**.*Test,
-			###
 			testing.saker.java.compiler.tests.jdk9.**.*Test,
 			testing.saker.java.compiler.tests.jdk10.**.*Test,
 			testing.saker.java.compiler.tests.jdk11.**.*Test,
@@ -610,7 +604,6 @@ testjava15(){
 			testing.saker.java.compiler.tests.jdk13.**.*Test,
 			testing.saker.java.compiler.tests.jdk14.**.*Test,
 			testing.saker.java.compiler.tests.jdk15.**.*Test,
-			###
 		],
 	)
 }
