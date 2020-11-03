@@ -51,6 +51,7 @@ import saker.java.compiler.api.compile.JavaAnnotationProcessor;
 import saker.java.compiler.api.compile.JavaDebugInfoType;
 import saker.java.compiler.api.modulepath.JavaModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.sdk.support.api.EnvironmentSDKDescription;
@@ -93,6 +94,7 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 
 	protected OutputBytecodeManipulationOption bytecodeManipulation = new OutputBytecodeManipulationOption();
 	protected Set<JavaAddExports> addExports;
+	protected Set<JavaAddReads> addReads;
 
 	protected boolean generateNativeHeaders;
 
@@ -157,6 +159,10 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 
 	public void setAddExports(Set<JavaAddExports> addExports) {
 		this.addExports = addExports;
+	}
+
+	public void setAddReads(Set<JavaAddReads> addReads) {
+		this.addReads = addReads;
 	}
 
 	public void setGenerateNativeHeaders(boolean generateNativeHeaders) {
@@ -303,6 +309,7 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 		SerialUtils.writeExternalCollection(out, parameters);
 		SerialUtils.writeExternalCollection(out, annotationProcessors);
 		SerialUtils.writeExternalCollection(out, addExports);
+		SerialUtils.writeExternalCollection(out, addReads);
 		SerialUtils.writeExternalCollection(out, sourceDirectories);
 		SerialUtils.writeExternalCollection(out, debugInfo);
 
@@ -326,6 +333,7 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 		parameters = SerialUtils.readExternalImmutableList(in);
 		annotationProcessors = SerialUtils.readExternalImmutableHashSet(in);
 		addExports = SerialUtils.readExternalImmutableHashSet(in);
+		addReads = SerialUtils.readExternalImmutableHashSet(in);
 		sourceDirectories = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		debugInfo = SerialUtils.readExternalImmutableNavigableSet(in, JavaTaskUtils.getIgnoreCaseNullableComparator());
 
@@ -340,6 +348,7 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((addExports == null) ? 0 : addExports.hashCode());
+		result = prime * result + ((addReads == null) ? 0 : addReads.hashCode());
 		result = prime * result + ((annotationProcessorOptions == null) ? 0 : annotationProcessorOptions.hashCode());
 		result = prime * result + ((annotationProcessors == null) ? 0 : annotationProcessors.hashCode());
 		result = prime * result + ((bootClassPath == null) ? 0 : bootClassPath.hashCode());
@@ -371,6 +380,11 @@ public abstract class WorkerJavaCompilerTaskFactoryBase
 			if (other.addExports != null)
 				return false;
 		} else if (!addExports.equals(other.addExports))
+			return false;
+		if (addReads == null) {
+			if (other.addReads != null)
+				return false;
+		} else if (!addReads.equals(other.addReads))
 			return false;
 		if (annotationProcessorOptions == null) {
 			if (other.annotationProcessorOptions != null)

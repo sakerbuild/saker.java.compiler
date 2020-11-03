@@ -35,7 +35,7 @@ import saker.java.compiler.impl.options.SimpleAddExportsPath;
  */
 public interface JavaAddExports {
 	/**
-	 * Gets the module that contains the exported package(s).
+	 * Gets the module that contains the exported packages.
 	 * 
 	 * @return The module name.
 	 */

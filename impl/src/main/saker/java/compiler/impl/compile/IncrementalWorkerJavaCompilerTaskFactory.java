@@ -178,8 +178,8 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 				}
 				compilationhandler.setPassOptions(sourceVersionName, targetVersionName, parallelProcessing,
 						javasdkreference, parameters, classPath, modulePath, annotationProcessorOptions,
-						processorreferences, addExports, bootClassPath, suppressWarnings, processorInputLocations,
-						bytecodeManipulation, sdkrefs, parameterNames, debugInfo);
+						processorreferences, addExports, addReads, bootClassPath, suppressWarnings,
+						processorInputLocations, bytecodeManipulation, sdkrefs, parameterNames, debugInfo);
 
 				//TODO remove using the present output generated resource files
 				compilationhandler.setPresentOutputGeneratedResourceFiles(
@@ -302,6 +302,7 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 			NavigableMap<String, SDKDescription> pinnedsdks) throws Exception {
 		JavaIDEConfigurationReportingTaskFactory task = new JavaIDEConfigurationReportingTaskFactory(compilationId);
 		task.setAddExports(addExports);
+		task.setAddReads(addReads);
 		task.setCompilerJavaVersion(javacompilersdk.getProperty(JavaSDKReference.PROPERTY_JAVA_VERSION));
 		task.setSourceDirectories(sourceDirectories);
 		task.setProcessorGenDirectory(processorGenDirectory);

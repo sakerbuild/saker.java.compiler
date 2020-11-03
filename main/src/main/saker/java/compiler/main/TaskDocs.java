@@ -95,8 +95,12 @@ public class TaskDocs {
 
 	public static final String COMPILE_ADD_EXPORTS = "Specifies the additional module export definitions when compiling for Java 9 or later.\n"
 			+ "Specifying this option will add the appropriate --add-exports options to the Java compiler backend.\n"
-			+ "The option accepts string values in the format of module/package=other-module(,other-module)*. "
+			+ "The also option accepts string values in the format of module/package=other-module(,other-module)*. "
 			+ "If the target module is omitted, ALL-UNNAMED is used.";
+
+	public static final String COMPILE_ADD_READS = "Specifies the additional module read definitions when compiling for Java 9 or later.\n"
+			+ "Specifying this option will add the appropriate --add-reads options to the Java compiler backend.\n"
+			+ "The also option accepts string values in the format of module=other-module(,other-module)*.";
 
 	public static final String COMPILE_SUPPRESS_WARNINGS = "Specifies the warning types which should be suppressed by the compiler task.";
 
@@ -270,6 +274,16 @@ public class TaskDocs {
 	@NestTypeInformation(kind = TypeInformationKind.LITERAL, qualifiedName = "AddExportsTargetModuleName")
 	@NestInformation("Target module name to which the packages are exported to.")
 	public static class AddExportsTargetOption {
+	}
+
+	@NestTypeInformation(kind = TypeInformationKind.LITERAL, qualifiedName = "AddReadsModuleName")
+	@NestInformation("Name of the module that requires/reads the associated modules.")
+	public static class AddReadsModuleOption {
+	}
+
+	@NestTypeInformation(kind = TypeInformationKind.LITERAL, qualifiedName = "AddReadsRequiresOption")
+	@NestInformation("Name of the module that is required/read.")
+	public static class AddReadsRequiresOption {
 	}
 
 	@NestTypeInformation(kind = TypeInformationKind.LITERAL, qualifiedName = "JavaCompilationParameter")

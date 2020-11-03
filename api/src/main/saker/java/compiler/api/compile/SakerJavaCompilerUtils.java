@@ -17,15 +17,18 @@ package saker.java.compiler.api.compile;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
 import saker.build.task.dependencies.TaskOutputChangeDetector;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.thirdparty.saker.util.StringUtils;
 import saker.java.compiler.api.classpath.JavaClassPath;
 import saker.java.compiler.api.modulepath.JavaModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.compile.AbiVersionKeyTaskOutputChangeDetector;
 import saker.java.compiler.impl.compile.CompilationClassPathTaskOutputChangeDetector;
 import saker.java.compiler.impl.compile.CompilationModulePathTaskOutputChangeDetector;
@@ -213,6 +216,33 @@ public final class SakerJavaCompilerUtils {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Converts the argument add-reads configuration to command line option.
+	 * <p>
+	 * The returned value can be passed as the argument of the <code>--add-reads</code> javac parameter.
+	 * 
+	 * @param addreads
+	 *            The add reads configuration.
+	 * @return The command line option. <code>null</code> if the argument is <code>null</code>.
+	 * @since saker.java.compiler 0.8.8
+	 */
+	public static String toAddReadsCommandLineString(JavaAddReads addreads) {
+		if (addreads == null) {
+			return null;
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append(addreads.getModule());
+		sb.append('=');
+		Iterator<String> it = addreads.getRequires().iterator();
+		//always has at least one element, so if it.next() throws, its a hard failure and interface violation
+		sb.append(it.next());
+		while (it.hasNext()) {
+			sb.append(',');
+			sb.append(it.next());
+		}
+		return sb.toString();
 	}
 
 	/**

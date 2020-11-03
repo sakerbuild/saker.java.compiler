@@ -96,6 +96,9 @@ import saker.sdk.support.main.option.SDKDescriptionTaskOption;
 @NestFieldInformation(value = "AddExports",
 		info = @NestInformation(TaskDocs.COMPILE_ADD_EXPORTS),
 		type = @NestTypeUsage(value = Collection.class, elementTypes = { AddExportsPathTaskOption.class }))
+@NestFieldInformation(value = "AddReads",
+		info = @NestInformation(TaskDocs.COMPILE_ADD_READS),
+		type = @NestTypeUsage(value = Collection.class, elementTypes = { AddReadsPathTaskOption.class }))
 
 @NestFieldInformation(value = "SuppressWarnings",
 		info = @NestInformation(TaskDocs.COMPILE_SUPPRESS_WARNINGS),
@@ -162,6 +165,8 @@ public interface JavaCompilerOptions {
 	public Boolean getGenerateNativeHeaders();
 
 	public Collection<AddExportsPathTaskOption> getAddExports();
+
+	public Collection<AddReadsPathTaskOption> getAddReads();
 
 	public Collection<String> getSuppressWarnings();
 

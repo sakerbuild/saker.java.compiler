@@ -136,7 +136,7 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 						outputClassDirectory, outputNativeHeaderDirectory, outputSourceDirectory,
 						outputResourceDirectory);
 				compilationhandler.setPassOptions(sourceVersionName, targetVersionName, javasdkreference, parameters,
-						classPath, modulePath, annotationProcessorOptions, annotationProcessors, addExports,
+						classPath, modulePath, annotationProcessorOptions, annotationProcessors, addExports, addReads,
 						bootClassPath, sourcefiles, processorInputLocations, bytecodeManipulation, sdkrefs,
 						parameterNames, debugInfo);
 				compilationhandler.setGenerateNativeHeaders(this.generateNativeHeaders);
@@ -200,6 +200,7 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 			NavigableMap<String, SDKDescription> pinnedsdks) throws Exception {
 		JavaIDEConfigurationReportingTaskFactory task = new JavaIDEConfigurationReportingTaskFactory(compilationId);
 		task.setAddExports(addExports);
+		task.setAddReads(addReads);
 		task.setCompilerJavaVersion(javacompilersdk.getProperty(JavaSDKReference.PROPERTY_JAVA_VERSION));
 		task.setSourceDirectories(sourceDirectories);
 		task.setProcessorGenDirectory(processorGenDirectory);

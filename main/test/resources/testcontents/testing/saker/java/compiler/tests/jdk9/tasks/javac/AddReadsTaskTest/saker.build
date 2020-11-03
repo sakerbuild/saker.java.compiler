@@ -1,0 +1,54 @@
+static(first) = saker.java.compile(
+	SourceDirectories: modle.first,
+	Identifier: first,
+)
+
+cmdline {
+	saker.java.compile(
+		SourceDirectories: modle.main,
+		Identifier: cmdline,
+		AddReads: [
+			modle.main=modle.first,
+		]
+		ModulePath: static(first),
+	)
+}
+
+fields {
+	saker.java.compile(
+		SourceDirectories: modle.main,
+		Identifier: fields,
+		AddReads: {
+			Module: modle.main,
+			Requires: modle.first 
+		}
+		ModulePath: static(first),
+	)
+}
+
+options {
+	saker.java.compile(
+		SourceDirectories: modle.main,
+		Identifier: options,
+		CompilerOptions: {
+			AddReads: {
+				Module: modle.main,
+				Requires: modle.first 
+			}
+		}
+		ModulePath: static(first),
+	)
+}
+
+full {
+	saker.java.compile(
+		SourceDirectories: modle.main,
+		Identifier: full,
+		BuildIncremental: false,
+		AddReads: {
+			Module: modle.main,
+			Requires: modle.first 
+		}
+		ModulePath: static(first),
+	)
+}

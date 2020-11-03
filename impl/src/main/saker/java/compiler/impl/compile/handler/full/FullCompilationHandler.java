@@ -65,6 +65,7 @@ import saker.java.compiler.api.modulepath.JavaModulePath;
 import saker.java.compiler.api.modulepath.ModulePathVisitor;
 import saker.java.compiler.api.modulepath.SDKModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.api.processor.ProcessorCreationContext;
 import saker.java.compiler.api.processor.ProcessorCreator;
 import saker.java.compiler.impl.RemoteJavaRMIProcess;
@@ -108,6 +109,7 @@ public class FullCompilationHandler extends CompilationHandler {
 	private String sourceVersionName;
 	private String targetVersionName;
 	private Collection<JavaAddExports> addExports;
+	private Collection<JavaAddReads> addReads;
 	private boolean generateNativeHeaders;
 
 	private Map<FileLocation, ClassPathIDEConfigurationEntry> classPathEntryMap;
@@ -144,8 +146,8 @@ public class FullCompilationHandler extends CompilationHandler {
 			SDKReference compilationJavaSDKReference, List<String> parameters, JavaClassPath classpath,
 			JavaModulePath modulepath, Map<String, String> annotationprocessoroptions,
 			Collection<JavaAnnotationProcessor> annotationprocessors, Collection<JavaAddExports> addexports,
-			JavaClassPath bootclasspath, NavigableMap<SakerPath, SakerFile> sourcefiles,
-			NavigableMap<String, SakerPath> processorInputLocations,
+			Collection<JavaAddReads> addreads, JavaClassPath bootclasspath,
+			NavigableMap<SakerPath, SakerFile> sourcefiles, NavigableMap<String, SakerPath> processorInputLocations,
 			OutputBytecodeManipulationOption bytecodeManipulation, NavigableMap<String, SDKReference> sdkrefs,
 			boolean parameterNames, Set<String> debugInfos) {
 		this.sourceFiles = sourcefiles;
@@ -165,6 +167,9 @@ public class FullCompilationHandler extends CompilationHandler {
 		if (addexports == null) {
 			addexports = Collections.emptyList();
 		}
+		if (addreads == null) {
+			addreads = Collections.emptyList();
+		}
 
 		this.sourceVersionName = sourceversionname;
 		this.targetVersionName = targetversionname;
@@ -176,6 +181,7 @@ public class FullCompilationHandler extends CompilationHandler {
 		this.annotationProcessorOptions = annotationprocessoroptions;
 		this.annotationProcessors = annotationprocessors;
 		this.addExports = addexports;
+		this.addReads = addreads;
 		//can be null
 		this.bootClassPath = bootclasspath;
 
@@ -271,8 +277,8 @@ public class FullCompilationHandler extends CompilationHandler {
 		boolean[] nocmdlinebootclasspath = { false };
 
 		Collection<String> options = createOptions(parameters, sourceVersionName, targetVersionName, addExports,
-				bootclasspathpaths, classpathpaths, modulepathpaths, parameterNames, debugInfos, nocmdlineclasspath,
-				nocmdlinebootclasspath);
+				addReads, bootclasspathpaths, classpathpaths, modulepathpaths, parameterNames, debugInfos,
+				nocmdlineclasspath, nocmdlinebootclasspath);
 		boolean allowcmdlinebootclasspath = bootClassPath == null || !nocmdlinebootclasspath[0];
 
 		if (!ObjectUtils.isNullOrEmpty(this.annotationProcessorOptions)) {

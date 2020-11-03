@@ -1,0 +1,58 @@
+cmdline {
+	saker.java.compile(
+		SourceDirectories: src,
+		Identifier: cmdline,
+		AddExports: [
+			jdk.compiler/com.sun.tools.javac.api=modle.main,
+			jdk.compiler/com.sun.tools.javac.code=modle.main,
+		]
+	)
+}
+
+fields {
+	saker.java.compile(
+		SourceDirectories: src,
+		Identifier: fields,
+		AddExports: {
+			Module: jdk.compiler,
+			Package: [
+				com.sun.tools.javac.api
+				com.sun.tools.javac.code
+			]
+			Target: modle.main
+		}
+	)
+}
+
+options {
+	saker.java.compile(
+		SourceDirectories: src,
+		Identifier: options,
+		CompilerOptions: {
+			AddExports: {
+				Module: jdk.compiler,
+				Package: [
+					com.sun.tools.javac.api
+					com.sun.tools.javac.code
+				]
+				Target: modle.main
+			}
+		}
+	)
+}
+
+full {
+	saker.java.compile(
+		SourceDirectories: src,
+		Identifier: full,
+		BuildIncremental: false,
+		AddExports: {
+			Module: jdk.compiler,
+			Package: [
+				com.sun.tools.javac.api
+				com.sun.tools.javac.code
+			]
+			Target: modle.main
+		}
+	)
+}

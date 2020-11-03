@@ -497,7 +497,8 @@ test(
 		],
 		ProcessJVMParameters: [
 			#"-agentlib:jdwp=transport=dt_socket,address=localhost:5432,server=y,suspend=y,quiet=y",
-			--illegal-access=deny
+			# temporarily disable until saker.build is updated
+			#--illegal-access=deny
 		],
 		WorkingDirectory: main,
 		MaxJVMCount: 1,

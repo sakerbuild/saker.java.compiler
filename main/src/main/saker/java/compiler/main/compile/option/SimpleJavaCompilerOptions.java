@@ -48,6 +48,7 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 	protected Map<String, SakerPath> processorInputLocations;
 	protected Boolean generateNativeHeaders;
 	protected Collection<AddExportsPathTaskOption> addExports;
+	protected Collection<AddReadsPathTaskOption> addReads;
 	protected Collection<String> suppressWarnings;
 	protected String moduleMainClass;
 	protected String moduleVersion;
@@ -79,6 +80,7 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 		this.processorInputLocations = ObjectUtils.cloneTreeMap(copy.getProcessorInputLocations());
 		this.generateNativeHeaders = copy.getGenerateNativeHeaders();
 		this.addExports = ObjectUtils.cloneArrayList(copy.getAddExports(), AddExportsPathTaskOption::clone);
+		this.addReads = ObjectUtils.cloneArrayList(copy.getAddReads(), AddReadsPathTaskOption::clone);
 		this.suppressWarnings = JavaTaskUtils
 				.makeImmutableIgnoreCaseNullableStringCollection(copy.getSuppressWarnings());
 		this.sdks = ObjectUtils.cloneTreeMap(copy.getSDKs(), Functionals.identityFunction(),
@@ -193,6 +195,11 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 		if (!ObjectUtils.isNullOrEmpty(oaddexports)) {
 			//we dont care about the duplicates, as the option users should filter them
 			this.setAddExports(ObjectUtils.newArrayList(this.getAddExports(), oaddexports));
+		}
+		Collection<AddReadsPathTaskOption> oaddreads = merge.getAddReads();
+		if (!ObjectUtils.isNullOrEmpty(oaddreads)) {
+			//we dont care about the duplicates, as the option users should filter them
+			this.setAddReads(ObjectUtils.newArrayList(this.getAddReads(), oaddreads));
 		}
 
 		Collection<String> osuppresswarnings = merge.getSuppressWarnings();
@@ -399,6 +406,15 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 	}
 
 	@Override
+	public Collection<AddReadsPathTaskOption> getAddReads() {
+		return addReads;
+	}
+
+	public void setAddReads(Collection<AddReadsPathTaskOption> addReads) {
+		this.addReads = addReads;
+	}
+
+	@Override
 	public Collection<String> getSuppressWarnings() {
 		return suppressWarnings;
 	}
@@ -490,10 +506,12 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 
 	@Override
 	public String toString() {
-		return "{" + (sourceDirectories != null ? "sourceDirectories: " + sourceDirectories + ", " : "")
+		return "{" + (identifier != null ? "identifier: " + identifier + ", " : "")
+				+ (language != null ? "language: " + language + ", " : "")
+				+ (sourceDirectories != null ? "sourceDirectories: " + sourceDirectories + ", " : "")
 				+ (classPath != null ? "classPath: " + classPath + ", " : "")
-				+ (modulePath != null ? "modulePath: " + modulePath + ", " : "")
 				+ (bootClassPath != null ? "bootClassPath: " + bootClassPath + ", " : "")
+				+ (modulePath != null ? "modulePath: " + modulePath + ", " : "")
 				+ (sourceVersion != null ? "sourceVersion: " + sourceVersion + ", " : "")
 				+ (targetVersion != null ? "targetVersion: " + targetVersion + ", " : "")
 				+ (parameters != null ? "parameters: " + parameters + ", " : "")
@@ -504,12 +522,19 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 				+ (processorInputLocations != null ? "processorInputLocations: " + processorInputLocations + ", " : "")
 				+ (generateNativeHeaders != null ? "generateNativeHeaders: " + generateNativeHeaders + ", " : "")
 				+ (addExports != null ? "addExports: " + addExports + ", " : "")
+				+ (addReads != null ? "addReads: " + addReads + ", " : "")
 				+ (suppressWarnings != null ? "suppressWarnings: " + suppressWarnings + ", " : "")
 				+ (moduleMainClass != null ? "moduleMainClass: " + moduleMainClass + ", " : "")
 				+ (moduleVersion != null ? "moduleVersion: " + moduleVersion + ", " : "")
 				+ (parallelProcessing != null ? "parallelProcessing: " + parallelProcessing + ", " : "")
 				+ (buildIncremental != null ? "buildIncremental: " + buildIncremental + ", " : "")
-				+ (sdks != null ? "sdks: " + sdks : "") + "}";
+				+ (sdks != null ? "sdks: " + sdks + ", " : "")
+				+ (parameterNames != null ? "parameterNames: " + parameterNames + ", " : "")
+				+ (debugInfo != null ? "debugInfo: " + debugInfo + ", " : "")
+				+ (allowTargetReleaseMismatch != null
+						? "allowTargetReleaseMismatch: " + allowTargetReleaseMismatch + ", "
+						: "")
+				+ (patchEnablePreview != null ? "patchEnablePreview: " + patchEnablePreview : "") + "}";
 	}
 
 }

@@ -49,12 +49,14 @@ import saker.java.compiler.api.classpath.ClassPathEntryInputFileVisitor;
 import saker.java.compiler.api.classpath.FileClassPath;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.java.compiler.api.classpath.SDKClassPath;
+import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.option.JavaAddExports;
-import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.ide.configuration.JavaIDEConfigurationBuilder;
 import saker.java.compiler.impl.ide.configuration.JavaIDEConfigurationBuilder.ClassPathConfigurationBuilder;
 import saker.java.compiler.impl.ide.configuration.JavaIDEConfigurationBuilder.SourceDirectoryConfigurationBuilder;
 import saker.java.compiler.impl.options.SimpleAddExportsPath;
+import saker.java.compiler.impl.options.SimpleAddReadsPath;
 import saker.sdk.support.api.SDKDescription;
 import saker.sdk.support.api.SDKPathReference;
 import saker.sdk.support.api.SDKReference;
@@ -72,6 +74,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 	protected String compilationId;
 	protected Set<JavaAddExports> addExports = new LinkedHashSet<>();
+	protected Set<JavaAddReads> addReads = new LinkedHashSet<>();
 	protected String compilerJavaVersion;
 	protected Set<JavaSourceDirectory> sourceDirectories = new LinkedHashSet<>();
 	protected SakerPath processorGenDirectory;
@@ -100,6 +103,10 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 	public void setAddExports(Set<JavaAddExports> addExports) {
 		this.addExports = addExports;
+	}
+
+	public void setAddReads(Set<JavaAddReads> addReads) {
+		this.addReads = addReads;
 	}
 
 	public void setCompilerJavaVersion(String compilerJavaVersion) {
@@ -174,14 +181,23 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 			ideconfigbuilder.setOutputBinDirectory(outputBinDirectory.toString());
 		}
 
-		Collection<JavaAddExports> exports = this.addExports;
+		Collection<JavaAddExports> exports = ObjectUtils.newLinkedHashSet(this.addExports);
 		addExportsFromParameters(parameters, exports);
 		if (!ObjectUtils.isNullOrEmpty(exports)) {
 			Collection<String> exportsstrings = new TreeSet<>();
 			for (JavaAddExports exp : exports) {
-				exportsstrings.addAll(JavaTaskUtils.toAddExportsCommandLineStrings(exp));
+				exportsstrings.addAll(SakerJavaCompilerUtils.toAddExportsCommandLineStrings(exp));
 			}
 			ideconfigbuilder.setAddExports(exportsstrings);
+		}
+		Collection<JavaAddReads> reads = ObjectUtils.newLinkedHashSet(this.addReads);
+		addReadsFromParameters(parameters, reads);
+		if (!ObjectUtils.isNullOrEmpty(reads)) {
+			Collection<String> readsstrings = new TreeSet<>();
+			for (JavaAddReads exp : reads) {
+				readsstrings.add(SakerJavaCompilerUtils.toAddReadsCommandLineString(exp));
+			}
+			ideconfigbuilder.setAddReads(readsstrings);
 		}
 
 		Collection<? extends ClassPathIDEConfigurationEntry> bootclasspath = this.bootClassPathEntries;
@@ -227,6 +243,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 		SerialUtils.writeExternalCollection(out, parameters);
 		SerialUtils.writeExternalCollection(out, addExports);
+		SerialUtils.writeExternalCollection(out, addReads);
 		SerialUtils.writeExternalCollection(out, sourceDirectories);
 		SerialUtils.writeExternalCollection(out, classPathEntries);
 		SerialUtils.writeExternalCollection(out, bootClassPathEntries);
@@ -243,6 +260,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 
 		parameters = SerialUtils.readExternalImmutableList(in);
 		addExports = SerialUtils.readExternalImmutableHashSet(in);
+		addReads = SerialUtils.readExternalImmutableHashSet(in);
 		sourceDirectories = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		classPathEntries = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		bootClassPathEntries = SerialUtils.readExternalImmutableLinkedHashSet(in);
@@ -267,6 +285,11 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 			if (other.addExports != null)
 				return false;
 		} else if (!addExports.equals(other.addExports))
+			return false;
+		if (addReads == null) {
+			if (other.addReads != null)
+				return false;
+		} else if (!addReads.equals(other.addReads))
 			return false;
 		if (bootClassPathEntries == null) {
 			if (other.bootClassPathEntries != null)
@@ -335,7 +358,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		return new IDEConfigurationReportingTaskIdentifier(compilationid);
 	}
 
-	static void addExportsFromParameters(List<String> parameters, Collection<JavaAddExports> result) {
+	private static void addExportsFromParameters(List<String> parameters, Collection<JavaAddExports> result) {
 		if (ObjectUtils.isNullOrEmpty(parameters)) {
 			return;
 		}
@@ -344,6 +367,19 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 			if ("--add-exports".equals(param) && it.hasNext()) {
 				String path = it.next();
 				result.add(SimpleAddExportsPath.valueOf(path));
+			}
+		}
+	}
+
+	private static void addReadsFromParameters(List<String> parameters, Collection<JavaAddReads> result) {
+		if (ObjectUtils.isNullOrEmpty(parameters)) {
+			return;
+		}
+		for (Iterator<String> it = parameters.iterator(); it.hasNext();) {
+			String param = it.next();
+			if ("--add-reads".equals(param) && it.hasNext()) {
+				String path = it.next();
+				result.add(SimpleAddReadsPath.valueOf(path));
 			}
 		}
 	}
@@ -640,4 +676,5 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 					+ "]";
 		}
 	}
+
 }

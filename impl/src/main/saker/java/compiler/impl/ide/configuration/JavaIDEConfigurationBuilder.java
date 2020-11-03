@@ -53,6 +53,7 @@ public final class JavaIDEConfigurationBuilder {
 	public static final String FIELD_MODULEPATHS = "java.modulepaths";
 
 	public static final String FIELD_ADDEXPORTS = "java.addexports";
+	public static final String FIELD_ADDREADS = "java.addreads";
 
 	public static final String FIELD_COMPILER_JDKHOME = "java.compiler.install.location";
 
@@ -68,12 +69,18 @@ public final class JavaIDEConfigurationBuilder {
 	private Collection<Object> modulePaths = new LinkedHashSet<>();
 	private Collection<Object> processorGenDirectories = new LinkedHashSet<>();
 	private Collection<?> addExports = new LinkedHashSet<>();
+	private Collection<?> addReads = new LinkedHashSet<>();
 	private String compilerInstallLocation;
 	private String compilerJavaVersion;
 	private String outputBinDirectory;
 
 	public JavaIDEConfigurationBuilder setAddExports(Collection<String> addExports) {
 		this.addExports = addExports;
+		return this;
+	}
+
+	public JavaIDEConfigurationBuilder setAddReads(Collection<String> addReads) {
+		this.addReads = addReads;
 		return this;
 	}
 
@@ -133,6 +140,9 @@ public final class JavaIDEConfigurationBuilder {
 		}
 		if (!ObjectUtils.isNullOrEmpty(addExports)) {
 			fields.put(FIELD_ADDEXPORTS, addExports);
+		}
+		if (!ObjectUtils.isNullOrEmpty(addReads)) {
+			fields.put(FIELD_ADDREADS, addReads);
 		}
 		if (!ObjectUtils.isNullOrEmpty(processorGenDirectories)) {
 			fields.put(FIELD_PROCESSOR_GEN_DIRECTORIES, processorGenDirectories);

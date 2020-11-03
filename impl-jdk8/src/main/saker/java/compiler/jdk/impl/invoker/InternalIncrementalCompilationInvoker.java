@@ -79,7 +79,7 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 		if (currentmajor < 11) {
 			options.remove("--enable-preview");
 			if (currentmajor < 9) {
-				removeAddExportsFromOptionsList(options);
+				CompilationHandler.removeNonModularArgumentsFromOptionsList(options);
 				int releaseidx = options.indexOf("--release");
 				if (releaseidx >= 0) {
 					//remove the release argument and its value

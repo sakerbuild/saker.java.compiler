@@ -89,6 +89,7 @@ import saker.java.compiler.api.modulepath.JavaModulePath;
 import saker.java.compiler.api.modulepath.ModulePathVisitor;
 import saker.java.compiler.api.modulepath.SDKModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaTaskUtils.LocalDirectoryClassFilesExecutionProperty;
 import saker.java.compiler.impl.RemoteJavaRMIProcess;
@@ -158,7 +159,8 @@ import saker.std.api.file.location.LocalFileLocation;
 import testing.saker.java.compiler.TestFlag;
 
 public class IncrementalCompilationHandler extends CompilationHandler {
-	public static final boolean LOGGING_ENABLED = TestFlag.ENABLED;
+	public static final boolean LOGGING_ENABLED = TestFlag.ENABLED
+			|| Boolean.parseBoolean(System.getProperty("saker.java.compiler.logging.verbose"));
 
 	private final class InvocationContextImpl implements JavaCompilerInvocationContext {
 		private final NavigableMap<SakerPath, SakerDirectory> passClassPaths;
@@ -336,6 +338,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 	private Map<String, String> passAnnotationProcessorOptions;
 	private Collection<JavaAnnotationProcessor> passAnnotationProcessors;
 	private Collection<JavaAddExports> passAddExports;
+	private Collection<JavaAddReads> passAddReads;
 	private NavigableMap<String, SakerPath> processorInputLocations;
 
 	private SDKReference compilationJavaSDKReference;
@@ -379,7 +382,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 			SDKReference compilationJavaSDKReference, List<String> parameters, JavaClassPath classpath,
 			JavaModulePath modulepath, Map<String, String> annotationprocessoroptions,
 			Collection<JavaAnnotationProcessor> annotationprocessors, Collection<JavaAddExports> addexports,
-			JavaClassPath bootclasspath, Collection<String> suppresswarnings,
+			Collection<JavaAddReads> addreads, JavaClassPath bootclasspath, Collection<String> suppresswarnings,
 			NavigableMap<String, SakerPath> processorInputLocations,
 			OutputBytecodeManipulationOption bytecodeManipulation, NavigableMap<String, SDKReference> sdkrefs,
 			boolean parameterNames, Set<String> debugInfos) {
@@ -402,6 +405,9 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 		if (addexports == null) {
 			addexports = Collections.emptyList();
 		}
+		if (addreads == null) {
+			addreads = Collections.emptyList();
+		}
 
 		this.suppressWarnings = suppresswarnings;
 		this.sourceVersionName = sourceversionname;
@@ -415,6 +421,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 		this.passAnnotationProcessorOptions = annotationprocessoroptions;
 		this.passAnnotationProcessors = annotationprocessors;
 		this.passAddExports = addexports;
+		this.passAddReads = addreads;
 		//can be null
 		this.bootClassPath = bootclasspath;
 
@@ -960,9 +967,9 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 			boolean[] nocmdlineclasspath, Set<? extends SakerPath> commandlinebootclasspaths,
 			boolean[] nocmdlinebootclasspath) throws IOException {
 		//do not pass sourceVersionName, targetVersionName, as they are added manually by the invoker
-		this.options = createOptions(passParameters, null, null, passAddExports, commandlinebootclasspaths,
-				commandlineclasspaths, commandlinemodulepaths, parameterNames, debugInfos, nocmdlineclasspath,
-				nocmdlinebootclasspath);
+		this.options = createOptions(passParameters, null, null, passAddExports, passAddReads,
+				commandlinebootclasspaths, commandlineclasspaths, commandlinemodulepaths, parameterNames, debugInfos,
+				nocmdlineclasspath, nocmdlinebootclasspath);
 		//options never contain any -proc options, as it is ignored by the createOptions method
 		this.options.add("-proc:none");
 	}

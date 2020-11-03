@@ -42,12 +42,14 @@ import saker.java.compiler.api.classpath.JavaClassPath;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.java.compiler.api.modulepath.JavaModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.FullWorkerJavaCompilerTaskFactory;
 import saker.java.compiler.impl.compile.IncrementalWorkerJavaCompilerTaskFactory;
 import saker.java.compiler.impl.compile.WorkerJavaCompilerTaskFactoryBase;
 import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.options.SimpleAddExportsPath;
+import saker.java.compiler.impl.options.SimpleAddReadsPath;
 import saker.java.compiler.impl.options.SimpleAnnotationProcessorReferenceOption;
 import saker.java.compiler.impl.options.SimpleJavaSourceDirectoryOption;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
@@ -77,6 +79,7 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 
 	protected Set<JavaAnnotationProcessor> annotationProcessors;
 	protected Set<JavaAddExports> addExports;
+	protected Set<JavaAddReads> addReads;
 
 	protected JavaClassPath classPath;
 	protected JavaClassPath bootClassPath;
@@ -240,6 +243,11 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 	}
 
 	@Override
+	public void setAddReads(Collection<? extends JavaAddReads> addReads) {
+		this.addReads = JavaTaskUtils.cloneImmutableHashSet(addReads, SimpleAddReadsPath::new);
+	}
+
+	@Override
 	public void setAnnotationProcessors(Collection<? extends JavaAnnotationProcessor> annotationProcessors) {
 		this.annotationProcessors = JavaTaskUtils.cloneImmutableLinkedHashSet(annotationProcessors,
 				SimpleAnnotationProcessorReferenceOption::new);
@@ -341,6 +349,7 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 		workertask.setBytecodeManipulation(bytecodemanip);
 
 		workertask.setAddExports(addExports);
+		workertask.setAddReads(addReads);
 		workertask.setGenerateNativeHeaders(generateNativeHeaders);
 		workertask.setParameterNames(parameterNames);
 		workertask.setDebugInfo(debugInfo);

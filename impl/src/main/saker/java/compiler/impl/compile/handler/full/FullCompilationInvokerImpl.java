@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.processing.Processor;
@@ -45,7 +46,9 @@ import com.sun.tools.javac.api.JavacTool;
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
+import saker.build.util.java.JavaTools;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.VersionKeyUtils;
@@ -97,6 +100,25 @@ public class FullCompilationInvokerImpl implements FullCompilationInvoker {
 	public void compile(SakerPathBytes[] sources) throws IOException, JavaCompilationFailedException {
 		System.out.println("Compiling " + sources.length + " source files.");
 		Iterable<? extends JavaFileObject> units = toCompilationSourceFileUnits(sources);
+
+		int currentmajor = JavaTools.getCurrentJavaMajorVersion();
+
+		List<String> options = ObjectUtils.newArrayList(this.options);
+
+		if (currentmajor < 11) {
+			options.remove("--enable-preview");
+			if (currentmajor < 9) {
+				CompilationHandler.removeNonModularArgumentsFromOptionsList(options);
+			}
+			Set<String> addreadsmodules = CompilationHandler.getAddReadsReferencedModules(options);
+			if (!ObjectUtils.isNullOrEmpty(addreadsmodules)) {
+				//add the --add-reads modules via --add-modules otherwise javac won't resolve them
+				//this is better than requiring the user to manualy specify them
+				//duplicate --add-modules values in the parameters are ignored.
+				options.add("--add-modules");
+				options.add(StringUtils.toStringJoin(",", addreadsmodules));
+			}
+		}
 
 		JavaCompiler compiler = JavacTool.create();
 		try (StandardJavaFileManager standardfilemanager = compiler.getStandardFileManager(null, null,

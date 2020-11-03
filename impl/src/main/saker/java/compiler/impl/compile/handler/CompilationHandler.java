@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -54,13 +55,16 @@ import saker.build.runtime.execution.SakerLog;
 import saker.build.task.TaskContext;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
+import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils.ThreadWorkPool;
 import saker.build.util.file.FileOnlyIgnoreCaseExtensionDirectoryVisitPredicate;
 import saker.java.compiler.api.classpath.JavaSourceDirectory;
+import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.ClassPathIDEConfigurationEntry;
 import saker.java.compiler.impl.compile.ModulePathIDEConfigurationEntry;
@@ -76,6 +80,7 @@ import saker.java.compiler.impl.compile.handler.info.CompilationInfo;
 import saker.java.compiler.impl.compile.handler.info.GeneratedFileOrigin;
 import saker.java.compiler.impl.compile.handler.info.SourceFileData;
 import saker.java.compiler.impl.compile.handler.invoker.ProcessorDetails;
+import saker.java.compiler.impl.options.SimpleAddReadsPath;
 import testing.saker.java.compiler.TestFlag;
 
 public abstract class CompilationHandler {
@@ -123,23 +128,23 @@ public abstract class CompilationHandler {
 	}
 
 	public static List<String> createOptions(List<String> passparameters, String passsourceversion,
-			String passtargetversion, Collection<JavaAddExports> passaddexports,
+			String passtargetversion, Collection<JavaAddExports> passaddexports, Collection<JavaAddReads> passaddreads,
 			Set<? extends SakerPath> bootclasspathfiles, Set<? extends SakerPath> classpathfiles,
 			Set<? extends SakerPath> modulepathfiles, boolean parameternames, Set<String> debuginfos,
 			boolean[] outnocmdlineclasspath, boolean[] outnocmdlinebootclasspath) {
 		ArrayList<String> result = new ArrayList<>();
-		collectOptions(passparameters, passsourceversion, passtargetversion, passaddexports, bootclasspathfiles,
-				classpathfiles, modulepathfiles, result, parameternames, debuginfos, outnocmdlineclasspath,
-				outnocmdlinebootclasspath);
+		collectOptions(passparameters, passsourceversion, passtargetversion, passaddexports, passaddreads,
+				bootclasspathfiles, classpathfiles, modulepathfiles, result, parameternames, debuginfos,
+				outnocmdlineclasspath, outnocmdlinebootclasspath);
 		return result;
 	}
 
 	//the debug infos are already sanitized to lower case values
 	private static void collectOptions(List<String> passparameters, String passsourceversion, String passtargetversion,
-			Collection<JavaAddExports> passaddexports, Set<? extends SakerPath> bootclasspathfiles,
-			Set<? extends SakerPath> classpathfiles, Set<? extends SakerPath> modulepathfiles, List<String> result,
-			boolean parameternames, Set<String> debuginfos, boolean[] outnocmdlineclasspath,
-			boolean[] outnocmdlinebootclasspath) {
+			Collection<JavaAddExports> passaddexports, Collection<JavaAddReads> passaddreads,
+			Set<? extends SakerPath> bootclasspathfiles, Set<? extends SakerPath> classpathfiles,
+			Set<? extends SakerPath> modulepathfiles, List<String> result, boolean parameternames,
+			Set<String> debuginfos, boolean[] outnocmdlineclasspath, boolean[] outnocmdlinebootclasspath) {
 		String presentclasspathparam = null;
 		String presentmodulepathparam = null;
 		String presentbootclasspathparam = null;
@@ -248,13 +253,25 @@ public abstract class CompilationHandler {
 			//use a buffer set to prevent duplicates
 			Set<String> addexports = new TreeSet<>();
 			for (JavaAddExports ae : passaddexports) {
-				for (String cmdline : JavaTaskUtils.toAddExportsCommandLineStrings(ae)) {
+				for (String cmdline : SakerJavaCompilerUtils.toAddExportsCommandLineStrings(ae)) {
 					addexports.add(cmdline);
 				}
 			}
 			for (String cmdline : addexports) {
 				result.add("--add-exports");
 				result.add(cmdline);
+			}
+		}
+		if (!passaddreads.isEmpty()) {
+			//use a map to potentially deduplicate arguments
+			Map<String, Set<String>> readsmap = new TreeMap<>();
+			for (JavaAddReads ar : passaddreads) {
+				readsmap.computeIfAbsent(ar.getModule(), Functionals.treeSetComputer()).addAll(ar.getRequires());
+			}
+			for (Entry<String, Set<String>> entry : readsmap.entrySet()) {
+				result.add("--add-reads");
+				//XXX maybe make this more efficient with string builder 
+				result.add(entry.getKey() + "=" + StringUtils.toStringJoin(",", entry.getValue()));
 			}
 		}
 		if (debuginfos == null) {
@@ -547,7 +564,7 @@ public abstract class CompilationHandler {
 			case CompilationHandler.URI_SCHEME_INPUT: {
 				return SakerPath.valueOf(uri.getSchemeSpecificPart());
 			}
-			case "jrt":{
+			case "jrt": {
 				return SakerPath.valueOf(uri.toString());
 			}
 			default: {
@@ -675,4 +692,46 @@ public abstract class CompilationHandler {
 		return result;
 	}
 
+	public static Set<String> getAddReadsReferencedModules(Iterable<String> options) {
+		Set<String> result = new TreeSet<>();
+		for (Iterator<String> it = options.iterator(); it.hasNext();) {
+			String arg = it.next();
+			if ("--add-reads".equals(arg)) {
+				//must have an argument, otherwise we would've failed earlier 
+				String readsval;
+				try {
+					readsval = it.next();
+				} catch (NoSuchElementException e) {
+					throw new IllegalArgumentException("Failed to retrieve --add-reads argument from javac options.",
+							e);
+				}
+				JavaAddReads arp = SimpleAddReadsPath.valueOf(readsval);
+				String m = arp.getModule();
+				result.add(m);
+				for (String r : arp.getRequires()) {
+					if ("ALL-UNNAMED".equals(r)) {
+						continue;
+					}
+					result.add(r);
+				}
+			}
+		}
+		return result;
+	}
+
+	public static void removeNonModularArgumentsFromOptionsList(Iterable<String> options) {
+		for (Iterator<String> it = options.iterator(); it.hasNext();) {
+			String o = it.next();
+			if ("--add-exports".equals(o) || "--add-opens".equals(o) || "--add-modules".equals(o)
+					|| "--limit-modules".equals(o) || "--module-version".equals(o)) {
+				it.remove();
+				if (it.hasNext()) {
+					it.next();
+					it.remove();
+				} else {
+					break;
+				}
+			}
+		}
+	}
 }

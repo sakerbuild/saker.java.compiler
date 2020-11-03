@@ -54,6 +54,7 @@ import saker.java.compiler.api.compile.JavaCompilerWarningType;
 import saker.java.compiler.api.compile.JavaDebugInfoType;
 import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.main.JavaTaskOptionUtils;
 import saker.java.compiler.main.TaskDocs;
@@ -66,6 +67,7 @@ import saker.java.compiler.main.TaskDocs.ModuleInfoInjectMainClassOption;
 import saker.java.compiler.main.TaskDocs.ModuleInfoInjectVersionOption;
 import saker.java.compiler.main.TaskDocs.ProcessorInputLocationNameOption;
 import saker.java.compiler.main.compile.option.AddExportsPathTaskOption;
+import saker.java.compiler.main.compile.option.AddReadsPathTaskOption;
 import saker.java.compiler.main.compile.option.AnnotationProcessorReferenceTaskOption;
 import saker.java.compiler.main.compile.option.JavaClassPathTaskOption;
 import saker.java.compiler.main.compile.option.JavaCompilerOptions;
@@ -139,6 +141,9 @@ import testing.saker.java.compiler.TestFlag;
 @NestParameterInformation(value = "AddExports",
 		info = @NestInformation(TaskDocs.COMPILE_ADD_EXPORTS),
 		type = @NestTypeUsage(value = Collection.class, elementTypes = { AddExportsPathTaskOption.class }))
+@NestParameterInformation(value = "AddReads",
+		info = @NestInformation(TaskDocs.COMPILE_ADD_READS),
+		type = @NestTypeUsage(value = Collection.class, elementTypes = { AddReadsPathTaskOption.class }))
 
 @NestParameterInformation(value = "SuppressWarnings",
 		info = @NestInformation(TaskDocs.COMPILE_SUPPRESS_WARNINGS),
@@ -237,6 +242,9 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 		@SakerInput(value = { "AddExports" })
 		public Collection<AddExportsPathTaskOption> addExportsOption;
 
+		@SakerInput(value = { "AddReads" })
+		public Collection<AddReadsPathTaskOption> addReadsOption;
+
 		@SakerInput(value = { "SuppressWarnings" })
 		public Collection<String> suppressWarningsOption;
 
@@ -302,6 +310,7 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 			options.setProcessorInputLocations(ObjectUtils.cloneTreeMap(this.processorInputLocationsOption));
 			options.setGenerateNativeHeaders(this.generateNativeHeadersOption);
 			options.setAddExports(ObjectUtils.cloneArrayList(this.addExportsOption, AddExportsPathTaskOption::clone));
+			options.setAddReads(ObjectUtils.cloneArrayList(this.addReadsOption, AddReadsPathTaskOption::clone));
 			options.setSuppressWarnings(
 					JavaTaskUtils.makeImmutableIgnoreCaseNullableStringCollection(this.suppressWarningsOption));
 			options.setSDKs(ObjectUtils.cloneTreeMap(this.sdksOption, Functionals.identityFunction(),
@@ -418,7 +427,7 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 					Collection<String> packages = aep.getPackage();
 					Collection<String> target = aep.getTarget();
 					packagebuf.clear();
-					target.clear();
+					targetbuf.clear();
 					if (!ObjectUtils.isNullOrEmpty(packages)) {
 						for (String pkgstr : packages) {
 							if (ObjectUtils.isNullOrEmpty(pkgstr)) {
@@ -440,6 +449,18 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 				}
 				taskbuilder.setAddExports(setaddexports);
 			}
+			Collection<? extends AddReadsPathTaskOption> addreads = p.getAddReads();
+			if (!ObjectUtils.isNullOrEmpty(addreads)) {
+				Collection<JavaAddReads> setaddreads = new HashSet<>();
+				for (AddReadsPathTaskOption arpopt : addreads) {
+					if (arpopt == null) {
+						continue;
+					}
+					setaddreads.add(arpopt.toAddReadsPath(taskcontext));
+				}
+				taskbuilder.setAddReads(setaddreads);
+			}
+
 			Collection<AnnotationProcessorReferenceTaskOption> annotationprocessors = p.getAnnotationProcessors();
 			if (!ObjectUtils.isNullOrEmpty(annotationprocessors)) {
 				Collection<JavaAnnotationProcessor> setprocessors = new LinkedHashSet<>();

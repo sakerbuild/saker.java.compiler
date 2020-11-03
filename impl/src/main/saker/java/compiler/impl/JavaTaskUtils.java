@@ -49,8 +49,6 @@ import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
 import saker.build.thirdparty.saker.util.io.FileUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
-import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
-import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
 import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
@@ -181,10 +179,6 @@ public class JavaTaskUtils {
 			result.addAll(strings);
 		}
 		return result;
-	}
-
-	public static Collection<String> toAddExportsCommandLineStrings(JavaAddExports addexports) {
-		return SakerJavaCompilerUtils.toAddExportsCommandLineStrings(addexports);
 	}
 
 	public static class LocalDirectoryClassFilesExecutionProperty

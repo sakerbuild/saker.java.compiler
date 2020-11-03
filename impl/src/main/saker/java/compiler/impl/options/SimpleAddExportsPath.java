@@ -27,10 +27,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.api.option.JavaAddExports;
 
-public class SimpleAddExportsPath implements Externalizable, JavaAddExports {
+public class SimpleAddExportsPath implements JavaAddExports, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private static final Pattern PATTERN_SPLIT_COMMA = Pattern.compile("[,]+");
@@ -39,6 +40,9 @@ public class SimpleAddExportsPath implements Externalizable, JavaAddExports {
 	private Set<String> packages;
 	private Set<String> target;
 
+	/**
+	 * For {@link Externalizable}.
+	 */
 	public SimpleAddExportsPath() {
 	}
 
@@ -149,9 +153,19 @@ public class SimpleAddExportsPath implements Externalizable, JavaAddExports {
 
 	@Override
 	public String toString() {
-		return "SimpleAddExportsPath [" + (module != null ? "module=" + module + ", " : "")
-				+ (packages != null ? "packages=" + packages + ", " : "") + (target != null ? "target=" + target : "")
-				+ "]";
+		StringBuilder sb = new StringBuilder();
+		sb.append(getClass().getSimpleName());
+		sb.append("[module=");
+		sb.append(module);
+		sb.append(", packages=");
+		sb.append(packages);
+		sb.append(", target=");
+		if (ObjectUtils.isNullOrEmpty(target)) {
+			sb.append("ALL-UNNAMED");
+		} else {
+			sb.append(target);
+		}
+		sb.append("]");
+		return sb.toString();
 	}
-
 }

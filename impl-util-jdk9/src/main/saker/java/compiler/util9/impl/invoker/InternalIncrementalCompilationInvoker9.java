@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.ServiceLoader;
@@ -77,6 +78,7 @@ import com.sun.tools.javac.util.Options;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
@@ -95,7 +97,6 @@ import saker.java.compiler.impl.signature.element.ModuleSignature.RequiresDirect
 import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignatureParser;
 
 public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalCompilationInvokerBase {
-
 	private static final AtomicReferenceFieldUpdater<InternalIncrementalCompilationInvoker9, ClassHoldingData> ARFU_moduleHoldingFile = AtomicReferenceFieldUpdater
 			.newUpdater(InternalIncrementalCompilationInvoker9.class, ClassHoldingData.class, "moduleHoldingFile");
 
@@ -104,6 +105,9 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 	private volatile ClassHoldingData moduleHoldingFile;
 	private volatile JCCompilationUnit moduleHoldingTree;
 	private ModuleSymbol defaultModule;
+
+	private java.util.List<String> options;
+	private Set<String> addReadsReferencedModules;
 
 	@Override
 	public void initCompilation(JavaCompilerInvocationDirector director) throws IOException {
@@ -234,6 +238,15 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			opt.remove(Option.TARGET.primaryName);
 		}
 
+		this.addReadsReferencedModules = CompilationHandler.getAddReadsReferencedModules(options);
+		if (!ObjectUtils.isNullOrEmpty(addReadsReferencedModules)) {
+			//add the --add-reads modules via --add-modules otherwise javac won't resolve them
+			//this is better than requiring the user to manualy specify them
+			//duplicate --add-modules values in the parameters are ignored.
+			options.add("--add-modules");
+			options.add(StringUtils.toStringJoin(",", addReadsReferencedModules));
+		}
+		this.options = options;
 		Arguments args = Arguments.instance(context);
 		args.init("saker-with-javac", options, null, null);
 
@@ -455,15 +468,54 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		Elements elems = getElements();
 		ModuleSignature msig = moduleHoldingFile.getModuleSignature();
 		result.add(msig.getName());
+
 		for (DirectiveSignature ds : msig.getDirectives()) {
 			if (ds.getKind() == DirectiveSignatureKind.REQUIRES) {
-				String depname = ((RequiresDirectiveSignature) ds).getDependencyModule().toString();
+				String depname = ((RequiresDirectiveSignature) ds).getDependencyModule().getName();
 				if (result.add(depname)) {
 					ModuleElement depmod = elems.getModuleElement(depname);
 					if (depmod != null) {
 						addCompilationModuleSet(depmod, result);
 					}
 				}
+			}
+		}
+
+		for (String m : addReadsReferencedModules) {
+			if (result.add(m)) {
+				ModuleElement me = elems.getModuleElement(m);
+				if (me != null) {
+					addCompilationModuleSet(me, result);
+				}
+			}
+		}
+
+		for (Iterator<String> it = this.options.iterator(); it.hasNext();) {
+			String arg = it.next();
+			if ("--add-modules".equals(arg)) {
+				//must have an argument, otherwise we would've failed earlier 
+				String readsval;
+				try {
+					readsval = it.next();
+				} catch (NoSuchElementException e) {
+					throw new IllegalArgumentException("Failed to retrieve --add-modules argument from javac options.",
+							e);
+				}
+				Iterator<? extends CharSequence> mit = StringUtils.splitCharSequenceIterator(readsval, ',');
+				while (mit.hasNext()) {
+					String m = mit.next().toString();
+					if (m.isEmpty()) {
+						//ignore
+						continue;
+					}
+					if (result.add(m)) {
+						ModuleElement me = elems.getModuleElement(m);
+						if (me != null) {
+							addCompilationModuleSet(me, result);
+						}
+					}
+				}
+				continue;
 			}
 		}
 

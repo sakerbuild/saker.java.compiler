@@ -36,6 +36,7 @@ import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.java.compiler.api.modulepath.JavaModulePath;
 import saker.java.compiler.api.modulepath.JavaModulePathBuilder;
 import saker.java.compiler.api.option.JavaAddExports;
+import saker.java.compiler.api.option.JavaAddReads;
 import saker.sdk.support.api.SDKDescription;
 
 /**
@@ -188,6 +189,15 @@ public interface JavaCompilationTaskBuilder {
 	 *            The add-exports configurations.
 	 */
 	public void setAddExports(Collection<? extends JavaAddExports> addExports);
+
+	/**
+	 * Sets the add-reads configuration to pass to <code>javac</code>.
+	 * 
+	 * @param addReads
+	 *            The add-reads configurations.
+	 * @since saker.java.compiler 0.8.8
+	 */
+	public void setAddReads(Collection<? extends JavaAddReads> addReads);
 
 	/**
 	 * Sets the annotation processors that should be used during the compilation.

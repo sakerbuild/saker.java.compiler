@@ -279,19 +279,4 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 				parsedsignature.getImportScope());
 	}
 
-	protected static void removeAddExportsFromOptionsList(List<String> options) {
-		for (Iterator<String> it = options.iterator(); it.hasNext();) {
-			String o = it.next();
-			if ("--add-exports".equals(o)) {
-				it.remove();
-				if (it.hasNext()) {
-					it.next();
-					it.remove();
-				} else {
-					break;
-				}
-			}
-		}
-	}
-
 }
