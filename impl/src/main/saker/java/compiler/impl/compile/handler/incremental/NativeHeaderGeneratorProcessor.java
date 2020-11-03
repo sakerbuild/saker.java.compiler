@@ -46,6 +46,7 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
+import saker.java.compiler.api.processing.exc.ElementKindNotFoundException;
 import saker.java.compiler.impl.compile.handler.NativeHeaderSakerFile;
 import saker.java.compiler.impl.compile.signature.jni.NativeConstantSignature;
 import saker.java.compiler.impl.compile.signature.jni.NativeMethodSignature;
@@ -80,9 +81,15 @@ public class NativeHeaderGeneratorProcessor implements Processor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-		//TODO handle if the element kinds cannot be represented in this JVM
 		for (Element rootelem : roundEnv.getRootElements()) {
-			ElementKind tkind = rootelem.getKind();
+			ElementKind tkind;
+			try {
+				tkind = rootelem.getKind();
+			} catch (ElementKindNotFoundException e) {
+				//don't care about this
+				//RECORDs don't allow the native keyword on its functions
+				continue;
+			}
 			switch (tkind) {
 				case ANNOTATION_TYPE:
 				case CLASS:
