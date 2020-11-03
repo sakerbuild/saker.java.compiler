@@ -105,11 +105,7 @@ public class FullCompilationInvokerImpl implements FullCompilationInvoker {
 
 		List<String> options = ObjectUtils.newArrayList(this.options);
 
-		if (currentmajor < 11) {
-			options.remove("--enable-preview");
-			if (currentmajor < 9) {
-				CompilationHandler.removeNonModularArgumentsFromOptionsList(options);
-			}
+		if (currentmajor >= 9) {
 			Set<String> addreadsmodules = CompilationHandler.getAddReadsReferencedModules(options);
 			if (!ObjectUtils.isNullOrEmpty(addreadsmodules)) {
 				//add the --add-reads modules via --add-modules otherwise javac won't resolve them
@@ -117,6 +113,13 @@ public class FullCompilationInvokerImpl implements FullCompilationInvoker {
 				//duplicate --add-modules values in the parameters are ignored.
 				options.add("--add-modules");
 				options.add(StringUtils.toStringJoin(",", addreadsmodules));
+			}
+		}
+
+		if (currentmajor < 11) {
+			options.remove("--enable-preview");
+			if (currentmajor < 9) {
+				CompilationHandler.removeNonModularArgumentsFromOptionsList(options);
 			}
 		}
 
