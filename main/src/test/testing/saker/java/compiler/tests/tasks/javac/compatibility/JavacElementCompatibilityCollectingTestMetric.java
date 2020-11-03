@@ -181,6 +181,68 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 
 	private ConcurrentPrependAccumulator<Runnable> javacClosings = new ConcurrentPrependAccumulator<>();
 
+	private static void checkPrimitiveArrayAssignability(Elements elems, Types types, Elements javacelems,
+			Types javactypes) {
+		TypeKind[] vals = TypeKind.values();
+		for (int i = 0; i < vals.length; i++) {
+			TypeKind tki = vals[i];
+			if (!tki.isPrimitive()) {
+				continue;
+			}
+
+			PrimitiveType javacti = javactypes.getPrimitiveType(tki);
+			PrimitiveType ti = types.getPrimitiveType(tki);
+
+			ArrayType javacati = javactypes.getArrayType(javacti);
+			ArrayType ati = types.getArrayType(ti);
+
+			for (int j = 0; j < vals.length; j++) {
+				TypeKind tkj = vals[j];
+				if (!tkj.isPrimitive()) {
+					continue;
+				}
+
+				PrimitiveType javactj = javactypes.getPrimitiveType(tkj);
+				PrimitiveType tj = types.getPrimitiveType(tkj);
+
+				ArrayType javacatj = javactypes.getArrayType(javactj);
+				ArrayType atj = types.getArrayType(tj);
+
+				boolean javacassignableat = javactypes.isAssignable(javacatj, javacati);
+				boolean assignableat = types.isAssignable(atj, ati);
+
+				if (javacassignableat != assignableat) {
+					throw new AssertionError("Assignability mismatch: " + ati + " - " + atj + " = " + javacassignableat
+							+ " - " + assignableat);
+				}
+
+				boolean javacassignable = javactypes.isAssignable(javactj, javacti);
+				boolean assignable = types.isAssignable(tj, ti);
+
+				if (javacassignable != assignable) {
+					throw new AssertionError("Assignability mismatch: " + ti + " - " + tj + " = " + javacassignable
+							+ " - " + assignable);
+				}
+
+				boolean javacsubtypeat = javactypes.isSubtype(javacatj, javacati);
+				boolean subtypeat = types.isSubtype(atj, ati);
+
+				if (javacsubtypeat != subtypeat) {
+					throw new AssertionError(
+							"Subtype mismatch: " + ati + " - " + atj + " = " + javacsubtypeat + " - " + subtypeat);
+				}
+
+				boolean javacsubtype = javactypes.isSubtype(javactj, javacti);
+				boolean subtype = types.isSubtype(tj, ti);
+
+				if (javacsubtype != subtype) {
+					throw new AssertionError(
+							"Subtype mismatch: " + ti + " - " + tj + " = " + javacsubtype + " - " + assignable);
+				}
+			}
+		}
+	}
+
 	@Override
 	public void javacCompilationFinished(Elements elems, Types types, Elements javacelems, Types javactypes) {
 		try {
@@ -189,6 +251,8 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 			PackageElement pack = elems.getPackageElement("test");
 			PackageElement javacpack = javacelems.getPackageElement("test");
 			compareElements(pack, javacpack, utils);
+
+			checkPrimitiveArrayAssignability(elems, types, javacelems, javactypes);
 		} finally {
 			javacClosings.clearAndIterator().forEachRemaining(Runnable::run);
 		}

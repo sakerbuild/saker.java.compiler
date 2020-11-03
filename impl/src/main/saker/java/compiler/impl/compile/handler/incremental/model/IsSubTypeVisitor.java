@@ -65,8 +65,12 @@ public class IsSubTypeVisitor implements DefaultedTypeVisitor<Boolean, TypeMirro
 		switch (p.getKind()) {
 			case ARRAY: {
 				ArrayType ap = (ArrayType) p;
-				//TODO make sure that primitive component array types are not assignable to each other
-				return callWithArguments(t.getComponentType(), ap.getComponentType());
+				TypeMirror tct = t.getComponentType();
+				TypeMirror atct = ap.getComponentType();
+				if (tct.getKind().isPrimitive() || atct.getKind().isPrimitive()) {
+					return tct == atct;
+				}
+				return callWithArguments(tct, atct);
 			}
 			case TYPEVAR: {
 				TypeVariable tvp = (TypeVariable) p;
