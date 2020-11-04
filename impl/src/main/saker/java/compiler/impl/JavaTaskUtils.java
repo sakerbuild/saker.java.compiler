@@ -50,11 +50,11 @@ import saker.build.thirdparty.saker.util.io.FileUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
 import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
-import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ModuleVisitor;
 import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Opcodes;
+import saker.std.api.util.SakerStandardUtils;
 
 public class JavaTaskUtils {
 	public static final String EXTENSION_CLASSFILE = "class";
@@ -273,8 +273,8 @@ public class JavaTaskUtils {
 					continue;
 				}
 				SakerPath cpabspath = path.resolve(keypath);
-				ContentDescriptor classfilecd = executioncontext.getExecutionPropertyCurrentValue(
-						new LocalPathFileContentDescriptorExecutionProperty(associatedTaskId, cpabspath));
+				ContentDescriptor classfilecd = executioncontext.getExecutionPropertyCurrentValue(SakerStandardUtils
+						.createLocalFileContentDescriptorExecutionProperty(cpabspath, associatedTaskId));
 				if (classfilecd == null) {
 					continue;
 				}

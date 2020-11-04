@@ -2,6 +2,6 @@ saker.java.compiler-impl
 	classpath: [this]
 		compile-transitive: false
 saker.standard-api
-	classpath: [0)
+	classpath: [0.8.2)
 saker.sdk.support-api
 	classpath: [0.8.3)

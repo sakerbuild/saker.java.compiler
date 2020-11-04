@@ -99,7 +99,6 @@ import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.CompileFileTags;
 import saker.java.compiler.impl.compile.WorkerJavaCompilerTaskFactoryBase;
-import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
 import saker.java.compiler.impl.util.ClassPathEntryFileLocationExecutionProperty;
 import saker.java.compiler.main.processor.BundleProcessorTaskFactory;
 import saker.nest.bundle.NestBundleClassLoader;
@@ -111,6 +110,7 @@ import saker.std.api.file.location.ExecutionFileLocation;
 import saker.std.api.file.location.FileLocation;
 import saker.std.api.file.location.FileLocationVisitor;
 import saker.std.api.file.location.LocalFileLocation;
+import saker.std.api.util.SakerStandardUtils;
 
 public final class ProcessorCreatorTaskFactory
 		implements TaskFactory<ProcessorCreator>, Task<ProcessorCreator>, Externalizable, TaskIdentifier {
@@ -227,8 +227,8 @@ public final class ProcessorCreatorTaskFactory
 								}
 							});
 							taskcontext.getTaskUtilities().getReportExecutionDependency(
-									new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(),
-											SakerPath.valueOf(cachejarpath)));
+									SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(
+											SakerPath.valueOf(cachejarpath), taskcontext.getTaskId()));
 						} catch (IOException e) {
 							throw ObjectUtils.sneakyThrow(e);
 						}
@@ -290,8 +290,8 @@ public final class ProcessorCreatorTaskFactory
 									}
 								});
 								taskcontext.getTaskUtilities().getReportExecutionDependency(
-										new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(),
-												SakerPath.valueOf(cachejarpath)));
+										SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(
+												SakerPath.valueOf(cachejarpath), taskcontext.getTaskId()));
 							} catch (IOException e) {
 								throw ObjectUtils.sneakyThrow(e);
 							}
@@ -307,8 +307,8 @@ public final class ProcessorCreatorTaskFactory
 									}
 								});
 								taskcontext.getTaskUtilities().getReportExecutionDependency(
-										new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(),
-												SakerPath.valueOf(cachejarpath)));
+										SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(
+												SakerPath.valueOf(cachejarpath), taskcontext.getTaskId()));
 							} catch (NoSuchAlgorithmException | IOException e) {
 								throw ObjectUtils.sneakyThrow(e);
 							}
@@ -527,8 +527,8 @@ public final class ProcessorCreatorTaskFactory
 					public void visit(LocalFileLocation loc) {
 						SakerPath path = loc.getLocalPath();
 						TaskExecutionUtilities taskutils = taskcontext.getTaskUtilities();
-						ContentDescriptor cd = taskutils.getReportExecutionDependency(
-								new LocalPathFileContentDescriptorExecutionProperty(taskcontext.getTaskId(), path));
+						ContentDescriptor cd = taskutils.getReportExecutionDependency(SakerStandardUtils
+								.createLocalFileContentDescriptorExecutionProperty(path, taskcontext.getTaskId()));
 						if (cd == null) {
 							throw ObjectUtils
 									.sneakyThrow(new FileNotFoundException("Class path local file not found: " + path));
@@ -699,8 +699,8 @@ public final class ProcessorCreatorTaskFactory
 				}
 				SakerPath keypath = entry.getKey();
 				SakerPath cpabspath = path.resolve(keypath);
-				ContentDescriptor classfilecd = executioncontext.getExecutionPropertyCurrentValue(
-						new LocalPathFileContentDescriptorExecutionProperty(associatedTaskId, cpabspath));
+				ContentDescriptor classfilecd = executioncontext.getExecutionPropertyCurrentValue(SakerStandardUtils
+						.createLocalFileContentDescriptorExecutionProperty(cpabspath, associatedTaskId));
 				if (classfilecd == null) {
 					continue;
 				}

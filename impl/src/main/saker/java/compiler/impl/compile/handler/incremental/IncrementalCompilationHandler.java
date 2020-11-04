@@ -135,7 +135,6 @@ import saker.java.compiler.impl.compile.signature.change.member.FieldRemovedABIC
 import saker.java.compiler.impl.compile.signature.change.member.MethodAddedABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.MethodRemovedABIChange;
 import saker.java.compiler.impl.compile.signature.change.member.NamedMethodModifiedABIChange;
-import saker.java.compiler.impl.compile.util.LocalPathFileContentDescriptorExecutionProperty;
 import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.options.SimpleJavaSourceDirectoryOption;
 import saker.java.compiler.impl.sdk.JavaSDKReference;
@@ -156,6 +155,7 @@ import saker.std.api.file.location.ExecutionFileLocation;
 import saker.std.api.file.location.FileLocation;
 import saker.std.api.file.location.FileLocationVisitor;
 import saker.std.api.file.location.LocalFileLocation;
+import saker.std.api.util.SakerStandardUtils;
 import testing.saker.java.compiler.TestFlag;
 
 public class IncrementalCompilationHandler extends CompilationHandler {
@@ -1188,7 +1188,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 					public void visit(LocalFileLocation loc) {
 						SakerPath path = loc.getLocalPath();
 						ContentDescriptor cd = taskContext.getTaskUtilities().getReportExecutionDependency(
-								new LocalPathFileContentDescriptorExecutionProperty(taskContext.getTaskId(), path));
+								SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(path,
+										taskContext.getTaskId()));
 						if (cd == null) {
 							throw ObjectUtils.sneakyThrow(
 									new FileNotFoundException("Module path local file not found: " + path));
@@ -1492,7 +1493,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 					public void visit(LocalFileLocation loc) {
 						SakerPath path = loc.getLocalPath();
 						ContentDescriptor cd = taskContext.getTaskUtilities().getReportExecutionDependency(
-								new LocalPathFileContentDescriptorExecutionProperty(taskContext.getTaskId(), path));
+								SakerStandardUtils.createLocalFileContentDescriptorExecutionProperty(path,
+										taskContext.getTaskId()));
 						if (cd == null) {
 							throw ObjectUtils
 									.sneakyThrow(new FileNotFoundException("Class path local file not found: " + path));
