@@ -50,8 +50,8 @@ import saker.sdk.support.main.TaskDocs.DocSDKDescription;
 
 @NestParameterInformation(value = "Version",
 		aliases = { "", "Versions" },
-		type = @NestTypeUsage(JavaVersionOption.class),
-		info = @NestInformation("Specifies the version of the JRE that the task should look for. It will attempt to match the java.version "
+		type = @NestTypeUsage(value = Collection.class, elementTypes = JavaVersionOption.class),
+		info = @NestInformation("Specifies the version(s) of the JRE that the task should look for. It will attempt to match the java.version "
 				+ "system property of the possible JRE, or the Java release major version number. (In this order)\n"
 				+ "If no version is specified, the task will return the reference to the JRE that runs the build execution."))
 public class JavaSDKTaskFactory extends FrontendTaskFactory<Object> {
