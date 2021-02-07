@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import javax.lang.model.element.RecordComponentElement;
 
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalTypeElement;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
@@ -37,12 +37,12 @@ public class IncrementalTypeElement14 extends IncrementalTypeElement {
 		if (thisrecordcomponents != null) {
 			return thisrecordcomponents;
 		}
-		if (signature.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+		if (signature.getKindIndex() != ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
 			thisrecordcomponents = Collections.emptyList();
 		} else {
 			thisrecordcomponents = new ArrayList<>();
 			for (ClassMemberSignature m : signature.getMembers()) {
-				if (m.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT) {
+				if (m.getKindIndex() != ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT) {
 					continue;
 				}
 				thisrecordcomponents.add(new IncrementalRecordComponentElement(elemTypes, this, (FieldSignature) m));

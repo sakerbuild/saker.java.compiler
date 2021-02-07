@@ -93,7 +93,7 @@ import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaTaskUtils.LocalDirectoryClassFilesExecutionProperty;
 import saker.java.compiler.impl.RemoteJavaRMIProcess;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.ClassPathIDEConfigurationEntry;
 import saker.java.compiler.impl.compile.CompileFileTags;
 import saker.java.compiler.impl.compile.InternalJavaCompilerOutput;
@@ -1838,8 +1838,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 			NavigableMap<String, Collection<MethodSignature>> prevmethods,
 			NavigableMap<String, ClassSignature> prevtypes, SignatureNameChecker parameterchecker, ClassSignature prev,
 			ClassSignature thiz, Consumer<AbiChange> result) {
-		boolean isrecord = thiz.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_RECORD
-				|| prev.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_RECORD;
+		boolean isrecord = thiz.getKindIndex() == ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD
+				|| prev.getKindIndex() == ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD;
 		ObjectUtils.iterateSortedMapEntries(prevfields, fields, (vname, prevsig, sig) -> {
 			if (prevsig == null) {
 				result.accept(new FieldAddedABIChange(thiz, sig));

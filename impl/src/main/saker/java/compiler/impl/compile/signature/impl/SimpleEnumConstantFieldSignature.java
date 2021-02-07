@@ -25,7 +25,7 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -66,7 +66,7 @@ public class SimpleEnumConstantFieldSignature implements FieldSignature, Externa
 
 	@Override
 	public final byte getKindIndex() {
-		return KindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT;
+		return ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT;
 	}
 
 	@Override

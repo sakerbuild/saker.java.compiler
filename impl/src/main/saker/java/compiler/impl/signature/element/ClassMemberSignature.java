@@ -21,7 +21,7 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 
 public interface ClassMemberSignature extends AnnotatedSignature, DocumentedSignature {
 	public String getSimpleName();
@@ -31,10 +31,10 @@ public interface ClassMemberSignature extends AnnotatedSignature, DocumentedSign
 	public ElementKind getKind();
 
 	/**
-	 * @see KindCompatUtils
+	 * @see ElementKindCompatUtils
 	 */
 	public default byte getKindIndex() {
-		return KindCompatUtils.getElementKindIndex(getKind());
+		return ElementKindCompatUtils.getElementKindIndex(getKind());
 	}
 
 	public static boolean signatureEquals(ClassMemberSignature first, ClassMemberSignature other) {

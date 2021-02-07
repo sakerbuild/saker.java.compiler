@@ -11,7 +11,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
 import saker.java.compiler.impl.JavaUtil;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -51,12 +51,12 @@ public class RecordComponentSignatureImpl implements FieldSignature, Externaliza
 
 	@Override
 	public ElementKind getKind() {
-		return KindCompatUtils.getElementKind(getKindIndex());
+		return ElementKindCompatUtils.getElementKind(getKindIndex());
 	}
 
 	@Override
 	public byte getKindIndex() {
-		return KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT;
+		return ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT;
 	}
 
 	@Override

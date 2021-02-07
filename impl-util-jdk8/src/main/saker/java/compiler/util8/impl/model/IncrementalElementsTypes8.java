@@ -81,7 +81,7 @@ import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.function.LazySupplier;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compat.element.ModuleElementCompat;
 import saker.java.compiler.impl.compat.element.RecordComponentElementCompat;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonDeclaredType;
@@ -293,7 +293,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 	static {
 		ELEMENT_KIND_PACKAGE_MODULE = EnumSet.of(ElementKind.PACKAGE);
-		ElementKind moduleelemkind = KindCompatUtils.ELEMENTKIND_MODULE;
+		ElementKind moduleelemkind = ElementKindCompatUtils.ELEMENTKIND_MODULE;
 		if (moduleelemkind != null) {
 			ELEMENT_KIND_PACKAGE_MODULE.add(moduleelemkind);
 		}
@@ -755,7 +755,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	public static Element getOuterMostEnclosingElement(Element elem) {
-		if (elem.getKind() == ElementKind.PACKAGE || KindCompatUtils.isModuleElementKind(elem.getKind())) {
+		if (elem.getKind() == ElementKind.PACKAGE || ElementKindCompatUtils.isModuleElementKind(elem.getKind())) {
 			return elem;
 		}
 		while (!(elem.getKind().isClass() || elem.getKind().isInterface())) {
@@ -3598,7 +3598,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	public static boolean isClassUnrelatedToEnclosing(ClassSignature sig) {
-		return sig.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_CLASS
+		return sig.getKindIndex() != ElementKindCompatUtils.ELEMENTKIND_INDEX_CLASS
 				|| sig.getNestingKind() == NestingKind.TOP_LEVEL || sig.getModifiers().contains(Modifier.STATIC);
 	}
 
@@ -4000,7 +4000,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		ClassHoldingFileData file = elementsToFilesMap.get(resolutionelement);
 		if (file != null) {
 			//either a module, package, or top level type
-			if (kind == ElementKind.PACKAGE || KindCompatUtils.isModuleElementKind(kind)) {
+			if (kind == ElementKind.PACKAGE || ElementKindCompatUtils.isModuleElementKind(kind)) {
 				return createUnitResolutionScope(file);
 			}
 			if (ELEMENT_KIND_TYPES.contains(kind)) {
@@ -4008,7 +4008,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 				return createTypeHeaderResolutionScopeWithFile((TypeElement) resolutionelement, file);
 			}
 		}
-		if (kind == ElementKind.PACKAGE || KindCompatUtils.isModuleElementKind(kind)) {
+		if (kind == ElementKind.PACKAGE || ElementKindCompatUtils.isModuleElementKind(kind)) {
 			//no file found for top level kind.
 			return null;
 		}
@@ -4065,10 +4065,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			}
 
 			default: {
-				if (KindCompatUtils.isRecordComponentElementKind(kind)) {
+				if (ElementKindCompatUtils.isRecordComponentElementKind(kind)) {
 					return createTypeHeaderResolutionScope((TypeElement) resolutionelement.getEnclosingElement());
 				}
-				if (KindCompatUtils.isRecordElementKind(kind)) {
+				if (ElementKindCompatUtils.isRecordElementKind(kind)) {
 					return createTypeHeaderResolutionScope((TypeElement) resolutionelement);
 				}
 				//unrecognized element type for resolution

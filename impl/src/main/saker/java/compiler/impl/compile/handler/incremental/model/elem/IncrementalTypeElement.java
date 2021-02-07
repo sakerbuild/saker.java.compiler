@@ -38,7 +38,7 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
@@ -189,7 +189,7 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 			List<? extends IncrementalElement<?>> elements) {
 		int paramcount = paramtypes.size();
 		for (IncrementalElement<?> e : elements) {
-			if (e.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR) {
+			if (e.getKindIndex() != ElementKindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR) {
 				continue;
 			}
 			MethodSignature ms = (MethodSignature) e.getSignature();
@@ -222,31 +222,31 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 		if (!ObjectUtils.isNullOrEmpty(members)) {
 			for (ClassMemberSignature m : members) {
 				switch (m.getKindIndex()) {
-					case KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
-					case KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE:
-					case KindCompatUtils.ELEMENTKIND_INDEX_CLASS:
-					case KindCompatUtils.ELEMENTKIND_INDEX_ENUM:
-					case KindCompatUtils.ELEMENTKIND_INDEX_RECORD: {
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE:
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_CLASS:
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM:
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD: {
 						IncrementalTypeElement gottype = elemTypes.getLocalPackagesTypesContainer()
 								.getTypeElement((ClassSignature) m);
 						thisenclosedelements.add(gottype);
 						break;
 					}
-					case KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
-					case KindCompatUtils.ELEMENTKIND_INDEX_METHOD: {
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_METHOD: {
 						IncrementalExecutableElement constructorelem = new IncrementalExecutableElement(
 								(MethodSignature) m, this, elemTypes);
 						thisenclosedelements.add(constructorelem);
 						break;
 					}
-					case KindCompatUtils.ELEMENTKIND_INDEX_FIELD:
-					case KindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT: {
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_FIELD:
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT: {
 						FieldSignature fs = (FieldSignature) m;
 						thisenclosedelements.add(new IncrementalVariableElement(elemTypes, fs,
 								fs.isEnumConstant() ? ElementKind.ENUM_CONSTANT : ElementKind.FIELD, this));
 						break;
 					}
-					case KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
+					case ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
 						FieldSignature fs = (FieldSignature) m;
 						thisenclosedelements
 								.add(new IncrementalVariableElement(elemTypes, fs, ElementKind.FIELD, this));
@@ -259,7 +259,7 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 				}
 			}
 		}
-		if (signature.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+		if (signature.getKindIndex() == ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
 			// handle implicit constructor, add only if not already declared
 			Collection<? extends FieldSignature> fields = signature.getFields();
 			List<MethodParameterSignature> paramsignatures = new ArrayList<>(fields.size());
@@ -355,7 +355,7 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 
 	private IncrementalElement<?> getEqualsMethod(List<IncrementalElement<?>> thisenclosedelements) {
 		for (IncrementalElement<?> e : thisenclosedelements) {
-			if (e.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
+			if (e.getKindIndex() != ElementKindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
 				continue;
 			}
 			MethodSignature s = (MethodSignature) e.getSignature();
@@ -400,16 +400,16 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 			return thissuperclass;
 		}
 		switch (signature.getKindIndex()) {
-			case KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE:
-			case KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE: {
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE:
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE: {
 				thissuperclass = IncrementalElementsTypes.getNoneTypeKind();
 				break;
 			}
-			case KindCompatUtils.ELEMENTKIND_INDEX_ENUM: {
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM: {
 				thissuperclass = elemTypes.getDeclaredType(elemTypes.getJavaLangEnumTypeElement(), asType());
 				break;
 			}
-			case KindCompatUtils.ELEMENTKIND_INDEX_CLASS: {
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_CLASS: {
 				TypeSignature extending = signature.getSuperClass();
 				if (extending != null) {
 					thissuperclass = elemTypes.getTypeMirror(extending, this);
@@ -418,7 +418,7 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 				}
 				break;
 			}
-			case KindCompatUtils.ELEMENTKIND_INDEX_RECORD: {
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD: {
 				thissuperclass = elemTypes.getJavaLangRecordTypeMirror();
 				break;
 			}

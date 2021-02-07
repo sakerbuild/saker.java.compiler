@@ -28,7 +28,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
 import saker.java.compiler.impl.JavaUtil;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
@@ -71,7 +71,7 @@ public final class SimpleNoArgConstructor implements MethodSignature, Externaliz
 
 	@Override
 	public final byte getKindIndex() {
-		return KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR;
+		return ElementKindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR;
 	}
 
 	@Override

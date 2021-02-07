@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import javax.lang.model.element.NestingKind;
 
 import saker.build.thirdparty.saker.util.function.Functionals;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
@@ -91,7 +91,7 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 	}
 
 	public default Collection<? extends MethodSignature> getConstructors() {
-		return getMembers().stream().filter(m -> m.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR)
+		return getMembers().stream().filter(m -> m.getKindIndex() == ElementKindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR)
 				.map(m -> (MethodSignature) m).collect(Collectors.toList());
 	}
 
@@ -116,33 +116,33 @@ public interface ClassSignature extends ClassMemberSignature, ParameterizedSigna
 		for (ClassMemberSignature member : getMembers()) {
 			String membername = member.getSimpleName();
 			switch (member.getKindIndex()) {
-				case KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
-				case KindCompatUtils.ELEMENTKIND_INDEX_CLASS:
-				case KindCompatUtils.ELEMENTKIND_INDEX_ENUM:
-				case KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_CLASS:
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM:
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
 					types.put(membername, (ClassSignature) member);
 					break;
 				}
-				case KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
-				case KindCompatUtils.ELEMENTKIND_INDEX_METHOD:
-				case KindCompatUtils.ELEMENTKIND_INDEX_STATIC_INIT:
-				case KindCompatUtils.ELEMENTKIND_INDEX_INSTANCE_INIT: {
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR:
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_METHOD:
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_STATIC_INIT:
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_INSTANCE_INIT: {
 					methods.computeIfAbsent(membername, Functionals.arrayListComputer()).add((MethodSignature) member);
 					break;
 				}
-				case KindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT:
-				case KindCompatUtils.ELEMENTKIND_INDEX_FIELD: {
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT:
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_FIELD: {
 					fields.put(membername, (FieldSignature) member);
 					break;
 				}
-				case KindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
+				case ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD_COMPONENT: {
 					//TODO should we use a different map instead of fields?
 					fields.put(membername, (FieldSignature) member);
 					break;
 				}
 				default: {
 					throw new IllegalArgumentException(
-							"Unknown kind: " + KindCompatUtils.getElementKindName(member.getKindIndex()));
+							"Unknown kind: " + ElementKindCompatUtils.getElementKindName(member.getKindIndex()));
 				}
 			}
 		}

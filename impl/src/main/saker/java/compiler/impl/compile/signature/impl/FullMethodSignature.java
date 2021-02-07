@@ -30,7 +30,7 @@ import javax.lang.model.element.Modifier;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
@@ -111,7 +111,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 		this.name = name;
 		this.throwsTypes = throwsTypes == null ? Collections.emptyList() : throwsTypes;
 		this.returnType = returnType;
-		this.elementKindIndex = KindCompatUtils.getElementKindIndex(methodKind);
+		this.elementKindIndex = ElementKindCompatUtils.getElementKindIndex(methodKind);
 		this.typeParameters = typeParameters == null ? Collections.emptyList() : typeParameters;
 		this.receiverParameter = receiverParameter;
 		this.varArg = varArg;
@@ -157,7 +157,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 
 	@Override
 	public final ElementKind getKind() {
-		return KindCompatUtils.getElementKind(elementKindIndex);
+		return ElementKindCompatUtils.getElementKind(elementKindIndex);
 	}
 
 	@Override

@@ -106,7 +106,7 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.JavacPrivateAPIError;
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.ImportDeclaration;
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.ImportScope;
@@ -417,8 +417,8 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.CLASS, ElementKind.CLASS);
 		TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.ENUM, ElementKind.ENUM);
 		TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.INTERFACE, ElementKind.INTERFACE);
-		if (KindCompatUtils.ELEMENTKIND_RECORD != null) {
-			TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.valueOf("RECORD"), KindCompatUtils.ELEMENTKIND_RECORD);
+		if (ElementKindCompatUtils.ELEMENTKIND_RECORD != null) {
+			TREEKIND_TO_ELEMENTKIND_MAP.put(Kind.valueOf("RECORD"), ElementKindCompatUtils.ELEMENTKIND_RECORD);
 		}
 	}
 
@@ -458,13 +458,13 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		Set<Modifier> modifiers = tree.getModifiers().getFlags();
 		// interface or annotation: no static final is required at declaration time
 		// class or enum: static final is required to be ABI constant
-		if (declaringkindindex == KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE //
-				|| declaringkindindex == KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE) {
+		if (declaringkindindex == ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE //
+				|| declaringkindindex == ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE) {
 			return true;
 		}
 		//Don't check the presence of STATIC modifier, as the constants are present even for instance variables
-		return (declaringkindindex == KindCompatUtils.ELEMENTKIND_INDEX_CLASS
-				|| declaringkindindex == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) && modifiers.contains(Modifier.FINAL);
+		return (declaringkindindex == ElementKindCompatUtils.ELEMENTKIND_INDEX_CLASS
+				|| declaringkindindex == ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM) && modifiers.contains(Modifier.FINAL);
 	}
 
 	public static boolean isConstantVariable(VariableTree tree, Kind declaringkind) {
@@ -482,7 +482,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 	}
 
 	private static boolean isRecordComponent(Set<Modifier> varmodifiers, byte enclosingelementkindindex) {
-		if (enclosingelementkindindex != KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+		if (enclosingelementkindindex != ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
 			return false;
 		}
 		if (varmodifiers.contains(Modifier.STATIC)) {
@@ -498,8 +498,8 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		ModifiersTree variablemodifiers = tree.getModifiers();
 		ImmutableModifierSet varmodifierflagss = ImmutableModifierSet.get(variablemodifiers.getFlags());
 		switch (context.getDeclaringKindIndex()) {
-			case KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
-			case KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
 				varmodifierflagss = varmodifierflagss.added(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
 				break;
 			}
@@ -542,13 +542,13 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 	}
 
 	private boolean isVariableEnumConstantInEnum(VariableTree tree, ParseContext context) {
-		return isEnumConstant(tree, tree.getModifiers().getFlags(), KindCompatUtils.ELEMENTKIND_INDEX_ENUM,
+		return isEnumConstant(tree, tree.getModifiers().getFlags(), ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM,
 				context.unit);
 	}
 
 	private boolean isEnumConstant(VariableTree tree, Set<Modifier> varmodifierflags, byte declaringkindindex,
 			CompilationUnitTree unit) {
-		if (declaringkindindex != KindCompatUtils.ELEMENTKIND_INDEX_ENUM || !varmodifierflags.contains(Modifier.STATIC)
+		if (declaringkindindex != ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM || !varmodifierflags.contains(Modifier.STATIC)
 				|| !varmodifierflags.contains(Modifier.FINAL) || !varmodifierflags.contains(Modifier.PUBLIC)) {
 			return false;
 		}
@@ -1024,12 +1024,12 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 
 	private Set<Modifier> getCorrectedMethodModifiers(ModifiersTree methodmodifiers, byte declaringkindindex) {
 		switch (declaringkindindex) {
-			case KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE: {
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE: {
 				ImmutableModifierSet methodmodifierflags = ImmutableModifierSet.get(methodmodifiers.getFlags())
 						.added(Modifier.PUBLIC, Modifier.ABSTRACT);
 				return methodmodifierflags;
 			}
-			case KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
+			case ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
 				return getInterfaceCorrectMethodModifiers(methodmodifiers);
 			}
 			default: {
@@ -1183,7 +1183,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				return classmodifierflags;
 			}
 			default: {
-				if (KindCompatUtils.isRecordElementKind(kind)) {
+				if (ElementKindCompatUtils.isRecordElementKind(kind)) {
 					ImmutableModifierSet res = ImmutableModifierSet.get(classmodifiers.getFlags())
 							.added(Modifier.FINAL);
 					if (enclosingclasssignature != null) {

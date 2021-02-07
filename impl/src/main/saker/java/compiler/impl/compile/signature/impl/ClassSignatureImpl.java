@@ -31,7 +31,7 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.ArrayTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
@@ -151,7 +151,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 	protected static boolean hasAnyConstructor(List<? extends ClassMemberSignature> members) {
 		for (ClassMemberSignature mem : members) {
-			if (mem.getKindIndex() == KindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR) {
+			if (mem.getKindIndex() == ElementKindCompatUtils.ELEMENTKIND_INDEX_CONSTRUCTOR) {
 				return true;
 			}
 		}
@@ -160,7 +160,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 	public static boolean hasSimpleNoArgMethodWithName(String name, List<? extends ClassMemberSignature> members) {
 		for (ClassMemberSignature m : members) {
-			if (m.getKindIndex() != KindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
+			if (m.getKindIndex() != ElementKindCompatUtils.ELEMENTKIND_INDEX_METHOD) {
 				continue;
 			}
 			if (!name.equals(m.getSimpleName())) {
@@ -177,8 +177,8 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 	public static void addImplicitMembers(List<ClassMemberSignature> result, ClassSignature thiz) {
 		byte kindidx = thiz.getKindIndex();
-		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE
-				|| kindidx == KindCompatUtils.ELEMENTKIND_INDEX_INTERFACE) {
+		if (kindidx == ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE
+				|| kindidx == ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE) {
 			return;
 		}
 
@@ -186,12 +186,12 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 		//the implicit members are added in IncrementalTypeElement
 
 		if (!hasAnyConstructor(result)) {
-			if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
+			if (kindidx == ElementKindCompatUtils.ELEMENTKIND_INDEX_RECORD) {
 				//don't add here, but in IncrementalTypeElement
 			} else {
 				Set<Modifier> cmodifiers;
 				Set<Modifier> thismodifiers = thiz.getModifiers();
-				if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
+				if (kindidx == ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
 					cmodifiers = IncrementalElementsTypes.MODIFIERS_PRIVATE;
 				} else {
 					if (thismodifiers.contains(Modifier.PUBLIC)) {
@@ -208,7 +208,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 			}
 		}
 
-		if (kindidx == KindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
+		if (kindidx == ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM) {
 			//we dont need to check if methods exist, as declaring them in an enum results in compilation error
 			TypeSignature thistypesig = thiz.getTypeSignature();
 

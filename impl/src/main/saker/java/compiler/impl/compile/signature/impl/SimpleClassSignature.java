@@ -26,7 +26,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 
@@ -46,7 +46,7 @@ public class SimpleClassSignature extends ClassSignatureBase {
 			List<? extends ClassMemberSignature> members, ClassSignature enclosingClass, ElementKind kind) {
 		super(modifiers, packageName, name, members);
 		this.enclosingClass = enclosingClass;
-		this.elementKindIndex = KindCompatUtils.getElementKindIndex(kind);
+		this.elementKindIndex = ElementKindCompatUtils.getElementKindIndex(kind);
 	}
 
 	@Override
@@ -61,7 +61,7 @@ public class SimpleClassSignature extends ClassSignatureBase {
 
 	@Override
 	public final ElementKind getKind() {
-		return KindCompatUtils.getElementKind(elementKindIndex);
+		return ElementKindCompatUtils.getElementKind(elementKindIndex);
 	}
 
 	@Override

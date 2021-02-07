@@ -6,8 +6,8 @@ import javax.lang.model.element.ElementKind;
 
 import saker.java.compiler.api.processing.exc.ElementKindNotFoundException;
 
-public class KindCompatUtils {
-	private KindCompatUtils() {
+public class ElementKindCompatUtils {
+	private ElementKindCompatUtils() {
 		throw new UnsupportedOperationException();
 	}
 

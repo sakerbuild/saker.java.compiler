@@ -32,7 +32,7 @@ import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaUtil;
-import saker.java.compiler.impl.compat.KindCompatUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
@@ -198,7 +198,7 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 			sb.append(' ');
 		}
 		sb.append(JavaUtil.modifiersToStringWithSpace(getModifiers()));
-		sb.append(KindCompatUtils.getElementKindName(getKindIndex()).toLowerCase(Locale.ENGLISH));
+		sb.append(ElementKindCompatUtils.getElementKindName(getKindIndex()).toLowerCase(Locale.ENGLISH));
 		sb.append(' ');
 		sb.append(getBinaryName());
 		return sb.toString();
