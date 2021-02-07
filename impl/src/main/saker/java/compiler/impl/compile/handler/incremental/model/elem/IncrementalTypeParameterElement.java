@@ -30,6 +30,7 @@ import javax.lang.model.type.TypeMirror;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
@@ -78,7 +79,7 @@ public class IncrementalTypeParameterElement extends IncrementalElement<TypePara
 		IncrementalTypeVariable itv = new IncrementalTypeVariable(elemTypes,
 				TypeVariableTypeSignatureImpl.create(signature.getVarName()), this);
 		//XXX is this valid? the typemirror of a parameter element should not contain any annotation put on the type parameter itself
-		itv.setElementTypes(Collections.emptySet());
+		itv.setElementTypes(ImmutableElementTypeSet.empty());
 		thisastype = itv;
 		if (ARFU_asType.compareAndSet(this, null, thisastype)) {
 			return thisastype;

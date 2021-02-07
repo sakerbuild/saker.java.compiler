@@ -52,6 +52,7 @@ import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ReflectUtils;
 import saker.build.thirdparty.saker.util.function.LazySupplier;
 import saker.java.compiler.impl.JavaUtil;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalAnnotationMirror;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.AnnotValue;
@@ -68,7 +69,7 @@ public abstract class IncrementalAnnotatedConstruct implements AnnotatedConstruc
 			.newUpdater(IncrementalAnnotatedConstruct.class, List.class, "annotationMirrors");
 
 	protected IncrementalElementsTypesBase elemTypes;
-	protected Set<ElementType> elementTypes = Collections.emptySet();
+	protected ImmutableElementTypeSet elementTypes = ImmutableElementTypeSet.empty();
 
 	private volatile transient List<AnnotationMirror> annotationMirrors;
 
@@ -80,7 +81,7 @@ public abstract class IncrementalAnnotatedConstruct implements AnnotatedConstruc
 		this.annotationMirrors = null;
 	}
 
-	public void setElementTypes(Set<ElementType> elementTypes) {
+	public void setElementTypes(ImmutableElementTypeSet elementTypes) {
 		this.elementTypes = elementTypes;
 	}
 
@@ -135,7 +136,8 @@ public abstract class IncrementalAnnotatedConstruct implements AnnotatedConstruc
 		}
 		String typename = annotationType.getCanonicalName();
 		AnnotationSignature founda = null;
-		for (AnnotationSignature a : getSignatureAnnotations()) {
+		Collection<? extends AnnotationSignature> signatureannotations = getSignatureAnnotations();
+		for (AnnotationSignature a : signatureannotations) {
 			TypeSignature atype = a.getAnnotationType();
 			if (typename.equals(elemTypes.getCanonicalName(atype, getEnclosingResolutionElement()))) {
 				if (founda != null) {
@@ -165,7 +167,7 @@ public abstract class IncrementalAnnotatedConstruct implements AnnotatedConstruc
 					if (componentrep != null && componentrep.value() == annotationType) {
 						List<AnnotationSignature> containedannots = new ArrayList<>();
 						String componenttypename = componenttype.getCanonicalName();
-						for (AnnotationSignature a : getSignatureAnnotations()) {
+						for (AnnotationSignature a : signatureannotations) {
 							TypeSignature atype = a.getAnnotationType();
 							if (componenttypename
 									.equals(elemTypes.getCanonicalName(atype, getEnclosingResolutionElement()))) {
@@ -263,18 +265,19 @@ public abstract class IncrementalAnnotatedConstruct implements AnnotatedConstruc
 	}
 
 	private boolean shouldIncludeAnnotation(Class<? extends Annotation> annotationtype) {
-		Set<ElementType> targets = JavaUtil.getAllowedAnnotationTargets(annotationtype);
+		ImmutableElementTypeSet targets = JavaUtil.getAllowedAnnotationTargets(annotationtype);
 		return shouldIncludeAnnotation(targets);
 	}
 
-	private boolean shouldIncludeAnnotation(Set<ElementType> targets) {
-		Set<ElementType> types = elementTypes;
-		for (ElementType t : types) {
-			if (targets.contains(t)) {
-				return true;
-			}
-		}
-		return false;
+	private boolean shouldIncludeAnnotation(ImmutableElementTypeSet targets) {
+		ImmutableElementTypeSet types = elementTypes;
+		return targets.containsAny(types);
+//		for (ElementType t : types) {
+//			if (targets.contains(t)) {
+//				return true;
+//			}
+//		}
+//		return false;
 	}
 
 	private void getPackedRepeatableAnnotations(AnnotationSignature sig, Class<? extends Annotation> componenttype,

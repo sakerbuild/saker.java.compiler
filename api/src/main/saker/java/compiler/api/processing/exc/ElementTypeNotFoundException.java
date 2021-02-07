@@ -15,40 +15,34 @@
  */
 package saker.java.compiler.api.processing.exc;
 
+import java.lang.annotation.ElementType;
 import java.util.Objects;
 
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.SourceVersion;
-
 /**
- * Exception describing the scenario when a {@link SourceVersion} enumeration cannot be retrieved due to it not being
- * available in the current JVM.
+ * Exception thrown when an {@link ElementType} was not found in the current JVM.
  * <p>
- * This scenario can happen when the compilation is running in a forked mode, where the compilation is being done in a
- * separate JVM, but the annotation processing is done in the build JVM. If the forked JVM is compiling for a more
- * recent {@link SourceVersion} that cannot be represented in the JVM that is running the annotation processing, then
- * this exception is thrown.
+ * Exceptions of this type can be thrown if the compilation is being done by a more recent JVM version than the one that
+ * tries to retrieve the {@link ElementType} enumeration value.
  * <p>
- * The actual name of the enumeration that was not found can be retrieved by calling {@link #getMessage()}. It is in the
- * format of <code>RELEASE_*</code>.
+ * The {@linkplain #getMessage() message} returns the name of the {@link ElementType} that was not found.
  * 
- * @see ProcessingEnvironment#getSourceVersion()
+ * @since saker.java.compiler 0.8.8
  */
-public final class SourceVersionNotFoundException extends EnumerationNotFoundException {
+public final class ElementTypeNotFoundException extends EnumerationNotFoundException {
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Creates a new instance with the specified enum name and the {@link IllegalArgumentException} that caused it.
 	 * 
 	 * @param enumname
-	 *            The name of the {@link SourceVersion} that was not found.
+	 *            The name of the {@link ElementType} that was not found.
 	 * @param cause
 	 *            The exception that determined that the enumeration was not found. It is the one thrown by
-	 *            {@link SourceVersion#valueOf(String)}.
+	 *            {@link ElementType#valueOf(String)}.
 	 * @throws NullPointerException
 	 *             If any of the arguments are <code>null</code>.
 	 */
-	public SourceVersionNotFoundException(String enumname, IllegalArgumentException cause) throws NullPointerException {
+	public ElementTypeNotFoundException(String enumname, IllegalArgumentException cause) throws NullPointerException {
 		super(Objects.requireNonNull(enumname, "enum name"), Objects.requireNonNull(cause, "cause"));
 	}
 

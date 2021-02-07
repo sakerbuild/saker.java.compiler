@@ -29,7 +29,7 @@ import javax.lang.model.element.ElementKind;
  * 
  * @since saker.java.compiler 0.8.7
  */
-public class ElementKindNotFoundException extends IllegalArgumentException {
+public final class ElementKindNotFoundException extends EnumerationNotFoundException {
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -47,25 +47,4 @@ public class ElementKindNotFoundException extends IllegalArgumentException {
 		super(Objects.requireNonNull(enumname, "enum name"), Objects.requireNonNull(cause, "cause"));
 	}
 
-	/**
-	 * Gets the enumeration name of the {@link ElementKind} that was not found.
-	 * <p>
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getMessage() {
-		return super.getMessage();
-	}
-
-	/**
-	 * Gets the exception that was received when the enumeration was tried to be looked up.
-	 * <p>
-	 * The exception is directly thrown by {@link ElementKind#valueOf(String)}.
-	 * <p>
-	 * {@inheritDoc}
-	 */
-	@Override
-	public IllegalArgumentException getCause() {
-		return (IllegalArgumentException) super.getCause();
-	}
 }

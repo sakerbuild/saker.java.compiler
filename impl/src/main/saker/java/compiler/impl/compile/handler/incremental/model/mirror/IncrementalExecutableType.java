@@ -33,6 +33,7 @@ import javax.lang.model.type.TypeVisitor;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
@@ -55,7 +56,7 @@ public class IncrementalExecutableType extends IncrementalTypeMirror<MethodSigna
 		super(elemTypes, signature);
 		this.executableElement = executableElement;
 		//no TYPE_USE annotations on an executable, leave them to the return type
-		elementTypes = Collections.emptySet();
+		elementTypes = ImmutableElementTypeSet.empty();
 	}
 
 	@Override

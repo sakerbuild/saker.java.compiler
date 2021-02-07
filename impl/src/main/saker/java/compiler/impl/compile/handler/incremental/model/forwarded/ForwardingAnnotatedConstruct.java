@@ -48,6 +48,8 @@ import javax.lang.model.type.TypeMirror;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.ReflectUtils;
 import saker.build.thirdparty.saker.util.function.LazySupplier;
+import saker.java.compiler.api.processing.exc.EnumerationArrayNotFoundException;
+import saker.java.compiler.api.processing.exc.EnumerationNotFoundException;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 
@@ -296,7 +298,7 @@ public class ForwardingAnnotatedConstruct<T extends AnnotatedConstruct>
 		return this.toString;
 	}
 
-	private void getPackedRepeatableAnnotations(AnnotationMirror am, Class<? extends Annotation> componenttype,
+	private static void getPackedRepeatableAnnotations(AnnotationMirror am, Class<? extends Annotation> componenttype,
 			List<Annotation> resultlist) {
 		for (Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : am.getElementValues().entrySet()) {
 			if (entry.getKey().getSimpleName().contentEquals("value")) {
@@ -638,7 +640,12 @@ public class ForwardingAnnotatedConstruct<T extends AnnotatedConstruct>
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		@Override
 		public Object visitEnumConstant(VariableElement c, Class<?> p) {
-			return Enum.valueOf((Class) p, c.getSimpleName().toString());
+			String enumname = c.getSimpleName().toString();
+			try {
+				return Enum.valueOf((Class) p, enumname);
+			} catch (IllegalArgumentException e) {
+				throw new EnumerationNotFoundException(enumname, e);
+			}
 		}
 
 		@Override
@@ -652,7 +659,34 @@ public class ForwardingAnnotatedConstruct<T extends AnnotatedConstruct>
 			Class<?> componenttype = p.getComponentType();
 			Object res = Array.newInstance(componenttype, len);
 			for (int i = 0; i < len; i++) {
-				Array.set(res, i, vals.get(i).accept(this, componenttype));
+				try {
+					Object val = vals.get(i).accept(this, componenttype);
+					Array.set(res, i, val);
+				} catch (EnumerationNotFoundException e) {
+					//an enumeration value was not found in the current JVM
+					//throw an EnumerationArrayNotFoundException with the names
+					String[] names = new String[len];
+					try {
+						for (int j = 0; j < i; j++) {
+							Enum<?> jval = (Enum<?>) Array.get(res, j);
+							names[j] = jval.name();
+						}
+						names[i] = e.getMessage();
+						for (int j = i + 1; j < len; j++) {
+							try {
+								Object val = vals.get(i).accept(this, componenttype);
+								names[j] = ((Enum<?>) val).name();
+							} catch (EnumerationNotFoundException ej) {
+								names[j] = ej.getMessage();
+							}
+						}
+					} catch (Exception e2) {
+						// shouldn't really happen, but rethrow with the suppressed just in case
+						e2.addSuppressed(e);
+						throw e2;
+					}
+					throw new EnumerationArrayNotFoundException(names, e.getCause());
+				}
 			}
 			return res;
 		}

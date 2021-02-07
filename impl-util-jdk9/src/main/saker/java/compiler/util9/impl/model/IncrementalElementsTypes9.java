@@ -44,8 +44,8 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
-import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonExecutableElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.mirror.ForwardingTypeMirrorBase;
@@ -70,7 +70,7 @@ import saker.java.compiler.util9.impl.model.elem.ModifiableModuleElement;
 import saker.java.compiler.util9.impl.model.mirror.CommonModuleType;
 
 public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
-	public static final Set<ElementType> ELEMENT_TYPE_MODULE = ImmutableUtils.singletonSet(ElementType.MODULE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_MODULE = ImmutableElementTypeSet.of(ElementType.MODULE);
 
 	private IncrementalUnnamedModuleElement unnamedModule;
 	private ModifiableModuleElement currentModule;

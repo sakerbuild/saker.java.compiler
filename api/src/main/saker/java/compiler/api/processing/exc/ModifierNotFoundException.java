@@ -31,7 +31,7 @@ import javax.lang.model.element.Modifier;
  * @since saker.java.compiler 0.8.7
  * @see Element#getModifiers()
  */
-public class ModifierNotFoundException extends IllegalArgumentException {
+public final class ModifierNotFoundException extends EnumerationNotFoundException {
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -49,25 +49,4 @@ public class ModifierNotFoundException extends IllegalArgumentException {
 		super(Objects.requireNonNull(enumname, "enum name"), Objects.requireNonNull(cause, "cause"));
 	}
 
-	/**
-	 * Gets the enumeration name of the {@link Modifier} that was not found.
-	 * <p>
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getMessage() {
-		return super.getMessage();
-	}
-
-	/**
-	 * Gets the exception that was received when the enumeration was tried to be looked up.
-	 * <p>
-	 * The exception is directly thrown by {@link Modifier#valueOf(String)}.
-	 * <p>
-	 * {@inheritDoc}
-	 */
-	@Override
-	public IllegalArgumentException getCause() {
-		return (IllegalArgumentException) super.getCause();
-	}
 }

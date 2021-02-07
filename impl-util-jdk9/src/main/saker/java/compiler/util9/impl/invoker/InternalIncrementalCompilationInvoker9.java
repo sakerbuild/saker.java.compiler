@@ -284,12 +284,6 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		MultiTaskListener mtl = MultiTaskListener.instance(context);
 		mtl.add(classGenerationTaskListener);
 
-		Annotate annotate = Annotate.instance(context);
-		//block annotation processing
-		//not blocking it can cause assertion errors and invalid annotation types in javac
-		//this is caused as we are using a hack to call initModules and be able to manually process the annotations
-		annotate.blockAnnotations();
-
 		//in case of java 9
 		//we need to always parse a module-info if there is any and call init modules with that
 		//we need to call enterTrees before any annotation processing
@@ -299,6 +293,12 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			//loop
 		}
 
+		Annotate annotate = Annotate.instance(context);
+		//block annotation processing
+		//not blocking it can cause assertion errors and invalid annotation types in javac
+		//this is caused as we are using a hack to call initModules and be able to manually process the annotations
+		annotate.blockAnnotations();
+		
 		if (isAnyErrorRaised()) {
 			return;
 		}

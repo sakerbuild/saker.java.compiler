@@ -20,8 +20,6 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -85,6 +83,8 @@ import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMIIdentityHashSetRemoteElementWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMILinkedHashSetStringElementWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMITreeSetStringElementWrapper;
+import saker.java.compiler.api.processing.exc.EnumerationArrayNotFoundException;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.IncrementalCompilationHandler;
 import saker.java.compiler.impl.compile.handler.invoker.rmi.ModifierEnumSetRMIWrapper;
 import saker.java.compiler.impl.compile.handler.invoker.rmi.NameRMIWrapper;
@@ -436,26 +436,24 @@ public class JavaUtil {
 		return ObjectUtils.isNullOrEmpty(annots) ? "" : (StringUtils.toStringJoin(" ", annots) + " ");
 	}
 
-	private static final Set<ElementType> DEFAULT_TARGETS = EnumSet.of(ElementType.ANNOTATION_TYPE,
-			ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
-			ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE);
+	private static final ImmutableElementTypeSet DEFAULT_TARGETS = ImmutableElementTypeSet.of(
+			ElementType.ANNOTATION_TYPE, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE,
+			ElementType.METHOD, ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE);
 
-	public static Set<ElementType> getAllowedAnnotationTargets(Target target) {
+	public static ImmutableElementTypeSet getAllowedAnnotationTargets(Target target) {
 		if (target == null) {
 			return DEFAULT_TARGETS;
 		}
-		ElementType[] vals = target.value();
-		if (vals.length == 0) {
-			return Collections.emptySet();
+		try {
+			ElementType[] vals = target.value();
+			return ImmutableElementTypeSet.of(vals);
+		} catch (EnumerationArrayNotFoundException e) {
+			//some element types not available in the current jvm
+			return ImmutableElementTypeSet.forCommaSeparatedNames(e.getMessage());
 		}
-		Set<ElementType> result = EnumSet.of(vals[0]);
-		for (int i = 1; i < vals.length; i++) {
-			result.add(vals[i]);
-		}
-		return result;
 	}
 
-	public static Set<ElementType> getAllowedAnnotationTargets(Class<? extends Annotation> annotationtype) {
+	public static ImmutableElementTypeSet getAllowedAnnotationTargets(Class<? extends Annotation> annotationtype) {
 		Target target = annotationtype.getAnnotation(Target.class);
 		return getAllowedAnnotationTargets(target);
 	}

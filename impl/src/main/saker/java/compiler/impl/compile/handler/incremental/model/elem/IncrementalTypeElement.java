@@ -37,6 +37,7 @@ import javax.lang.model.type.TypeMirror;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
@@ -134,7 +135,7 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 				this);
 		// disable TYPE_USE annotations as this is not really a "type use". Javac doesnt
 		// give this either.
-		ntype.setElementTypes(Collections.emptySet());
+		ntype.setElementTypes(ImmutableElementTypeSet.empty());
 		if (ARFU_asType.compareAndSet(this, null, ntype)) {
 			return ntype;
 		}

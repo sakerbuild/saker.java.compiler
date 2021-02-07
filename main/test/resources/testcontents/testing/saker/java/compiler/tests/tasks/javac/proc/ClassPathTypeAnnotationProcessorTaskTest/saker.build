@@ -1,0 +1,42 @@
+build {
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		Identifier: proc,
+	)
+	saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: [
+			$ProcPass,
+		],
+		AnnotationProcessors: {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.MessagerProcessor,
+			),
+			Aggregating: false,
+		},
+		Identifier: main
+	)
+}
+
+
+build2 {
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		Identifier: proc2,
+	)
+	saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: [
+			$ProcPass,
+		],
+		AnnotationProcessors: {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.MessagerProcessor,
+			),
+			Aggregating: false,
+		},
+		Identifier: main2
+	)
+}

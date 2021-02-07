@@ -80,6 +80,7 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.function.LazySupplier;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compat.KindCompatUtils;
 import saker.java.compiler.impl.compat.element.ModuleElementCompat;
 import saker.java.compiler.impl.compat.element.RecordComponentElementCompat;
@@ -237,29 +238,31 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	public static final Map<TypeKind, Set<TypeKind>> PRIMITIVE_ASSIGNABLE_MAP = PRIMITIVE_SUBTYPE_MAP;
 
 	//XXX these ElementType, ElementKind and Modifier sets should be immutable
-	public static final Set<ElementType> ELEMENT_TYPE_TYPE_USE = ImmutableUtils.singletonSet(ElementType.TYPE_USE);
-	public static final Set<ElementType> ELEMENT_TYPE_METHOD = ImmutableUtils.singletonSet(ElementType.METHOD);
-	public static final Set<ElementType> ELEMENT_TYPE_CONSTRUCTOR = ImmutableUtils
-			.singletonSet(ElementType.CONSTRUCTOR);
-	public static final Set<ElementType> ELEMENT_TYPE_PARAMETER = ImmutableUtils.singletonSet(ElementType.PARAMETER);
-	public static final Set<ElementType> ELEMENT_TYPE_PACKAGE = ImmutableUtils.singletonSet(ElementType.PACKAGE);
-	public static final Set<ElementType> ELEMENT_TYPE_FIELD = ImmutableUtils.singletonSet(ElementType.FIELD);
-	public static final Set<ElementType> ELEMENT_TYPE_LOCAL_VARIABLE = ImmutableUtils
-			.singletonSet(ElementType.LOCAL_VARIABLE);
-	public static final Set<ElementType> ELEMENT_TYPE_CONSTRUCTOR_TYPE_USE = EnumSet.of(ElementType.CONSTRUCTOR,
-			ElementType.TYPE_USE);
-	public static final Set<ElementType> ELEMENT_TYPE_PARAMETER_TYPE_USE = EnumSet.of(ElementType.PARAMETER,
-			ElementType.TYPE_USE);
-	public static final Set<ElementType> ELEMENT_TYPE_FIELD_TYPE_USE = EnumSet.of(ElementType.FIELD,
-			ElementType.TYPE_USE);
-	public static final Set<ElementType> ELEMENT_TYPE_LOCAL_VARIABLE_TYPE_USE = EnumSet.of(ElementType.LOCAL_VARIABLE,
-			ElementType.TYPE_USE);
-	public static final Set<ElementType> ELEMENT_TYPE_ANNOTATION_TYPE_TYPE_TYPE_USE = EnumSet.of(ElementType.TYPE,
-			ElementType.ANNOTATION_TYPE, ElementType.TYPE_USE);
-	public static final Set<ElementType> ELEMENT_TYPE_TYPE_TYPE_USE = EnumSet.of(ElementType.TYPE,
-			ElementType.TYPE_USE);
-	public static final Set<ElementType> ELEMENT_TYPE_TYPE_PARAMETER_TYPE_USE = EnumSet.of(ElementType.TYPE_PARAMETER,
-			ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_METHOD = ImmutableElementTypeSet.of(ElementType.METHOD);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_CONSTRUCTOR = ImmutableElementTypeSet
+			.of(ElementType.CONSTRUCTOR);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_PARAMETER = ImmutableElementTypeSet
+			.of(ElementType.PARAMETER);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_PACKAGE = ImmutableElementTypeSet.of(ElementType.PACKAGE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_FIELD = ImmutableElementTypeSet.of(ElementType.FIELD);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_LOCAL_VARIABLE = ImmutableElementTypeSet
+			.of(ElementType.LOCAL_VARIABLE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_CONSTRUCTOR_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.CONSTRUCTOR, ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_PARAMETER_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.PARAMETER, ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_FIELD_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.FIELD, ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_LOCAL_VARIABLE_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_ANNOTATION_TYPE_TYPE_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_TYPE_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.TYPE, ElementType.TYPE_USE);
+	public static final ImmutableElementTypeSet ELEMENT_TYPE_TYPE_PARAMETER_TYPE_USE = ImmutableElementTypeSet
+			.of(ElementType.TYPE_PARAMETER, ElementType.TYPE_USE);
 
 	public static final Set<Modifier> MODIFIERS_PUBLIC_STATIC = ImmutableModifierSet.of(Modifier.PUBLIC,
 			Modifier.STATIC);

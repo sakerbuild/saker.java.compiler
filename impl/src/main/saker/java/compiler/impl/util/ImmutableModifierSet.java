@@ -121,6 +121,9 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> implements
 
 	public static ImmutableModifierSet of(Modifier... modifiers) {
 		Objects.requireNonNull(modifiers, "modifiers");
+		if (modifiers.length == 0) {
+			return EMPTY_INSTANCE;
+		}
 		short f = 0;
 		for (Modifier m : modifiers) {
 			Objects.requireNonNull(m, "modifier");
