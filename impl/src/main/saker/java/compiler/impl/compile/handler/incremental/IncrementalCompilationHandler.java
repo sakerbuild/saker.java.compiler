@@ -1745,7 +1745,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 				throw new JavaCompilationFailedException("Unexpected Javac internal API error. "
 						+ "You can turn off internal API usage and incremental compilation by setting BuildIncremental to false on your Java compiler pass. ("
 						+ e + ")", e);
-			} catch (Exception | com.sun.tools.javac.util.FatalError e) {
+			} catch (Exception | com.sun.tools.javac.util.FatalError | com.sun.tools.javac.util.Abort e) {
 				throw new JavaCompilationFailedException("Unexpected error.", e);
 			}
 		} finally {

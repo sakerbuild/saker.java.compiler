@@ -358,7 +358,7 @@ public class FullCompilationHandler extends CompilationHandler {
 					allowcmdlinebootclasspath);
 		} catch (JavaCompilationFailedException e) {
 			throw e;
-		} catch (Exception | com.sun.tools.javac.util.FatalError e) {
+		} catch (Exception | com.sun.tools.javac.util.FatalError | com.sun.tools.javac.util.Abort e) {
 			throw new JavaCompilationFailedException("Unexpected error.", e);
 		}
 	}
