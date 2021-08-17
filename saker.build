@@ -485,6 +485,7 @@ test(
 					};{
 						foreach $path in nest.bundle.localize($resolveddependencies)[BundleLocalPaths]: ";{ $path }"
 					}",
+				saker.java.jre.install.locations: std.param.env(saker.java.jre.install.locations)
 			}
 		},
 		TestInvokerParameters: {

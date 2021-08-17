@@ -15,7 +15,12 @@
  */
 package testing.saker.java.compiler.tests.tasks.javac.proc;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
 import testing.saker.SakerTest;
+import testing.saker.build.tests.EnvironmentTestCaseConfiguration;
 import testing.saker.java.compiler.CompilerCollectingTestMetric;
 import testing.saker.java.compiler.JavaCompilerVariablesMetricEnvironmentTaskTestCase;
 
@@ -31,6 +36,17 @@ public class ExternalJavaCompilerProcessorTaskTest extends JavaCompilerVariables
 	@Override
 	protected void runNestTaskTestImpl() throws Throwable {
 		runScriptTask("build");
+		
+		//to check that we safely handle newly introduced methods on Elements if we compile on Java 8 
+		runScriptTask("build8");
 	}
 
+	@Override
+	protected Set<EnvironmentTestCaseConfiguration> getTestConfigurations() {
+		Map<String, String> environmentUserParameters = new TreeMap<>();
+		environmentUserParameters.put("saker.java.jre.install.locations",
+				this.testParameters.get("saker.java.jre.install.locations"));
+		return EnvironmentTestCaseConfiguration.builder(super.getTestConfigurations())
+				.setEnvironmentUserParameters(environmentUserParameters).build();
+	}
 }

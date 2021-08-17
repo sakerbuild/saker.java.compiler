@@ -48,6 +48,7 @@ import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonExecutableElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
+import saker.java.compiler.impl.compile.handler.incremental.model.NoModulePackagesTypesContainer;
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.mirror.ForwardingTypeMirrorBase;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingFileData;
 import saker.java.compiler.impl.compile.handler.invoker.CompilationContextInformation;
@@ -73,6 +74,10 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 	public static final ImmutableElementTypeSet ELEMENT_TYPE_MODULE = ImmutableElementTypeSet.of(ElementType.MODULE);
 
 	private IncrementalUnnamedModuleElement unnamedModule;
+	/**
+	 * <code>null</code> if not using modules. Otherwise the module in which the compiled classes reside, and will be
+	 * the same as {@link IncrementalElementsTypes8#packageTypesContainer} in that case.
+	 */
 	private ModifiableModuleElement currentModule;
 
 	private final DirectiveForwarderVisitor directiveForwarder = new DirectiveForwarderVisitor();
@@ -93,7 +98,13 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 			CompilationContextInformation context) {
 		super(realelements, javacsync, cache, context);
 
-		unnamedModule = new IncrementalUnnamedModuleElement(this, realelements.getModuleElement(""));
+		ModuleElement javacunnamedmodule = realelements.getModuleElement("");
+		if (javacunnamedmodule != null) {
+			//don't set if not using modules
+			unnamedModule = new IncrementalUnnamedModuleElement(this, javacunnamedmodule);
+		} else {
+			allModuleElements = Collections.emptySet();
+		}
 	}
 
 	@Override
@@ -107,13 +118,18 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 
 	@Override
 	public void initCompilationModuleNotSpecified() {
+		//null if not using modules
 		currentModule = unnamedModule;
 
 		finishModuleInit();
 	}
 
 	private void finishModuleInit() {
-		super.packageTypesContainer = currentModule;
+		if (currentModule != null) {
+			super.packageTypesContainer = currentModule;
+		} else {
+			super.packageTypesContainer = new NoModulePackagesTypesContainer(this);
+		}
 	}
 
 	@Override
@@ -127,7 +143,9 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 	}
 
 	public PackageElement getCurrentModulePackageElement(String name) {
-		return getPackageElement(currentModule, name);
+		//used to be the following call, but modified as the currentModule might be null
+//		return getPackageElement(currentModule, name);
+		return super.packageTypesContainer.getPackageElement(name.toString());
 	}
 
 	public TypeElement getCurrentModuleTypeElement(TypeSignature sig) {
@@ -150,6 +168,10 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 		Module module = clazz.getModule();
 		String modulename = module.getName();
 		if (modulename == null) {
+			if (unnamedModule == null) {
+				//not using modules
+				return getTypeElement(cname);
+			}
 			return unnamedModule.getTypeElement(cname);
 		}
 		return getTypeElement(getModuleElement(modulename), cname);
@@ -158,6 +180,8 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 	@Override
 	public Set<? extends ModuleElement> getAllModuleElements() {
 		if (allModuleElements == null) {
+			//allModuleElements is initialized to empty set if we're not using modules
+
 			synchronized (javacSync) {
 				if (allModuleElements == null) {
 					Set<ModuleElement> result = new HashSet<>();
@@ -193,6 +217,10 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 
 	@Override
 	public ModuleElement getModuleElement(CharSequence name) {
+		if (unnamedModule == null) {
+			//not using modules during the compilation
+			return null;
+		}
 		if (name.length() == 0) {
 			return unnamedModule;
 		}
@@ -305,7 +333,7 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 		//    Returns:the specified package, or null if it cannot be uniquely found
 		//  we return the first element we find
 		String namestr = name.toString();
-		PackageElement parsed = currentModule.getPresentPackageElement(namestr);
+		PackageElement parsed = super.packageTypesContainer.getPresentPackageElement(namestr);
 		if (parsed != null) {
 			return parsed;
 		}
@@ -318,7 +346,7 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 		//    Returns:the named type element, or null if it cannot be uniquely found
 		//  we return the first element we find
 		String namestr = name.toString();
-		TypeElement parsed = currentModule.getParsedTypeElement(namestr);
+		TypeElement parsed = super.packageTypesContainer.getParsedTypeElement(namestr);
 		if (parsed != null) {
 			return parsed;
 		}

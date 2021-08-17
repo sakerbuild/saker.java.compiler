@@ -519,6 +519,9 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		return null;
 	}
 
+	/**
+	 * @return May be <code>null</code>.
+	 */
 	public Element getCurrentModuleElement() {
 		return null;
 	}

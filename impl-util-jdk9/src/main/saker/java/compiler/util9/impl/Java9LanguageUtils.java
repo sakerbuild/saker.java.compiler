@@ -124,6 +124,9 @@ public class Java9LanguageUtils {
 		builder.add(MethodTransferProperties
 				.builder(ReflectUtils.getMethodAssert(Elements.class, "getAllModuleElements"))
 				.returnWriter(new WrapperRMIObjectWriteHandler(RMIIdentityHashSetRemoteElementWrapper.class)).build());
+		builder.add(MethodTransferProperties
+				.builder(ReflectUtils.getMethodAssert(Elements.class, "getModuleElement", CharSequence.class))
+				.defaultOnFailure(true).build());
 
 		JavaUtil.addCommonElementClassRMIProperties(builder, ModuleElement.class);
 		JavaUtil.addCommonQualifiedNameableRMIProperties(builder, ModuleElement.class);

@@ -17,3 +17,29 @@ build {
 		},
 	)
 }
+
+build8 {
+	$ProcPass = saker.java.compile(
+		SourceDirectories: proc,
+		Identifier: proc,
+		SDKs: {
+			Java: saker.java.sdk(8)
+		},
+	)
+	saker.java.compile(
+		SourceDirectories: src,
+		ClassPath: [
+			$ProcPass,
+		],
+		AnnotationProcessors: {
+			Processor: saker.java.processor(
+				ClassPath: $ProcPass,
+				Class: test.MessagerProcessor,
+			),
+			Aggregating: false,
+		},
+		SDKs: {
+			Java: saker.java.sdk(8)
+		},
+	)
+}
