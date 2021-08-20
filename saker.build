@@ -429,6 +429,8 @@ testexport(
 		],
 		Identifier: saker.java.compiler-testutil,
 		CompilerOptions: global(TOOLS_OPTIONS),
+		SourceVersion: RELEASE_8,
+		TargetVersion: RELEASE_8,
 	)
 }
 test(
@@ -448,9 +450,8 @@ test(
 		],
 		Identifier: saker.java.compiler-tests,
 		CompilerOptions: global(TOOLS_OPTIONS),
-		SDKs: {
-			Java: $jre
-		}
+		SourceVersion: RELEASE_8,
+		TargetVersion: RELEASE_8,
 	)
 	$resolveddependencies = nest.dependency.resolve(
 		Bundles: global(saker.java.compiler_DEPENDENCIES) + [nest.repository.support, saker.standard],
