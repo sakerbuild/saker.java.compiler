@@ -630,5 +630,7 @@ _testapicompile(
 		],
 		Identifier: "saker.java.compiler-testapi-{ $enabled ? enabled : disabled }",
 		CompilerOptions: global(TOOLS_OPTIONS),
+		SourceVersion: RELEASE_8,
+		TargetVersion: RELEASE_8,
 	)
 }
