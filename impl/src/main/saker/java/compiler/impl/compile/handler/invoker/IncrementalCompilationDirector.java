@@ -639,8 +639,18 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			}
 		}
 
-		//invoking the compilation
-		invoker.invokeCompilation(unitpathbytes);
+		try {
+			//invoking the compilation
+			invoker.invokeCompilation(unitpathbytes);
+		} catch (Exception | com.sun.tools.javac.util.FatalError | com.sun.tools.javac.util.Abort e) {
+			//print the diagnostic entries in case of severe error as well
+			try {
+				printDiagnosticEntries();
+			} catch (Throwable e2) {
+				e.addSuppressed(e2);
+			}
+			throw e;
+		}
 
 		if (isAnyErrorRaised()) {
 			printDiagnosticEntries();
