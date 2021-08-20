@@ -448,6 +448,9 @@ test(
 		],
 		Identifier: saker.java.compiler-tests,
 		CompilerOptions: global(TOOLS_OPTIONS),
+		SDKs: {
+			Java: $jre
+		}
 	)
 	$resolveddependencies = nest.dependency.resolve(
 		Bundles: global(saker.java.compiler_DEPENDENCIES) + [nest.repository.support, saker.standard],
