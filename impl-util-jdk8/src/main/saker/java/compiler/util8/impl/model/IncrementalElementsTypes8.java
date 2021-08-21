@@ -926,7 +926,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		synchronized (javacSync) {
 			TypeElement realtype = realElements.getTypeElement(name);
 			if (realtype != null) {
-				return forwardElementImpl(realtype);
+				return forwardElementLockedImpl(realtype);
 			}
 		}
 		forwardedTypeElements.put(name, FORWARDED_ELEMENT_NOT_FOUND_TAG);
@@ -3222,7 +3222,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		TypeMirror[] elems = new TypeMirror[size];
 		int i = 0;
 		for (T t : list) {
-			elems[i++] = forwardTypeImpl(t, null);
+			elems[i++] = forwardTypeLockedImpl(t, null);
 		}
 		@SuppressWarnings("unchecked")
 		List<? extends T> result = ImmutableUtils.unmodifiableArrayList((T[]) elems);
@@ -3238,7 +3238,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		TypeMirror[] elems = new TypeMirror[size];
 		int i = 0;
 		for (TypeMirror t : list) {
-			elems[i++] = forwardTypeImpl(t, tpeit.next());
+			elems[i++] = forwardTypeLockedImpl(t, tpeit.next());
 		}
 		return ImmutableUtils.unmodifiableArrayList(elems);
 	}
@@ -3258,7 +3258,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		Element[] elems = new Element[size];
 		int i = 0;
 		for (E t : list) {
-			elems[i++] = forwardElementImpl(t);
+			elems[i++] = forwardElementLockedImpl(t);
 		}
 		@SuppressWarnings("unchecked")
 		List<? extends E> result = ImmutableUtils.unmodifiableArrayList((E[]) elems);
@@ -3306,7 +3306,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			if (got == null) {
 				return null;
 			}
-			return forwardElementImpl(got);
+			return forwardElementLockedImpl(got);
 		}
 	}
 
@@ -3317,40 +3317,40 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			if (got == null) {
 				return null;
 			}
-			return forwardElementImpl(got);
+			return forwardElementLockedImpl(got);
 		}
 	}
 
 	@Override
 	public VariableElement forwardElement(VariableElement element) {
 		synchronized (javacSync) {
-			return forwardElementImpl(element);
+			return forwardElementLockedImpl(element);
 		}
 	}
 
 	@Override
 	public ExecutableElement forwardElement(ExecutableElement element) {
 		synchronized (javacSync) {
-			return forwardElementImpl(element);
+			return forwardElementLockedImpl(element);
 		}
 	}
 
 	@Override
 	public Element forwardElement(Element element) {
 		synchronized (javacSync) {
-			return forwardElementImpl(element);
+			return forwardElementLockedImpl(element);
 		}
 	}
 
-	private <E extends Element> E forwardElementImpl(E element) {
+	private <E extends Element> E forwardElementLockedImpl(E element) {
 		ElementKind elemkind = element.getKind();
-		return forwardElementImpl(element, elemkind);
+		return forwardElementLockedImpl(element, elemkind);
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <E extends Element> E forwardElementImpl(E element, ElementKind elemkind) {
+	protected <E extends Element> E forwardElementLockedImpl(E element, ElementKind elemkind) {
 		if (elemkind == ElementKind.PACKAGE) {
-			return (E) forwardPackageImpl((PackageElement) element);
+			return (E) forwardPackageLockedImpl((PackageElement) element);
 		}
 		return (E) forwardedElements.computeIfAbsent(element, e -> {
 			ForwardingElementBase<?> result = KindBasedElementVisitor.visit(elemkind, e, forwardingElementVisitor,
@@ -3360,10 +3360,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		});
 	}
 
-	protected PackageElement forwardPackageImpl(PackageElement pe) {
+	protected PackageElement forwardPackageLockedImpl(PackageElement pe) {
 		String pname = pe.getQualifiedName().toString();
 
-		PackageElement over = packageTypesContainer.forwardOverride(pe, pname);
+		PackageElement over = packageTypesContainer.forwardOverrideJavacLocked(pe, pname);
 		if (over != null) {
 			return over;
 		}
@@ -3458,15 +3458,12 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		}
 	}
 
-	private <T extends TypeMirror> T forwardTypeImpl(T mirror, TypeParameterElement correspondingtypeparameter) {
-		synchronized (javacSync) {
-			TypeKind kind = mirror.getKind();
-			return forwardTypeImpl(mirror, correspondingtypeparameter, kind);
-		}
+	private <T extends TypeMirror> T forwardTypeLockedImpl(T mirror, TypeParameterElement correspondingtypeparameter) {
+		return forwardTypeKindImpl(mirror, correspondingtypeparameter, mirror.getKind());
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <T extends TypeMirror> T forwardTypeImpl(T mirror, TypeParameterElement correspondingtypeparameter,
+	private <T extends TypeMirror> T forwardTypeKindImpl(T mirror, TypeParameterElement correspondingtypeparameter,
 			TypeKind kind) {
 		//XXX visitorize?
 		ForwardingTypeMirrorBase<?> result;
@@ -3533,7 +3530,9 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 	@Override
 	public <T extends TypeMirror> T forwardType(T mirror, TypeParameterElement correspondingtypeparameter) {
-		return forwardTypeImpl(mirror, correspondingtypeparameter);
+		synchronized (javacSync) {
+			return forwardTypeLockedImpl(mirror, correspondingtypeparameter);
+		}
 	}
 
 //	public DeclaredType forwardType(DeclaredType mirror) {
@@ -3544,7 +3543,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	public <T extends TypeMirror> T forwardType(Supplier<T> javacmirrorsupplier,
 			TypeParameterElement correspondingtypeparameter) {
 		synchronized (javacSync) {
-			return forwardTypeImpl(javacmirrorsupplier.get(), correspondingtypeparameter);
+			return forwardTypeLockedImpl(javacmirrorsupplier.get(), correspondingtypeparameter);
 		}
 	}
 
@@ -3565,7 +3564,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			if (type == null) {
 				return IncrementalNoType.INSTANCE_NONE;
 			}
-			return forwardTypeImpl(type, null);
+			return forwardTypeLockedImpl(type, null);
 		}
 	}
 

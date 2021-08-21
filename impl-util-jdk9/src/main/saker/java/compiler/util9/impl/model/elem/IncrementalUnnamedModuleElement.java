@@ -166,8 +166,9 @@ public class IncrementalUnnamedModuleElement implements ModifiableModuleElement,
 	}
 
 	@Override
-	public PackageElement forwardOverride(PackageElement javacpackage, String qualifiedname) {
-		if (elemTypes.javac(javacpackage::getEnclosingElement) == javacUnnamedModule) {
+	public PackageElement forwardOverrideJavacLocked(PackageElement javacpackage, String qualifiedname) {
+		//can access javacpackage directly, as this method is called while already locked
+		if (javacpackage.getEnclosingElement() == javacUnnamedModule) {
 			return packageElements.compute(qualifiedname, (k, v) -> {
 				if (v == null) {
 					DualPackageElement result = new DualPackageElement(elemTypes, this, null, javacpackage, k);

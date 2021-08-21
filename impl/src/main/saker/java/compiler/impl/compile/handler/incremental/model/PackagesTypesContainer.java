@@ -42,5 +42,9 @@ public interface PackagesTypesContainer {
 
 	public List<? extends Element> getPackageEnclosedNonJavacElements(String packname);
 
-	public PackageElement forwardOverride(PackageElement javacpackage, String qualifiedname);
+	/**
+	 * Called while the lock is acquired on the javac synchronization lock. Accessing <code>javacpackage</code> doesn't
+	 * require additional locking.
+	 */
+	public PackageElement forwardOverrideJavacLocked(PackageElement javacpackage, String qualifiedname);
 }

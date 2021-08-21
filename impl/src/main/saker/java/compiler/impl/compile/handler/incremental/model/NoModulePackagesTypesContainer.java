@@ -66,7 +66,7 @@ public class NoModulePackagesTypesContainer implements PackagesTypesContainer {
 	}
 
 	@Override
-	public PackageElement forwardOverride(PackageElement javacpackage, String qualifiedname) {
+	public PackageElement forwardOverrideJavacLocked(PackageElement javacpackage, String qualifiedname) {
 		return packageElements.compute(qualifiedname, (k, v) -> {
 			if (v == null) {
 				return new DualPackageElement(elemTypes, this, null, javacpackage, k);

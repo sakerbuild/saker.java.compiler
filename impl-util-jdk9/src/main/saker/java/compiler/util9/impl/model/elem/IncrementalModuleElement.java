@@ -190,7 +190,7 @@ public class IncrementalModuleElement extends IncrementalElement<ModuleSignature
 	}
 
 	@Override
-	public PackageElement forwardOverride(PackageElement javacpackage, String qualifiedname) {
+	public PackageElement forwardOverrideJavacLocked(PackageElement javacpackage, String qualifiedname) {
 		return null;
 	}
 

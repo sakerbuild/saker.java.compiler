@@ -190,19 +190,17 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 						result.add(currentModule);
 					}
 					Name currentqname = currentModule.getQualifiedName();
-					synchronized (javacSync) {
-						Set<? extends ModuleElement> realallmodules = realElements.getAllModuleElements();
-						for (ModuleElement me : realallmodules) {
-							//do not include the module with the same name from javac or the unnamed module
-							if (me == unnamedModule.getJavacUnnamedModule()) {
-								continue;
-							}
-							Name mqname = me.getQualifiedName();
-							if (mqname.contentEquals(currentqname)) {
-								continue;
-							}
-							result.add(forwardModuleElementImpl(me, mqname));
+					Set<? extends ModuleElement> realallmodules = realElements.getAllModuleElements();
+					for (ModuleElement me : realallmodules) {
+						//do not include the module with the same name from javac or the unnamed module
+						if (me == unnamedModule.getJavacUnnamedModule()) {
+							continue;
 						}
+						Name mqname = me.getQualifiedName();
+						if (mqname.contentEquals(currentqname)) {
+							continue;
+						}
+						result.add(forwardModuleElementImpl(me, mqname));
 					}
 					allModuleElements = Collections.unmodifiableSet(result);
 				}
@@ -236,11 +234,11 @@ public class IncrementalElementsTypes9 extends IncrementalElementsTypes8 {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <E extends Element> E forwardElementImpl(E element, ElementKind elemkind) {
+	protected <E extends Element> E forwardElementLockedImpl(E element, ElementKind elemkind) {
 		if (elemkind == ElementKind.MODULE) {
 			return (E) forwardModuleElementImpl((ModuleElement) element);
 		}
-		return super.forwardElementImpl(element, elemkind);
+		return super.forwardElementLockedImpl(element, elemkind);
 	}
 
 	protected ModuleElement forwardModuleElementImpl(ModuleElement me) {
