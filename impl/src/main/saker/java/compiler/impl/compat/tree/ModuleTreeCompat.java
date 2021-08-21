@@ -21,8 +21,7 @@ import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 
-public interface ModuleTreeCompat {
-	public Tree getRealObject();
+public interface ModuleTreeCompat extends TreeCompat {
 
 	public List<? extends AnnotationTree> getAnnotations();
 

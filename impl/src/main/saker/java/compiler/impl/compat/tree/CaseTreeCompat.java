@@ -21,7 +21,8 @@ import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 
-public interface CaseTreeCompat {
+public interface CaseTreeCompat extends TreeCompat {
+	@Override
 	public CaseTree getRealObject();
 
 	// From JDK 12:

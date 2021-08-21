@@ -255,7 +255,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			opt.put(Option.SOURCE, sourceversionname);
 		}
 		if (targetversionname != null) {
-			opt.put(Option.TARGET, sourceversionname);
+			opt.put(Option.TARGET, targetversionname);
 		}
 
 		//XXX we may need to call args.validate(), however it is fine to not do it
@@ -298,7 +298,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		//not blocking it can cause assertion errors and invalid annotation types in javac
 		//this is caused as we are using a hack to call initModules and be able to manually process the annotations
 		annotate.blockAnnotations();
-		
+
 		if (isAnyErrorRaised()) {
 			return;
 		}

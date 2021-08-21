@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -65,7 +66,6 @@ import saker.java.compiler.api.compile.SakerJavaCompilerUtils;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.api.option.JavaAddReads;
-import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compile.ClassPathIDEConfigurationEntry;
 import saker.java.compiler.impl.compile.ModulePathIDEConfigurationEntry;
 import saker.java.compiler.impl.compile.VersionKeyUtils;
@@ -98,12 +98,20 @@ public abstract class CompilationHandler {
 		SOURCE_VERSION_STRINGS.put("RELEASE_6", "1.6");
 		SOURCE_VERSION_STRINGS.put("RELEASE_7", "1.7");
 		SOURCE_VERSION_STRINGS.put("RELEASE_8", "1.8");
-		SOURCE_VERSION_STRINGS.put("RELEASE_9", "9");
-		SOURCE_VERSION_STRINGS.put("RELEASE_10", "10");
-		SOURCE_VERSION_STRINGS.put("RELEASE_11", "11");
-		SOURCE_VERSION_STRINGS.put("RELEASE_12", "12");
-		SOURCE_VERSION_STRINGS.put("RELEASE_13", "13");
-		SOURCE_VERSION_STRINGS.put("RELEASE_14", "14");
+		//iterate over the source version for any release above 8 so we don't miss anything when adding support for new Java versions
+		for (SourceVersion sourceversion : SourceVersion.values()) {
+			String name = sourceversion.name();
+			//strip RELEASE_ prefix to get the number
+			String numstr = name.substring(8);
+			int releaseval = Integer.parseInt(numstr);
+			if (releaseval >= 9) {
+				String prev = SOURCE_VERSION_STRINGS.put(name, numstr);
+				if (prev != null) {
+					//shouldn't happen at all, but check to be sure
+					throw new IllegalArgumentException("Duplicate RELEASE_ SourceVersions found for: " + prev);
+				}
+			}
+		}
 	}
 
 	public static String sourceVersionToParameterString(String srcversion) {

@@ -195,7 +195,7 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 
 	//XXX instead of creating treepath, we could use javactask.getTypeMirror or even ((JCTree) tree).type which would mean less object allocations
 
-	protected TreePath descend(Tree tree, ParseContext param) {
+	protected final TreePath descend(Tree tree, ParseContext param) {
 		return descend(tree, param, this);
 	}
 
@@ -1105,6 +1105,10 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 	@Override
 	public Void visitOther(Tree tree, ParseContext param) {
 		//TODO make the resulting abi usage always affected
+		if (TestFlag.ENABLED) {
+			throw new IllegalArgumentException(
+					"Unrecognized tree: " + tree.getKind() + " - " + tree.getClass() + " - " + tree);
+		}
 		System.err.println(
 				"ABIUsageParser.visitOther() Other tree: " + tree.getKind() + " - " + tree.getClass() + " - " + tree);
 		return null;

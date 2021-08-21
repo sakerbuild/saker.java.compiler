@@ -8,6 +8,7 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
+import saker.java.compiler.jdk.impl.compat.tree.TreeCompatUtil;
 import saker.java.compiler.util13.impl.parser.usage.AbiUsageParser13;
 
 public class AbiUsageParser14 extends AbiUsageParser13 {
@@ -28,9 +29,7 @@ public class AbiUsageParser14 extends AbiUsageParser13 {
 
 	@Override
 	public Void visitBindingPattern(BindingPatternTree node, ParseContext param) {
-		super.visitBindingPattern(node, param);
-
-		Tree type = node.getType();
+		Tree type = TreeCompatUtil.getBindingPatternTreeType(node);
 		TreePath typepath = descend(type, param);
 		withExpressionType(typepath, param.typeElementAddUsedTypeConsumer);
 

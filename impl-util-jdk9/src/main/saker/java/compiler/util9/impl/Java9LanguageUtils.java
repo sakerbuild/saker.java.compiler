@@ -15,7 +15,6 @@
  */
 package saker.java.compiler.util9.impl;
 
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -96,14 +95,6 @@ public class Java9LanguageUtils {
 
 	public static String getModuleNameOf(Element elem) {
 		return IncrementalElementsTypes9.getModuleOfImpl(elem).getQualifiedName().toString();
-	}
-
-	public static boolean isModuleElementKind(ElementKind kind) {
-		return kind == ElementKind.MODULE;
-	}
-
-	public static void addModuleElementKind(Collection<? super ElementKind> coll) {
-		coll.add(ElementKind.MODULE);
 	}
 
 	public static void applyRMIProperties(RMITransferProperties.Builder builder) {

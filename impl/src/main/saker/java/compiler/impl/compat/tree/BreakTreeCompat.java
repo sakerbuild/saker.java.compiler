@@ -18,7 +18,8 @@ package saker.java.compiler.impl.compat.tree;
 import com.sun.source.tree.BreakTree;
 import com.sun.source.tree.ExpressionTree;
 
-public interface BreakTreeCompat {
+public interface BreakTreeCompat extends TreeCompat {
+	@Override
 	public BreakTree getRealObject();
 
 	// From JDK 12:

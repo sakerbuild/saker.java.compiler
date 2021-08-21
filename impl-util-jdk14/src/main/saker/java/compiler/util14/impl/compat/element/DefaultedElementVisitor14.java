@@ -20,6 +20,7 @@ import javax.lang.model.element.RecordComponentElement;
 import saker.java.compiler.util9.impl.compat.element.DefaultedElementVisitor9;
 
 public interface DefaultedElementVisitor14<R, P> extends DefaultedElementVisitor9<R, P> {
+	@Override
 	public default R visitRecordComponent(RecordComponentElement t, P p) {
 		return visitRecordComponentElementCompat(new RecordComponentElementCompatImpl(t), p);
 	}

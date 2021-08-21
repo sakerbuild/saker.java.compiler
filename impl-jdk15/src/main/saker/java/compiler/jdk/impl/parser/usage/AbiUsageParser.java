@@ -15,6 +15,9 @@
  */
 package saker.java.compiler.jdk.impl.parser.usage;
 
+import com.sun.source.tree.BindingPatternTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.util.TreePath;
 import com.sun.source.util.Trees;
 
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;

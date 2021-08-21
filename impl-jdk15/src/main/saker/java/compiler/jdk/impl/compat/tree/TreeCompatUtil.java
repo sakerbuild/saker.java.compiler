@@ -15,8 +15,13 @@
  */
 package saker.java.compiler.jdk.impl.compat.tree;
 
+import javax.lang.model.element.Name;
+
+import com.sun.source.tree.BindingPatternTree;
 import com.sun.source.tree.BreakTree;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.tree.VariableTree;
 
 public class TreeCompatUtil {
 	private TreeCompatUtil() {
@@ -24,6 +29,18 @@ public class TreeCompatUtil {
 	}
 
 	public static ExpressionTree getBreakTreeValue(BreakTree tree) {
+		return null;
+	}
+
+	public static Tree getBindingPatternTreeType(BindingPatternTree tree) {
+		return tree.getType();
+	}
+
+	public static Name getBindingPatternTreeBinding(BindingPatternTree tree) {
+		return tree.getBinding();
+	}
+
+	public static VariableTree getBindingPatternTreeVariable(BindingPatternTree tree) {
 		return null;
 	}
 }

@@ -19,10 +19,8 @@ import java.util.List;
 
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ExpressionTree;
-import com.sun.source.tree.Tree;
 
-public interface PackageTreeCompat {
-	public Tree getRealObject();
+public interface PackageTreeCompat extends TreeCompat {
 
 	public List<? extends AnnotationTree> getAnnotations();
 

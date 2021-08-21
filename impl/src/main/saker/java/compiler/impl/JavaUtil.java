@@ -458,12 +458,13 @@ public class JavaUtil {
 		return getAllowedAnnotationTargets(target);
 	}
 
-	private static RMITransferProperties compilationRMIProperties = null;
+	private static volatile RMITransferProperties compilationRMIProperties = null;
 
 	public synchronized static RMITransferProperties getCompilationRMIProperties() {
-		if (compilationRMIProperties == null) {
+		RMITransferProperties result = compilationRMIProperties;
+		if (result == null) {
 			synchronized (IncrementalCompilationHandler.class) {
-				if (compilationRMIProperties == null) {
+				if (result == null) {
 					RMITransferProperties.Builder builder = RMITransferProperties.builder();
 
 					builder.add(MethodTransferProperties
@@ -636,11 +637,13 @@ public class JavaUtil {
 							.build());
 
 					JavaCompilationUtils.applyRMIProperties(builder);
-					compilationRMIProperties = builder.build();
+					result = builder.build();
+					compilationRMIProperties = result;
+					return result;
 				}
 			}
 		}
-		return compilationRMIProperties;
+		return result;
 	}
 
 	public static int compareSourceVersionEnumNames(String left, String right) {

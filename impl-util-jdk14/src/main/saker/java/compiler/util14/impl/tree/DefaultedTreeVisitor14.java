@@ -21,7 +21,8 @@ import saker.java.compiler.util13.impl.tree.DefaultedTreeVisitor13;
 
 @SuppressWarnings("removal")
 public interface DefaultedTreeVisitor14<R, P> extends DefaultedTreeVisitor13<R, P> {
+	@Override
 	public default R visitBindingPattern(BindingPatternTree node, P p) {
-		return visitOther(node, p);
+		return visitBindingPatternCompat(new BindingPatternTreeCompatImpl(node), p);
 	}
 }

@@ -20,7 +20,8 @@ import java.util.List;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.ExpressionTree;
 
-public interface SwitchExpressionTreeCompat {
+public interface SwitchExpressionTreeCompat extends TreeCompat {
+	@Override
 	public ExpressionTree getRealObject();
 
 	public ExpressionTree getExpression();

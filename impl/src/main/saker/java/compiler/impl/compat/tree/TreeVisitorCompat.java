@@ -61,4 +61,8 @@ public interface TreeVisitorCompat<R, P> extends TreeVisitor<R, P> {
 	public default R visitYieldCompat(YieldTreeCompat node, P p) {
 		return visitOther(node.getRealObject(), p);
 	}
+
+	public default R visitBindingPatternCompat(BindingPatternTreeCompat node, P p) {
+		return visitOther(node.getRealObject(), p);
+	}
 }

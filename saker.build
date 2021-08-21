@@ -51,6 +51,12 @@ global(TOOLS_OPTIONS) = [
 			Java: saker.java.sdk(15),
 		},
 	},
+	{
+		Identifier: jdk16,
+		SDKs: {
+			Java: saker.java.sdk(16),
+		},
+	},
 ]
 
 static(TARGET_JDKS) = [
@@ -85,6 +91,10 @@ static(TARGET_JDKS) = [
 	{
 		Id: jdk15,
 		Major: 15,
+	},
+	{
+		Id: jdk16,
+		Major: 16,
 	},
 ]
 static(JDK_ID_TO_MAJOR) = foreach $jdk in static(TARGET_JDKS) : { $jdk[Id]: $jdk[Major] }
@@ -171,6 +181,17 @@ compile(
 					impl-util-jdk12/src/main/,
 					impl-util-jdk13/src/main/,
 					impl-util-jdk14/src/main/,
+				],
+			},
+			{
+				Identifier: jdk16,
+				SourceDirectories: [
+					impl-util-jdk8/src/main/,
+					impl-util-jdk9/src/main/,
+					impl-util-jdk12/src/main/,
+					impl-util-jdk13/src/main/,
+					impl-util-jdk14/src/main/,
+					impl-util-jdk15/src/main/,
 				],
 			},
 		] + [
@@ -326,6 +347,12 @@ compile13() {
 compile14() {
 	include(compile, jdk: jdk14)
 }
+compile15() {
+	include(compile, jdk: jdk15)
+}
+compile16() {
+	include(compile, jdk: jdk16)
+}
 export9(){
 	include(export, compile: include(compile, jdk: jdk9))
 }
@@ -334,7 +361,7 @@ export12(){
 }
 exportall(
 	in testapi = include(_testapicompile),
-	in jdkids = [ jdk8, jdk9, jdk12, jdk13, jdk14, jdk15 ],
+	in jdkids = [ jdk8, jdk9, jdk12, jdk13, jdk14, jdk15, jdk16 ],
 	
 	out bundlepaths,
 	out exportbyjdkid,
@@ -610,6 +637,23 @@ testjava15(){
 			testing.saker.java.compiler.tests.jdk13.**.*Test,
 			testing.saker.java.compiler.tests.jdk14.**.*Test,
 			testing.saker.java.compiler.tests.jdk15.**.*Test,
+		],
+	)
+}
+testjava16(){
+	test(
+		jre: saker.java.sdk(16),
+		testclasses: [
+			testing.saker.java.compiler.tests.tasks.**.*Test,
+			testing.saker.java.compiler.tests.only.jdk16.**.*Test,
+			testing.saker.java.compiler.tests.jdk9.**.*Test,
+			testing.saker.java.compiler.tests.jdk10.**.*Test,
+			testing.saker.java.compiler.tests.jdk11.**.*Test,
+			testing.saker.java.compiler.tests.jdk12.**.*Test,
+			testing.saker.java.compiler.tests.jdk13.**.*Test,
+			testing.saker.java.compiler.tests.jdk14.**.*Test,
+			testing.saker.java.compiler.tests.jdk15.**.*Test,
+			testing.saker.java.compiler.tests.jdk16.**.*Test,
 		],
 	)
 }

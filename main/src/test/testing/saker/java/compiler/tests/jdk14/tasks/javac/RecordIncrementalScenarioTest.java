@@ -1,4 +1,4 @@
-package testing.saker.java.compiler.tests.only.jdk14.tasks.javac;
+package testing.saker.java.compiler.tests.jdk14.tasks.javac;
 
 import saker.build.file.path.SakerPath;
 import testing.saker.SakerTest;

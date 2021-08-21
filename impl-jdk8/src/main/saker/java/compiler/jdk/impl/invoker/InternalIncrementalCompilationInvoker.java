@@ -117,7 +117,7 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 			opt.put(Option.SOURCE, sourceversionname);
 		}
 		if (targetversionname != null) {
-			opt.put(Option.TARGET, sourceversionname);
+			opt.put(Option.TARGET, targetversionname);
 		}
 
 		final JavaCompiler javac = JavaCompiler.instance(context);
