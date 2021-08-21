@@ -30,6 +30,9 @@ strategy:
     Java15:
       J_JAVA_MAJOR: '15'
       J_JDKS: '8 9 12 13 14 15 16'
+    Java16:
+      J_JAVA_MAJOR: '16'
+      J_JDKS: '8 9 12 13 14 15 16'
 steps:
 - script: curl -L https://api.nest.saker.build/bundle/download/saker.build-v$(curl -s https://mirror.nest.saker.build/badges/saker.build/latest.txt) -o saker.build.jar
   displayName: 'Download saker.build'
