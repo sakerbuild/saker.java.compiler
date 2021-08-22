@@ -17,6 +17,7 @@ package saker.java.compiler.impl.compat.type;
 
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVisitor;
+import javax.lang.model.type.UnknownTypeException;
 
 public interface TypeVisitorCompat<R, P> extends TypeVisitor<R, P> {
 	@Override
@@ -27,5 +28,10 @@ public interface TypeVisitorCompat<R, P> extends TypeVisitor<R, P> {
 	@Override
 	public default R visit(TypeMirror t) {
 		return visit(t, null);
+	}
+
+	@Override
+	public default R visitUnknown(TypeMirror t, P p) {
+		throw new UnknownTypeException(t, p);
 	}
 }
