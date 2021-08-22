@@ -21,12 +21,10 @@ import java.util.NavigableMap;
 
 import saker.build.file.FileHandle;
 import saker.build.file.path.SakerPath;
-import saker.build.thirdparty.saker.rmi.annot.invoke.RMICacheResult;
 import saker.build.thirdparty.saker.rmi.annot.transfer.RMIWrap;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMITreeMapSerializeKeySerializeValueWrapper;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
-import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.diagnostic.DiagnosticEntry;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingFileData;
 import saker.java.compiler.impl.compile.handler.info.CompilationInfo;
@@ -37,18 +35,10 @@ public interface JavaCompilerInvocationDirector {
 			NavigableMap<SakerPath, ? extends ClassHoldingFileData> removedsourcefiles)
 			throws JavaCompilationFailedException, IOException;
 
-	public void setErrorRaised();
-
-	@RMICacheResult
-	public IncrementalDirectoryPaths getDirectoryPaths();
-
 	public void addGeneratedClassFilesForSourceFiles(
 			@RMIWrap(RMITreeMapSerializeKeySerializeValueWrapper.class) Map<String, SakerPath> classbinarynamesourcefilepaths);
 
-	@RMICacheResult
-	public String[] getOptions();
-
-	public boolean compilationRound();
+	public void runCompilationRounds();
 
 	public boolean isAnyErrorRaised();
 
@@ -61,15 +51,4 @@ public interface JavaCompilerInvocationDirector {
 		}
 	}
 
-	/**
-	 * The user provided source version name in <code>RELEASE_*</code> format
-	 */
-	@RMICacheResult
-	public String getSourceVersionOptionName();
-
-	/**
-	 * The user provided target version name in <code>RELEASE_*</code> format
-	 */
-	@RMICacheResult
-	public String getTargetVersionOptionName();
 }

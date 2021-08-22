@@ -45,6 +45,7 @@ import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
+import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.file.JavaCompilerJavaFileObject;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.diagnostic.CompilerDiagnosticListener;
@@ -69,6 +70,7 @@ import saker.java.compiler.jdk.impl.parser.usage.AbiUsageParser;
 public abstract class AbstractJavaCompilationInvoker implements JavaCompilationInvoker {
 
 	protected JavaCompilerInvocationDirector director;
+	protected IncrementalDirectoryPaths directoryPaths;
 
 	private Map<CompilationUnitTree, Map<? extends Tree, ? extends Signature>> unitTreeSignatures = new ConcurrentHashMap<>();
 	private NavigableMap<SakerPath, ABIParseInfo> abiUsages = new ConcurrentSkipListMap<>();
@@ -89,11 +91,13 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 	}
 
 	@Override
-	public void initCompilation(JavaCompilerInvocationDirector director) throws IOException {
+	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
+			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException {
 		this.director = director;
+		this.directoryPaths = directorypaths;
 		this.fileManager = JavaCompilationUtils.createFileManager(
 				JavacTool.create().getStandardFileManager(getDiagnosticListener(), null, StandardCharsets.UTF_8),
-				director.getDirectoryPaths());
+				directorypaths);
 	}
 
 	@Override
@@ -127,10 +131,6 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 		}
 		diagnosticListener.errorDiagnosticReported = director.isAnyErrorRaised();
 		return diagnosticListener.errorDiagnosticReported;
-	}
-
-	public boolean compilationRound() {
-		return director.compilationRound();
 	}
 
 	@Override

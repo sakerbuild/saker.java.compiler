@@ -32,6 +32,7 @@ import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.rmi.annot.invoke.RMICacheResult;
 import saker.build.thirdparty.saker.rmi.annot.transfer.RMISerialize;
 import saker.build.util.java.JavaTools;
+import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
 import saker.java.compiler.impl.compile.handler.info.RealizedSignatureHolder;
 import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage;
@@ -91,7 +92,14 @@ public interface JavaCompilationInvoker {
 		}
 	}
 
-	public void initCompilation(JavaCompilerInvocationDirector director) throws IOException;
+	/**
+	 * @param sourceversionoptionname
+	 *            The user provided source version name in <code>RELEASE_*</code> format
+	 * @param targetversionoptionname
+	 *            The user provided target version name in <code>RELEASE_*</code> format
+	 */
+	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
+			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException;
 
 	public void invokeCompilation(SakerPathBytes[] units) throws IOException;
 

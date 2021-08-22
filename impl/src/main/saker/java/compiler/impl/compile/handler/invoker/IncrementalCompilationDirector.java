@@ -389,8 +389,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		this.cache = cache;
 	}
 
-	@Override
-	public String[] getOptions() {
+	private String[] getOptions() {
 		return options.toArray(ObjectUtils.EMPTY_STRING_ARRAY);
 	}
 
@@ -600,7 +599,8 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			}
 		}
 
-		invoker.initCompilation(this);
+		invoker.initCompilation(this, directoryPaths, this.getOptions(), this.getSourceVersionOptionName(),
+				this.getTargetVersionOptionName());
 
 		//always include module-info files if compiling to JDK >= 9
 		//use > RELEASE_8 instead of >= RELEASE_9 to be able to properly compile on JDK 8
@@ -973,16 +973,6 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 	private boolean isCompilationInclusionPending() {
 		return sourceCompilationInclusionPending || classCompilationInclusionPending;
-	}
-
-	@Override
-	public void setErrorRaised() {
-		this.errorRaised = true;
-	}
-
-	@Override
-	public IncrementalDirectoryPaths getDirectoryPaths() {
-		return directoryPaths;
 	}
 
 	private final void addSourceForCompilation(String sourcename, SakerPath file) throws IOException {
@@ -1539,13 +1529,11 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		return errorRaised || anyProcessingException != null;
 	}
 
-	@Override
-	public String getSourceVersionOptionName() {
+	private String getSourceVersionOptionName() {
 		return sourceVersionOptionName;
 	}
 
-	@Override
-	public String getTargetVersionOptionName() {
+	private String getTargetVersionOptionName() {
 		return targetVersionOptionName;
 	}
 
@@ -2743,7 +2731,13 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 	}
 
 	@Override
-	public boolean compilationRound() {
+	public void runCompilationRounds() {
+		while (compilationRound()) {
+			//loop
+		}
+	}
+
+	private boolean compilationRound() {
 		if (anyProcessingException != null || errorRaised) {
 			return false;
 		}

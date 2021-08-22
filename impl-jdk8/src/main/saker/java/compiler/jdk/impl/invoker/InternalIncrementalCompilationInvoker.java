@@ -52,6 +52,7 @@ import com.sun.tools.javac.util.Options;
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.util.java.JavaTools;
+import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.info.ClassGenerationInfo;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
@@ -63,18 +64,17 @@ import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignaturePar
 
 public class InternalIncrementalCompilationInvoker extends InternalIncrementalCompilationInvokerBase {
 	@Override
-	public void initCompilation(JavaCompilerInvocationDirector director) throws IOException {
-		super.initCompilation(director);
+	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
+			String[] optionsarray, String sourceversionoptionname, String targetversionoptionname) throws IOException {
+		super.initCompilation(director, directorypaths, optionsarray, sourceversionoptionname, targetversionoptionname);
 
 		context = new Context();
 		context.put(DiagnosticListener.class, getDiagnosticListener());
 		context.put(JavaFileManager.class, fileManager);
 
-		java.util.List<String> options = ObjectUtils.newArrayList(director.getOptions());
-		String sourceversionname = CompilationHandler
-				.sourceVersionToParameterString(director.getSourceVersionOptionName());
-		String targetversionname = CompilationHandler
-				.sourceVersionToParameterString(director.getTargetVersionOptionName());
+		java.util.List<String> options = ObjectUtils.newArrayList(optionsarray);
+		String sourceversionname = CompilationHandler.sourceVersionToParameterString(sourceversionoptionname);
+		String targetversionname = CompilationHandler.sourceVersionToParameterString(targetversionoptionname);
 		int currentmajor = JavaTools.getCurrentJavaMajorVersion();
 		if (currentmajor < 11) {
 			options.remove("--enable-preview");
@@ -144,9 +144,7 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 
 		parsedTrees = new ListBuffer<>();
 
-		while (compilationRound()) {
-			//loop
-		}
+		director.runCompilationRounds();
 
 		if (isAnyErrorRaised()) {
 			return;
@@ -222,8 +220,8 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 				}
 				//name will never be package-info
 				//adding that from the previous compilation has no effect so might as well ignore it
-				JavaFileObject fileobj = new SakerPathJavaInputFileObject(director.getDirectoryPaths(), entry.getKey(),
-						Kind.CLASS, classname);
+				JavaFileObject fileobj = new SakerPathJavaInputFileObject(directoryPaths, entry.getKey(), Kind.CLASS,
+						classname);
 
 				Name cnamename = names.fromString(classname);
 				//enterClass might throw an assertion error if a class is present on both the classpath and among the sources

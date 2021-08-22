@@ -81,6 +81,7 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.JavaUtil;
+import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.incremental.JavacPrivateAPIError;
 import saker.java.compiler.impl.compile.handler.info.ClassGenerationInfo;
@@ -110,16 +111,15 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 	private Set<String> addReadsReferencedModules;
 
 	@Override
-	public void initCompilation(JavaCompilerInvocationDirector director) throws IOException {
-		super.initCompilation(director);
+	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
+			String[] optionsarray, String sourceversionoptionname, String targetversionoptionname) throws IOException {
+		super.initCompilation(director, directorypaths, optionsarray, sourceversionoptionname, targetversionoptionname);
 		context = new Context();
 		context.put(DiagnosticListener.class, getDiagnosticListener());
 
-		java.util.List<String> options = ObjectUtils.newArrayList(director.getOptions());
-		String sourceversionname = CompilationHandler
-				.sourceVersionToParameterString(director.getSourceVersionOptionName());
-		String targetversionname = CompilationHandler
-				.sourceVersionToParameterString(director.getTargetVersionOptionName());
+		java.util.List<String> options = ObjectUtils.newArrayList(optionsarray);
+		String sourceversionname = CompilationHandler.sourceVersionToParameterString(sourceversionoptionname);
+		String targetversionname = CompilationHandler.sourceVersionToParameterString(targetversionoptionname);
 		if (JavaTools.getCurrentJavaMajorVersion() < 11) {
 			options.remove("--enable-preview");
 		}
@@ -289,9 +289,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		//we need to call enterTrees before any annotation processing
 		//else getTypeElement will throw an exception
 
-		while (compilationRound()) {
-			//loop
-		}
+		director.runCompilationRounds();
 
 		Annotate annotate = Annotate.instance(context);
 		//block annotation processing
@@ -431,7 +429,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 				//name will never be package-info
 				//adding that from the previous compilation has no effect so might as well ignore it
 
-				JavaFileObject fileobj = new SakerPathJavaInputFileObject(director.getDirectoryPaths(), entry.getKey(),
+				JavaFileObject fileobj = new SakerPathJavaInputFileObject(directoryPaths, entry.getKey(),
 						Kind.CLASS, classname);
 
 				ClassSymbol csym = getClassSymbol(module, symtab, p, names, classsig);

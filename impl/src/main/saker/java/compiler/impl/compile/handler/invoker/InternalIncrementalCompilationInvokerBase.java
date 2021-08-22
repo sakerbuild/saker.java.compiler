@@ -137,8 +137,7 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 
 	@Override
 	public void addSourceForCompilation(String sourcename, SakerPath file) {
-		roundAddedSources
-				.add(new SakerPathJavaInputFileObject(director.getDirectoryPaths(), file, Kind.SOURCE, sourcename));
+		roundAddedSources.add(new SakerPathJavaInputFileObject(directoryPaths, file, Kind.SOURCE, sourcename));
 	}
 
 	@Override
