@@ -36,6 +36,8 @@ import testing.saker.java.compiler.TestFlag;
 public class RemoteJavaCompilerCacheKey implements CacheKey<RemoteCompiler, RemoteJavaRMIProcess> {
 	private static final Class<JavaCompilerDaemon> JAVA_COMPILER_DAEMON_MAIN_CLASS = saker.java.compiler.impl.launching.JavaCompilerDaemon.class;
 	private static final String JAVA_COMPILER_DAEMON_MAIN_CLASS_NAME = JAVA_COMPILER_DAEMON_MAIN_CLASS.getName();
+	private static final String MAIN_CLASS_BUNDLE_IDENTIFIER = NestUtils
+			.getClassBundleIdentifier(JAVA_COMPILER_DAEMON_MAIN_CLASS).toString();
 
 	public static final boolean COLLECT_RMI_STATS = saker.build.meta.Versions.VERSION_FULL_COMPOUND >= 8_015
 			&& (System.getProperty(PropertyNames.PROPERTY_COLLECT_RMI_STATISTICS) != null || TestFlag.ENABLED);
@@ -72,8 +74,9 @@ public class RemoteJavaCompilerCacheKey implements CacheKey<RemoteCompiler, Remo
 		if (COLLECT_RMI_STATS) {
 			commands.add("-D" + PropertyNames.PROPERTY_COLLECT_RMI_STATISTICS + "=true");
 		}
-		NestBundleClassLoader cl = (NestBundleClassLoader) IncrementalCompilationHandler.class.getClassLoader();
-		RepositoryEnvironment repoenv = cl.getRepository().getRepositoryEnvironment();
+		ClassLoader classloader = IncrementalCompilationHandler.class.getClassLoader();
+		NestBundleClassLoader nestbundlecl = (NestBundleClassLoader) classloader;
+		RepositoryEnvironment repoenv = nestbundlecl.getRepository().getRepositoryEnvironment();
 		commands.add(saker.build.launching.Main.class.getName());
 		commands.add("action");
 		commands.add("-storage-dir");
@@ -87,9 +90,9 @@ public class RemoteJavaCompilerCacheKey implements CacheKey<RemoteCompiler, Remo
 		commands.add("-class");
 		commands.add(JAVA_COMPILER_DAEMON_MAIN_CLASS_NAME);
 		commands.add("-bundle");
-		commands.add(NestUtils.getClassBundleIdentifier(JAVA_COMPILER_DAEMON_MAIN_CLASS).toString());
-		return new RemoteJavaRMIProcess(commands, IncrementalCompilationHandler.class.getClassLoader(),
-				JavaUtil.getCompilationRMIProperties(), environment.getEnvironmentThreadGroup());
+		commands.add(MAIN_CLASS_BUNDLE_IDENTIFIER);
+		return new RemoteJavaRMIProcess(commands, classloader, JavaUtil.getCompilationRMIProperties(),
+				environment.getEnvironmentThreadGroup());
 	}
 
 	@Override

@@ -33,7 +33,6 @@ import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.IOUtils;
 import saker.build.thirdparty.saker.util.io.ProcessUtils;
 import saker.build.thirdparty.saker.util.io.StreamUtils;
-import saker.build.thirdparty.saker.util.io.UnsyncByteArrayOutputStream;
 import saker.java.compiler.impl.compile.handler.incremental.RemoteJavaCompilerCacheKey;
 import saker.java.compiler.impl.util.RMICompatUtil;
 
@@ -54,23 +53,31 @@ public class RemoteJavaRMIProcess implements Closeable {
 		}
 		proc = pb.start();
 
-		final int port;
-
+		int port = 0;
 		try {
 			InputStream procin = proc.getInputStream();
-			try (UnsyncByteArrayOutputStream portnumbuf = new UnsyncByteArrayOutputStream()) {
-				while (true) {
-					int r = procin.read();
-					if (r < 0 || r == '\n' || r == '\r') {
-						break;
-					}
-					portnumbuf.write(r);
+			while (true) {
+				int r = procin.read();
+				if (r < 0) {
+					throw new IOException(
+							"Failed to read port number from remote Java compiler process, received EOF on standard output.");
 				}
-				if (portnumbuf.isEmpty()) {
-					//XXX reify exception?
-					throw new IOException("Failed to read port number.");
+				if (r == '\n' || r == '\r') {
+					//reached end of port number value
+					break;
 				}
-				port = Integer.parseInt(portnumbuf.toString());
+				if (r < '0' || r > '9') {
+					throw new IOException("Invalid character read for port number from remote Java compiler process, port: "
+							+ port + " char: 0x" + Integer.toHexString(r));
+				}
+				port = port * 10 + (r - '0');
+				if (port > 0xFFFF) {
+					throw new IOException("Invalid port number read from remote Java compiler process: " + port);
+				}
+			}
+			if (port == 0) {
+				//XXX reify exception?
+				throw new IOException("Failed to read port number from remote Java compiler process.");
 			}
 			address = new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
 			RMIOptions options = new RMIOptions().classLoader(cloader).transferProperties(rmiproperties)
@@ -78,7 +85,7 @@ public class RemoteJavaRMIProcess implements Closeable {
 			if (RemoteJavaCompilerCacheKey.COLLECT_RMI_STATS) {
 				options.collectStatistics(true);
 			}
-			connection = options.connect(address);
+			connection = RMICompatUtil.connectWithRMISocketConfiguration(options, address);
 			if (RemoteJavaCompilerCacheKey.COLLECT_RMI_STATS) {
 				RMICompatUtil.addDumpCloseListener(connection);
 			}
@@ -92,10 +99,21 @@ public class RemoteJavaRMIProcess implements Closeable {
 		} catch (Exception e) {
 			waitDestroyForcibly();
 			printProcessStreams();
-			throw new IOException(
-					"Failed to connect to remote Java process." + (address == null ? "" : " (" + address + ")")
-							+ " (Exit code: " + ProcessUtils.getExitCodeIfExited(proc) + ")",
-					e);
+			StringBuilder sb = new StringBuilder("Failed to connect to remote Java compiler process.");
+			if (address != null) {
+				sb.append(" (");
+				sb.append(address);
+				sb.append(")");
+			}
+			sb.append(" (Exit code: ");
+			sb.append(ProcessUtils.getExitCodeIfExited(proc));
+			sb.append(")");
+			if (port != 0) {
+				sb.append(" (Port: ");
+				sb.append(port);
+				sb.append(")");
+			}
+			throw new IOException(sb.toString(), e);
 		}
 	}
 
@@ -152,22 +170,33 @@ public class RemoteJavaRMIProcess implements Closeable {
 	}
 
 	private void printProcessStreams() {
+		IOException e1 = null;
+		IOException e2 = null;
 		String cmd = StringUtils.toStringJoin("\"", "\" \"", commands, "\"");
-		System.err.println(" ---- StdOut from command: " + cmd);
-		try {
-			StreamUtils.copyStream(proc.getInputStream(), System.err);
-		} catch (IOException e) {
-			e.printStackTrace();
+		synchronized (System.err) {
+			System.err.println(" ---- StdOut from command: " + cmd);
+			try {
+				StreamUtils.copyStream(proc.getInputStream(), System.err);
+			} catch (IOException e) {
+				e1 = e;
+			}
+			System.err.println();
+			System.err.println(" ---- StdErr from command: " + cmd);
+			try {
+				StreamUtils.copyStream(proc.getErrorStream(), System.err);
+			} catch (IOException e) {
+				e2 = e;
+			}
+			System.err.println();
+			System.err.println(" -------- ");
+			if (e1 != null) {
+				e1.printStackTrace(System.err);
+			}
+			if (e2 != null) {
+				e2.printStackTrace(System.err);
+			}
 		}
-		System.err.println();
-		System.err.println(" ---- StdErr from command: " + cmd);
-		try {
-			StreamUtils.copyStream(proc.getErrorStream(), System.err);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.err.println();
-		System.err.println(" -------- ");
+
 	}
 
 	public RMIConnection getConnection() {
