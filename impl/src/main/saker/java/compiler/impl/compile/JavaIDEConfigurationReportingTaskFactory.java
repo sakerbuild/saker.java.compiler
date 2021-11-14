@@ -247,6 +247,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		SerialUtils.writeExternalCollection(out, sourceDirectories);
 		SerialUtils.writeExternalCollection(out, classPathEntries);
 		SerialUtils.writeExternalCollection(out, bootClassPathEntries);
+		SerialUtils.writeExternalCollection(out, modulePathEntries);
 		SerialUtils.writeExternalMap(out, sdks);
 	}
 
@@ -264,6 +265,7 @@ public class JavaIDEConfigurationReportingTaskFactory implements TaskFactory<Voi
 		sourceDirectories = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		classPathEntries = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		bootClassPathEntries = SerialUtils.readExternalImmutableLinkedHashSet(in);
+		modulePathEntries = SerialUtils.readExternalImmutableLinkedHashSet(in);
 		sdks = SerialUtils.readExternalSortedImmutableNavigableMap(in, SDKSupportUtils.getSDKNameComparator());
 	}
 
