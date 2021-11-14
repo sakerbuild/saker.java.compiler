@@ -175,7 +175,7 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 		sfd.setRealizedSignatures(getRealizedSignatures(unit, trees, sfd.getPath().getFileName(), cache));
 	}
 
-	protected ClassHoldingData handleParsedFileSignature(CompilationUnitTree unit, ParseContextBase parsedsignature,
+	protected ParsedFileClassHoldingData handleParsedFileSignature(CompilationUnitTree unit, ParseContextBase parsedsignature,
 			SakerPath filepath, JavaCompilerJavaFileObject fileobject, SourcePositions javacsourcepositions,
 			ImportScope importscope) {
 		PackageSignature packagesignature = parsedsignature.getPackageSignature();

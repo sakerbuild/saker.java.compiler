@@ -18,7 +18,6 @@ package saker.java.compiler.impl.compile.handler.invoker;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -159,7 +158,7 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 		return ImmutableUtils.makeImmutableList(result.values());
 	}
 
-	private void addRoundAddedSourceFiles(ConcurrentSkipListMap<SakerPath, ClassHoldingData> result) {
+	private void addRoundAddedSourceFiles(ConcurrentSkipListMap<SakerPath, ? super ParsedFileClassHoldingData> result) {
 		if (roundAddedSources.isEmpty()) {
 			return;
 		}
@@ -173,7 +172,7 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 					parsedTrees.add(cunittree);
 
 					wp.offer(() -> {
-						ClassHoldingData sfd = parseCompilationUnitSignature(unit, cunittree);
+						ParsedFileClassHoldingData sfd = parseCompilationUnitSignature(unit, cunittree);
 
 						result.put(sfd.getPath(), sfd);
 
@@ -268,7 +267,7 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 //		}
 	}
 
-	private ClassHoldingData parseCompilationUnitSignature(JavaCompilerJavaFileObject unit,
+	private ParsedFileClassHoldingData parseCompilationUnitSignature(JavaCompilerJavaFileObject unit,
 			CompilationUnitTree cunittree) {
 		ParseContextBase parsedsignature = signatureParser.parse(cunittree);
 
