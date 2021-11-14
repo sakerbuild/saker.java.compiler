@@ -92,7 +92,7 @@ public class SimpleJavaCompilerOptions implements JavaCompilerOptions {
 		this.parameterNames = copy.getParameterNames();
 		this.debugInfo = JavaTaskUtils.makeImmutableIgnoreCaseNullableStringCollection(copy.getDebugInfo());
 		this.allowTargetReleaseMismatch = copy.getAllowTargetReleaseMismatch();
-		this.parallelProcessing = copy.getPatchEnablePreview();
+		this.patchEnablePreview = copy.getPatchEnablePreview();
 	}
 
 	public SimpleJavaCompilerOptions(JavaCompilerOptions base, JavaCompilerOptions merge)
