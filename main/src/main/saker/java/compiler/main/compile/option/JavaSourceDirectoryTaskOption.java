@@ -32,12 +32,13 @@ import saker.nest.scriptinfo.reflection.annot.NestTypeUsage;
 @NestFieldInformation(value = "Directory",
 		info = @NestInformation("Path to the source directory.\n"
 				+ "The wildcards specified in the Files field are resolved against this path.\n"
-				+ "This path is also used to configure IDE projects."),
-		type = @NestTypeUsage(SakerPath.class))
+				+ "This path is also used to configure IDE projects.\n"
+				+ "This path can also be a wildcard path in which case all matched directories are used."),
+		type = @NestTypeUsage(WildcardPath.class))
 @NestFieldInformation(value = "Files",
 		info = @NestInformation("Specifies the source files that should be matched.\n"
 				+ "The value of the field may be one or multiple wildcards which are used to specify the source files.\n"
-				+ "The source files still should have the .java extension nonetheless."),
+				+ "The source files should still have the .java extension nonetheless."),
 		type = @NestTypeUsage(value = Collection.class, elementTypes = WildcardPath.class))
 public interface JavaSourceDirectoryTaskOption {
 	public default JavaSourceDirectoryTaskOption clone() {
@@ -45,11 +46,15 @@ public interface JavaSourceDirectoryTaskOption {
 	}
 
 	//TODO this should be FileLocation
-	public SakerPath getDirectory();
+	public WildcardPath getDirectory();
 
 	public Collection<WildcardPath> getFiles();
 
 	public static JavaSourceDirectoryTaskOption valueOf(SakerPath path) {
+		return new SimpleJavaSourceDirectoryTaskOption(WildcardPath.valueOf(path), null);
+	}
+
+	public static JavaSourceDirectoryTaskOption valueOf(WildcardPath path) {
 		return new SimpleJavaSourceDirectoryTaskOption(path, null);
 	}
 

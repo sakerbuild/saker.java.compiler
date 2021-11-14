@@ -29,15 +29,21 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import saker.build.file.SakerDirectory;
+import saker.build.file.SakerFile;
 import saker.build.file.path.SakerPath;
+import saker.build.file.path.WildcardPath;
+import saker.build.file.path.WildcardPath.ReducedWildcardPath;
 import saker.build.runtime.execution.ExecutionContext;
 import saker.build.runtime.execution.SakerLog;
+import saker.build.task.CommonTaskContentDescriptors;
 import saker.build.task.ParameterizableTask;
 import saker.build.task.TaskContext;
 import saker.build.task.TaskExecutionParameters;
 import saker.build.task.TaskFactory;
 import saker.build.task.utils.annot.SakerInput;
 import saker.build.task.utils.dependencies.EqualityTaskOutputChangeDetector;
+import saker.build.task.utils.dependencies.WildcardFileCollectionStrategy;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
@@ -392,10 +398,38 @@ public class JavaCompilerTaskFactory extends FrontendTaskFactory<Object> {
 					if (srcdir == null) {
 						continue;
 					}
-					SakerPath dir = srcdir.getDirectory();
-					Objects.requireNonNull(dir, "source directory");
-					setsourcedirs.add(JavaSourceDirectory.create(workingdirpath.tryResolve(dir), srcdir.getFiles()));
-					hadsourcedir = true;
+					WildcardPath wcdir = srcdir.getDirectory();
+					Objects.requireNonNull(wcdir, "source directory");
+
+					ReducedWildcardPath reducedwc = wcdir.reduce();
+					if (reducedwc.getWildcard() == null) {
+						setsourcedirs.add(JavaSourceDirectory.create(workingdirpath.tryResolve(reducedwc.getFile()),
+								srcdir.getFiles()));
+						hadsourcedir = true;
+					} else {
+						//the directory is a wildcard
+						//determine the source directories in this task
+
+						//Use some delta tag like this. We could use null, but this is probably fine.
+						Object deltatag = "DIR-WILDCARD";
+
+						NavigableMap<SakerPath, SakerFile> collectedfiles = taskcontext.getTaskUtilities()
+								.collectFilesReportAdditionDependency(deltatag,
+										WildcardFileCollectionStrategy.create(wcdir));
+						for (Entry<SakerPath, SakerFile> entry : collectedfiles.entrySet()) {
+							SakerFile dirfile = entry.getValue();
+							SakerPath dirfilepath = entry.getKey();
+							if (dirfile instanceof SakerDirectory) {
+								setsourcedirs.add(JavaSourceDirectory.create(dirfilepath, srcdir.getFiles()));
+								hadsourcedir = true;
+								taskcontext.reportInputFileDependency(deltatag, dirfilepath,
+										CommonTaskContentDescriptors.IS_DIRECTORY);
+							} else {
+								taskcontext.reportInputFileDependency(deltatag, dirfilepath,
+										CommonTaskContentDescriptors.IS_NOT_DIRECTORY);
+							}
+						}
+					}
 				}
 				taskbuilder.setSourceDirectories(setsourcedirs);
 			}
