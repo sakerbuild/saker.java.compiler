@@ -1,0 +1,2 @@
+/**DocPackagetest*/
+package test;

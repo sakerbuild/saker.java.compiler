@@ -408,8 +408,6 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	protected final Map<SakerPath, Set<Element>> filesToElementsMap = new TreeMap<>();
 	protected PackagesTypesContainer packageTypesContainer;
 
-	private final ThreadLocal<Set<? super DocumentedElement<?>>> docCommentTrackerThreadLocal = new InheritableThreadLocal<>();
-
 	protected final ParserCache cache;
 	private CompilationContextInformation compilationContext;
 
@@ -429,10 +427,6 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 	protected void setForwardingElementVisitor(ForwardingElementVisitor forwardingElementVisitor) {
 		this.forwardingElementVisitor = forwardingElementVisitor;
-	}
-
-	public void setDocCommentTrackerThreadLocal(Set<? super DocumentedElement<?>> elements) {
-		docCommentTrackerThreadLocal.set(elements);
 	}
 
 	@Override
@@ -993,10 +987,6 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	public String getDocComment(Element e) {
 		if (e instanceof DocumentedElement) {
 			DocumentedElement<?> docelem = (DocumentedElement<?>) e;
-			Set<? super DocumentedElement<?>> tracker = docCommentTrackerThreadLocal.get();
-			if (tracker != null) {
-				tracker.add(docelem);
-			}
 			return docelem.getDocComment();
 		}
 		return null;

@@ -168,6 +168,7 @@ import saker.java.compiler.impl.signature.element.PackageSignature;
 import saker.java.compiler.impl.signature.element.SignatureNameChecker;
 import saker.java.compiler.jdk.impl.JavaCompilationUtils;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
+import saker.java.compiler.jdk.impl.invoker.ForwardingSakerElementsTypes;
 import testing.saker.java.compiler.TestFlag;
 
 public class IncrementalCompilationDirector implements JavaCompilerInvocationDirector {
@@ -231,7 +232,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 	private Map<ProcessorDetails, ProcessorData> prevProcessorDatas;
 
 	private final Object javacSync = new Object();
-	private IncrementalElementsTypes elemTypes;
+	protected IncrementalElementsTypes elemTypes;
 	private AnnotationSetCollector rootElementsAnnotationSetCollector;
 	private volatile AnnotationSetCollector startRootElementsAnnotationSetCollector;
 	private ProcessorCreationContextImpl processorCreationContext;
@@ -1139,7 +1140,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 //		}
 //	}
 
-	private class TrackingABIChangeResultHandler implements Consumer<AbiChange> {
+	private final class TrackingABIChangeResultHandler implements Consumer<AbiChange> {
 		private boolean hadAbiChange = false;
 
 		@Override
@@ -1537,7 +1538,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		return targetVersionOptionName;
 	}
 
-	private class IncrementalRoundEnvironment implements SakerRoundEnvironment {
+	private final class IncrementalRoundEnvironment implements SakerRoundEnvironment {
 		private final boolean processingOver;
 		private Set<? extends Element> rootElements;
 		private Map<TypeElement, Set<Element>> elementsForAnnotationTypes;
@@ -1587,17 +1588,40 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		}
 	}
 
-	private class IncrementalProcessingEnvironment implements SakerProcessingEnvironment {
+	private static class DocTrackingSakerElementsTypes extends ForwardingSakerElementsTypes {
+		private final ProcessorState procState;
+
+		public DocTrackingSakerElementsTypes(SakerElementsTypes elementsTypes, ProcessorState procState) {
+			super(elementsTypes);
+			this.procState = procState;
+		}
+
+		@Override
+		public String getDocComment(Element e) {
+			if (e instanceof DocumentedElement) {
+				//only need to add it in case this is a DocumentElement
+				//as per the implementation in IncrementalElementsTypes8
+				procState.referencedDocCommentElements.add((DocumentedElement<?>) e);
+			}
+			return super.getDocComment(e);
+		}
+
+	}
+
+	private final class IncrementalProcessingEnvironment implements SakerProcessingEnvironment {
 		protected final IncrementalFiler filer;
 		protected final Map<String, String> options;
 		protected final String sourceVersionName;
 		protected final SakerMessager messager;
+
+		protected final DocTrackingSakerElementsTypes docTrackingElementsTypes;
 
 		public IncrementalProcessingEnvironment(ProcessorState p, String sourceVersionName) {
 			this.filer = new IncrementalFiler(p);
 			this.options = p.getProcessorSpecificOptions();
 			this.sourceVersionName = sourceVersionName;
 			this.messager = new IncrementalProcessorMessager(p.getProcessorDetails());
+			this.docTrackingElementsTypes = new DocTrackingSakerElementsTypes(elemTypes, p);
 		}
 
 		@Override
@@ -1617,12 +1641,12 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 		@Override
 		public SakerElementsTypes getElementUtils() {
-			return elemTypes;
+			return docTrackingElementsTypes;
 		}
 
 		@Override
 		public SakerElementsTypes getTypeUtils() {
-			return elemTypes;
+			return docTrackingElementsTypes;
 		}
 
 		@Override
@@ -1700,7 +1724,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		}
 	}
 
-	private class IncrementalFiler implements SakerFiler {
+	private final class IncrementalFiler implements SakerFiler {
 		protected final ProcessorState processor;
 		protected final ConcurrentSkipListMap<SakerPath, ContentDescriptor> processorReadResources = new ConcurrentSkipListMap<>();
 
@@ -1989,7 +2013,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 	}
 
-	private class SourceOutputCollectorJavaFileObject extends SourceClassGeneratedJavaFileObject {
+	private final class SourceOutputCollectorJavaFileObject extends SourceClassGeneratedJavaFileObject {
 		private ProcessorState processor;
 
 		public SourceOutputCollectorJavaFileObject(ProcessorState procstate, String name, GeneratedFileOrigin origin) {
@@ -2154,7 +2178,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 //		info.putGeneratedClassFile(cfd);
 //	}
 
-	private class ProcessorState {
+	private final class ProcessorState {
 		private final JavaAnnotationProcessor processorReference;
 		private final ProcessorDetails processorDetails;
 
@@ -2175,7 +2199,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		private boolean notSkippable = false;
 		private boolean requiresFullRootElements = false;
 
-		private Set<DocumentedElement<?>> referencedDocCommentElements = ConcurrentHashMap.newKeySet();
+		protected final Set<DocumentedElement<?>> referencedDocCommentElements = ConcurrentHashMap.newKeySet();
 		private ProcessorData prevProcessorData;
 
 		public ProcessorState(JavaAnnotationProcessor procref, ProcessorDetails processordetails,
@@ -2270,7 +2294,6 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 				throw new ClientProcessorException(
 						"Failed to instantiate processor: " + processorDetails.getProcessorName(), e, processorDetails);
 			}
-			elemTypes.setDocCommentTrackerThreadLocal(referencedDocCommentElements);
 			try {
 				processor.init(processingEnvironment);
 			} catch (Exception | StackOverflowError | AssertionError | LinkageError | ServiceConfigurationError
@@ -2430,7 +2453,6 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			}
 			System.out.println("Calling processor final round: " + processorDetails.getProcessorName());
 			try {
-				elemTypes.setDocCommentTrackerThreadLocal(referencedDocCommentElements);
 				processor.process(Collections.emptySet(), processorendenv);
 			} catch (Exception | StackOverflowError | AssertionError | LinkageError | ServiceConfigurationError
 					| OutOfMemoryError e) {
@@ -2445,7 +2467,6 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			System.out.println("Calling processor: " + processorDetails.getProcessorName());
 			boolean result;
 			try {
-				elemTypes.setDocCommentTrackerThreadLocal(referencedDocCommentElements);
 				result = processor.process(annotations, roundEnv);
 			} catch (Exception | StackOverflowError | AssertionError | LinkageError | ServiceConfigurationError
 					| OutOfMemoryError e) {
@@ -2477,7 +2498,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		}
 	}
 
-	private class IncrementalProcessorMessager implements SakerMessager {
+	private final class IncrementalProcessorMessager implements SakerMessager {
 		private ProcessorDetails processor;
 
 		public IncrementalProcessorMessager(ProcessorDetails processor) {
@@ -3400,7 +3421,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 //		determineABIChanges(prevcfd, cfd);
 //	}
 
-	private static class OpenedResource {
+	private final static class OpenedResource {
 		private String location;
 		private SakerPath resourcePath;
 
@@ -3441,7 +3462,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		}
 	}
 
-	private static class OpenedResourceState {
+	private final static class OpenedResourceState {
 		private ProcessorDetails processor;
 		private boolean writing;
 
