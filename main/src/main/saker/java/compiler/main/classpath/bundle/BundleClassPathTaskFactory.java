@@ -114,9 +114,7 @@ public class BundleClassPathTaskFactory extends FrontendTaskFactory<Object> {
 							BundleKey bundlekey = taskcontext.getTaskUtilities().getReportExecutionDependency(
 									BundlePropertyUtils.lookupBundleIdentifierToBundleKeyExecutionProperty(bundleid));
 
-							synchronized (bundlekeys) {
-								bundlekeys.add(bundlekey);
-							}
+							bundlekeys.add(bundlekey);
 						}
 						return startBundleKeysTask(taskcontext, bundlekeys);
 					}
