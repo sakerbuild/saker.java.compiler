@@ -530,7 +530,7 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 	 * Same as {@link #iterateRemoverSortedRemoving(SortedMap, SortedMap, BiFunction)} but never removes the item from
 	 * the base map.
 	 * 
-	 * @see {@link #iterateRemoverSortedRemoving(SortedMap, SortedMap, BiFunction)}
+	 * @see #iterateRemoverSortedRemoving(SortedMap, SortedMap, BiFunction)
 	 */
 	private static <T extends Comparable<T>, V1, V2> void iterateSortedRemoving(SortedMap<T, V1> basemap,
 			SortedMap<T, V2> subjectmap, BiConsumer<Entry<T, V1>, V2> consumer) {
