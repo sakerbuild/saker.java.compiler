@@ -464,7 +464,8 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		}
 		//Don't check the presence of STATIC modifier, as the constants are present even for instance variables
 		return (declaringkindindex == ElementKindCompatUtils.ELEMENTKIND_INDEX_CLASS
-				|| declaringkindindex == ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM) && modifiers.contains(Modifier.FINAL);
+				|| declaringkindindex == ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM)
+				&& modifiers.contains(Modifier.FINAL);
 	}
 
 	public static boolean isConstantVariable(VariableTree tree, Kind declaringkind) {
@@ -548,8 +549,9 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 
 	private boolean isEnumConstant(VariableTree tree, Set<Modifier> varmodifierflags, byte declaringkindindex,
 			CompilationUnitTree unit) {
-		if (declaringkindindex != ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM || !varmodifierflags.contains(Modifier.STATIC)
-				|| !varmodifierflags.contains(Modifier.FINAL) || !varmodifierflags.contains(Modifier.PUBLIC)) {
+		if (declaringkindindex != ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM
+				|| !varmodifierflags.contains(Modifier.STATIC) || !varmodifierflags.contains(Modifier.FINAL)
+				|| !varmodifierflags.contains(Modifier.PUBLIC)) {
 			return false;
 		}
 
@@ -741,6 +743,16 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				//this is a reference to a constant field of a type
 				MemberSelectTree mst = (MemberSelectTree) expression;
 				TypeSignature type = typeResolver.resolve(mst.getExpression(), context);
+				if (type == null) {
+					//this can happen if the constant is like 
+					//    public static final int CONSTANT = somefunction().STATIC_FIELD_CONSTANT;
+					//so the member on which we select, is a method invocation
+					//we can't determine the type for that
+					//anyway, its not really relevant, as javac doesn't inline the STATIC_FIELD_CONSTANT
+					//even if it is a static final constant value
+					//so CONSTANT won't be an actual constant field, therefore we don't need (and cant get) a proper constant resolver
+					break;
+				}
 				return new VariableConstantMemberResolver(type, cache.string(mst.getIdentifier()));
 			}
 			case IDENTIFIER: {

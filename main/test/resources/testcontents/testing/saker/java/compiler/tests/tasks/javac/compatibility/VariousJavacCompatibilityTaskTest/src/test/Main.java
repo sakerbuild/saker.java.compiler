@@ -44,6 +44,11 @@ public class Main {
 	public final java.lang.String instance_CONST10 = "123";
 	public final String instance_CONST11 = "123" + 123;
 	public final java.lang.String instance_CONST12 = "123" + 123;
+	
+	public static final int MEMSEL_CONSTANT_1 = new Main().CONST3;
+	public static final int MEMSEL_CONSTANT_2 = makeMain().CONST3;
+	public static final int MEMSEL_CONSTANT_3 = ((Main) null).CONST3;
+	public static final int MEMSEL_CONSTANT_4 = Main.CONST3;
 
 	/**
 	 * docdynamic
@@ -72,6 +77,10 @@ public class Main {
 	//post-declaration array return type
 	public int iReturnAnIntArrayReallyIDo()[] {
 		return new int[0];
+	}
+
+	public static Main makeMain() {
+		return new Main();
 	}
 }
 
