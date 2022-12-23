@@ -429,8 +429,8 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 				//name will never be package-info
 				//adding that from the previous compilation has no effect so might as well ignore it
 
-				JavaFileObject fileobj = new SakerPathJavaInputFileObject(directoryPaths, entry.getKey(),
-						Kind.CLASS, classname);
+				JavaFileObject fileobj = new SakerPathJavaInputFileObject(directoryPaths, entry.getKey(), Kind.CLASS,
+						classname);
 
 				ClassSymbol csym = getClassSymbol(module, symtab, p, names, classsig);
 				csym.classfile = fileobj;
@@ -575,15 +575,29 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		@Override
 		public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse)
 				throws IOException {
-			if (release > 8) {
-				return delegate(location).list(location, packageName, kinds, recurse);
+			try {
+				if (release > 8) {
+					return delegate(location).list(location, packageName, kinds, recurse);
+				}
+				//the release is 8 or earlier 
+				// non-standard (i.e. module oriented) locations should be delegated to release fm
+				if (location instanceof StandardLocation) {
+					return delegate(location).list(location, packageName, kinds, recurse);
+				}
+				return releaseFM.list(StandardLocation.PLATFORM_CLASS_PATH, packageName, kinds, recurse);
+			} catch (RuntimeException e) {
+				//add call information to the exception
+				//this is to help discover the cause of a strange error, when ConcurrentModificationException
+				//and other runtime exceptions were thrown when reading using JRT file system
+				try {
+					e.addSuppressed(new RuntimeException("[INFO] Call parameters: location:" + location
+							+ " packageName: " + packageName + " kinds: " + kinds + " recurse: " + recurse));
+				} catch (Throwable e2) {
+					//failed to add the suppressed exception?!
+					//ignore, throw the original exception anyway
+				}
+				throw e;
 			}
-			//the release is 8 or earlier 
-			// non-standard (i.e. module oriented) locations should be delegated to release fm
-			if (location instanceof StandardLocation) {
-				return delegate(location).list(location, packageName, kinds, recurse);
-			}
-			return releaseFM.list(StandardLocation.PLATFORM_CLASS_PATH, packageName, kinds, recurse);
 		}
 
 		@Override
