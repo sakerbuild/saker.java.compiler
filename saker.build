@@ -206,6 +206,7 @@ compile(
 						com.sun.tools.javac.code,
 						com.sun.tools.javac.model,
 						com.sun.tools.javac.util,
+						com.sun.tools.javac.file,
 						com.sun.tools.javac.comp,
 						com.sun.tools.javac.jvm,
 						com.sun.tools.javac.main,
