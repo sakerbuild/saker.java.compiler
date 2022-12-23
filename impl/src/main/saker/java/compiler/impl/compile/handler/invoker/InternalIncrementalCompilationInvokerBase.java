@@ -18,14 +18,18 @@ package saker.java.compiler.impl.compile.handler.invoker;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.lang.model.SourceVersion;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
+import javax.tools.StandardJavaFileManager;
 
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.util.SourcePositions;
@@ -43,8 +47,10 @@ import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
 import saker.build.thirdparty.saker.util.ConcurrentPrependEntryAccumulator;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
+import saker.build.thirdparty.saker.util.io.IOUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils.ThreadWorkPool;
+import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.file.JavaCompilerJavaFileObject;
 import saker.java.compiler.impl.compile.handler.incremental.JavacPrivateAPIError;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
@@ -59,6 +65,15 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 	protected ListBuffer<JCCompilationUnit> parsedTrees;
 	protected ConcurrentPrependAccumulator<JavaCompilerJavaFileObject> roundAddedSources;
 	protected ConcurrentPrependEntryAccumulator<String, SakerPath> roundAddedClassFiles;
+
+	/**
+	 * The file manager provided by javac.
+	 */
+	protected StandardJavaFileManager javacFileManager;
+	/**
+	 * The file manager that we actually use and give to javac.
+	 */
+	protected JavaFileManager fileManager;
 
 	protected CompilationUnitSignatureParser signatureParser;
 	protected SourcePositions sourcePositions;
@@ -91,6 +106,15 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 	};
 
 	@Override
+	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
+			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException {
+		super.initCompilation(director, directorypaths, options, sourceversionoptionname, targetversionoptionname);
+		context = new Context();
+		context.put(DiagnosticListener.class, getDiagnosticListener());
+		context.put(Locale.class, (Locale) null);
+	}
+
+	@Override
 	public void invokeCompilationImpl(JavaCompilerJavaFileObject[] units) throws IOException {
 		try {
 			roundAddedSources = new ConcurrentPrependAccumulator<>(units);
@@ -107,6 +131,17 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 				closeJavaCompiler(jc);
 			}
 		}
+	}
+
+	@Override
+	public void close() throws IOException {
+		try {
+			//close some resources
+			IOUtils.close(fileManager);
+		} finally {
+			fileManager = null;
+		}
+
 	}
 
 	@Override

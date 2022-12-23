@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,7 +29,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 
@@ -38,10 +36,10 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.SourcePositions;
 import com.sun.source.util.Trees;
-import com.sun.tools.javac.api.JavacTool;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
@@ -77,8 +75,6 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 
 	private ConcurrentNavigableMap<String, SakerPath> classBinaryNameSourcePaths = new ConcurrentSkipListMap<>();
 
-	protected JavaFileManager fileManager;
-
 	protected ParserCache cache = new ParserCache();
 
 	private DelayedReportingDiagnosticListener diagnosticListener = new DelayedReportingDiagnosticListener();
@@ -95,28 +91,39 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException {
 		this.director = director;
 		this.directoryPaths = directorypaths;
-		this.fileManager = JavaCompilationUtils.createFileManager(
-				JavacTool.create().getStandardFileManager(getDiagnosticListener(), null, StandardCharsets.UTF_8),
-				directorypaths);
 	}
 
 	@Override
-	public void invokeCompilation(SakerPathBytes[] units) throws IOException {
+	public final void invokeCompilation(SakerPathBytes[] units) throws IOException {
 		try {
-			JavaCompilerJavaFileObject[] unitobjects = new JavaCompilerJavaFileObject[units.length];
-			for (int i = 0; i < unitobjects.length; i++) {
-				unitobjects[i] = new SakerPathBytesJavaInputFileObject(units[i], Kind.SOURCE, null);
+			Throwable exece = null;
+			try {
+				JavaCompilerJavaFileObject[] unitobjects = new JavaCompilerJavaFileObject[units.length];
+				for (int i = 0; i < unitobjects.length; i++) {
+					unitobjects[i] = new SakerPathBytesJavaInputFileObject(units[i], Kind.SOURCE, null);
+				}
+				invokeCompilationImpl(unitobjects);
+				director.addGeneratedClassFilesForSourceFiles(classBinaryNameSourcePaths);
+			} catch (Throwable e) {
+				exece = e;
+			} finally {
+				try {
+					this.close();
+				} catch (Throwable closee) {
+					if (exece == null) {
+						exece = closee;
+					} else {
+						exece.addSuppressed(closee);
+					}
+				}
 			}
-			invokeCompilationImpl(unitobjects);
-			director.addGeneratedClassFilesForSourceFiles(classBinaryNameSourcePaths);
+			if (exece != null) {
+				//safe sneaky throw, as the possible IOException is declared
+				throw ObjectUtils.sneakyThrow(exece);
+			}
 		} finally {
 			director.reportDiagnostics(diagnosticListener.entries.clearAndIterable());
 		}
-	}
-
-	@Override
-	public JavaFileManager getJavaFileManager() {
-		return fileManager;
 	}
 
 	protected abstract void invokeCompilationImpl(JavaCompilerJavaFileObject[] units) throws IOException;
@@ -175,9 +182,9 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 		sfd.setRealizedSignatures(getRealizedSignatures(unit, trees, sfd.getPath().getFileName(), cache));
 	}
 
-	protected ParsedFileClassHoldingData handleParsedFileSignature(CompilationUnitTree unit, ParseContextBase parsedsignature,
-			SakerPath filepath, JavaCompilerJavaFileObject fileobject, SourcePositions javacsourcepositions,
-			ImportScope importscope) {
+	protected ParsedFileClassHoldingData handleParsedFileSignature(CompilationUnitTree unit,
+			ParseContextBase parsedsignature, SakerPath filepath, JavaCompilerJavaFileObject fileobject,
+			SourcePositions javacsourcepositions, ImportScope importscope) {
 		PackageSignature packagesignature = parsedsignature.getPackageSignature();
 		ModuleSignature modulesignatures = parsedsignature.getModuleSignature();
 		NavigableMap<String, ClassSignature> classes = parsedsignature.getClasses();

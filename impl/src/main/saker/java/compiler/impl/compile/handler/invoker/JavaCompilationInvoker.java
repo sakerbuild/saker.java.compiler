@@ -15,6 +15,7 @@
  */
 package saker.java.compiler.impl.compile.handler.invoker;
 
+import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -40,7 +41,7 @@ import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
 
-public interface JavaCompilationInvoker {
+public interface JavaCompilationInvoker extends Closeable {
 	public interface ABIParseInfo extends RealizedSignatureHolder {
 		public TopLevelAbiUsage getUsage();
 	}
@@ -101,6 +102,11 @@ public interface JavaCompilationInvoker {
 	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
 			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException;
 
+	/**
+	 * Invokes the compilation and closes the resources used by the invoker.
+	 * <p>
+	 * {@link #close()} won't be called after this method successfully finishes.
+	 */
 	public void invokeCompilation(SakerPathBytes[] units) throws IOException;
 
 	public void addSourceForCompilation(String sourcename, SakerPath file) throws IOException;
@@ -122,8 +128,6 @@ public interface JavaCompilationInvoker {
 
 	@RMISerialize
 	public NavigableMap<SakerPath, ABIParseInfo> getParsedSourceABIUsages();
-
-	public JavaFileManager getJavaFileManager();
 
 	@RMISerialize
 	public NavigableSet<String> getCompilationModuleSet();

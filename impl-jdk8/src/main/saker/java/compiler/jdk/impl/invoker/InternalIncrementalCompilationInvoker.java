@@ -16,7 +16,10 @@
 package saker.java.compiler.jdk.impl.invoker;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Map.Entry;
+import java.util.Locale;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Queue;
@@ -37,6 +40,8 @@ import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
+import com.sun.tools.javac.file.CacheFSInfo;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.jvm.ClassReader;
 import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.main.JavaCompiler;
@@ -45,9 +50,11 @@ import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
+import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
+import com.sun.tools.javac.util.Context.Key;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
@@ -60,6 +67,7 @@ import saker.java.compiler.impl.compile.handler.invoker.InternalIncrementalCompi
 import saker.java.compiler.impl.compile.handler.invoker.JavaCompilerInvocationDirector;
 import saker.java.compiler.impl.compile.handler.invoker.PreviousCompilationClassInfo;
 import saker.java.compiler.impl.compile.handler.invoker.SakerPathJavaInputFileObject;
+import saker.java.compiler.jdk.impl.JavaCompilationUtils;
 import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignatureParser;
 
 public class InternalIncrementalCompilationInvoker extends InternalIncrementalCompilationInvokerBase {
@@ -67,10 +75,6 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
 			String[] optionsarray, String sourceversionoptionname, String targetversionoptionname) throws IOException {
 		super.initCompilation(director, directorypaths, optionsarray, sourceversionoptionname, targetversionoptionname);
-
-		context = new Context();
-		context.put(DiagnosticListener.class, getDiagnosticListener());
-		context.put(JavaFileManager.class, fileManager);
 
 		java.util.List<String> options = ObjectUtils.newArrayList(optionsarray);
 		String sourceversionname = CompilationHandler.sourceVersionToParameterString(sourceversionoptionname);
@@ -96,6 +100,21 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 				}
 			}
 		}
+
+		//it seems the file manager has its own context
+		Context filemanagercontext = new Context();
+		filemanagercontext.put(DiagnosticListener.class, getDiagnosticListener());
+		filemanagercontext.put(Locale.class, (Locale) null);
+		//TODO we should have a proper stream for the out/err log key, instead of standard err
+		filemanagercontext.put(Log.outKey, new PrintWriter(System.err));
+		CacheFSInfo.preRegister(filemanagercontext);
+		javacFileManager = new JavacFileManager(filemanagercontext, true, StandardCharsets.UTF_8);
+		//the instantiation used to be like this:
+		//javacFileManager = JavacTool.create().getStandardFileManager(getDiagnosticListener(), null, StandardCharsets.UTF_8);
+		//but we don't need to go through the JavacTool
+		fileManager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+
+		context.put(JavaFileManager.class, fileManager);
 
 		Options opt = Options.instance(context);
 		//put the version options and query the corresponding instances

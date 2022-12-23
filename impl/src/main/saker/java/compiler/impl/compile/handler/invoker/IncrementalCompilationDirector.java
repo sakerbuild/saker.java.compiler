@@ -83,6 +83,7 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.io.FileUtils;
+import saker.build.thirdparty.saker.util.io.IOUtils;
 import saker.build.thirdparty.saker.util.io.UnsyncByteArrayOutputStream;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.java.compiler.api.compile.JavaAnnotationProcessor;
@@ -602,42 +603,50 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 		invoker.initCompilation(this, directoryPaths, this.getOptions(), this.getSourceVersionOptionName(),
 				this.getTargetVersionOptionName());
-
-		//always include module-info files if compiling to JDK >= 9
-		//use > RELEASE_8 instead of >= RELEASE_9 to be able to properly compile on JDK 8
-		modulesSupported = JavaUtil.isModuleSupportingSourceVersion(getSourceVersionName());
-		if (modulesSupported) {
-			for (Entry<SakerPath, ? extends FileHandle> entry : presentSourceFilePaths.entrySet()) {
-				if (JavaTaskUtils.isModuleInfoSource(entry.getValue().getName())) {
-					unitpaths.put(entry.getKey(), entry.getValue());
-					//do not break compilation, as multiple module-info files might be present, and they should trigger an error
+		SakerPathBytes[] unitpathbytes;
+		try {
+			//always include module-info files if compiling to JDK >= 9
+			//use > RELEASE_8 instead of >= RELEASE_9 to be able to properly compile on JDK 8
+			modulesSupported = JavaUtil.isModuleSupportingSourceVersion(getSourceVersionName());
+			if (modulesSupported) {
+				for (Entry<SakerPath, ? extends FileHandle> entry : presentSourceFilePaths.entrySet()) {
+					if (JavaTaskUtils.isModuleInfoSource(entry.getValue().getName())) {
+						unitpaths.put(entry.getKey(), entry.getValue());
+						//do not break compilation, as multiple module-info files might be present, and they should trigger an error
+					}
 				}
 			}
-		}
-		sourceCompilationInclusionPending = !unitpaths.isEmpty();
+			sourceCompilationInclusionPending = !unitpaths.isEmpty();
 
-		if (IncrementalCompilationHandler.LOGGING_ENABLED) {
-			System.out.println("Compile: ");
-			for (SakerPath p : unitpaths.keySet()) {
-				System.out.println("    " + SakerPathFiles.toRelativeString(p));
+			if (IncrementalCompilationHandler.LOGGING_ENABLED) {
+				System.out.println("Compile: ");
+				for (SakerPath p : unitpaths.keySet()) {
+					System.out.println("    " + SakerPathFiles.toRelativeString(p));
+				}
+				System.out.println();
+				System.out.println("ABI changes:");
+				allABIChanges.forEach(System.out::println);
+				System.out.println();
 			}
-			System.out.println();
-			System.out.println("ABI changes:");
-			allABIChanges.forEach(System.out::println);
-			System.out.println();
-		}
 
-		parseEnteredSourcePaths.addAll(unitpaths.keySet());
+			parseEnteredSourcePaths.addAll(unitpaths.keySet());
 
-		SakerPathBytes[] unitpathbytes = new SakerPathBytes[unitpaths.size()];
-		{
-			int i = 0;
-			for (Entry<SakerPath, ? extends FileHandle> entry : unitpaths.entrySet()) {
-				unitpathbytes[i++] = new SakerPathBytes(entry.getKey(), entry.getValue().getBytes());
-				if (TestFlag.ENABLED) {
-					TestFlag.metric().javacCompilingFile(entry.getKey());
+			
+			unitpathbytes = new SakerPathBytes[unitpaths.size()];
+			{
+				int i = 0;
+				for (Entry<SakerPath, ? extends FileHandle> entry : unitpaths.entrySet()) {
+					unitpathbytes[i++] = new SakerPathBytes(entry.getKey(), entry.getValue().getBytes());
+					if (TestFlag.ENABLED) {
+						TestFlag.metric().javacCompilingFile(entry.getKey());
+					}
 				}
 			}
+		} catch (Throwable e) {
+			//an exception was received after the invoker has been initialized
+			//close it, and forward the exception
+			IOUtils.addExc(e, IOUtils.closeExc(invoker));
+			throw e;
 		}
 
 		try {
@@ -645,6 +654,8 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			invoker.invokeCompilation(unitpathbytes);
 		} catch (Exception | com.sun.tools.javac.util.FatalError | com.sun.tools.javac.util.Abort e) {
 			//print the diagnostic entries in case of severe error as well
+			//close the invoker as well, as we don't know if it has closed itself or not
+			IOUtils.addExc(e, IOUtils.closeExc(invoker));
 			try {
 				printDiagnosticEntries();
 			} catch (Throwable e2) {

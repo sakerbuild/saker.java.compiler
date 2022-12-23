@@ -17,12 +17,15 @@ package saker.java.compiler.util9.impl.invoker;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
@@ -63,6 +66,8 @@ import com.sun.tools.javac.comp.Annotate;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.comp.Modules;
+import com.sun.tools.javac.file.CacheFSInfo;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.jvm.Target;
 import com.sun.tools.javac.main.Arguments;
 import com.sun.tools.javac.main.JavaCompiler;
@@ -72,6 +77,7 @@ import com.sun.tools.javac.platform.PlatformUtils;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
+import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
@@ -79,6 +85,7 @@ import com.sun.tools.javac.util.Options;
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
+import saker.build.thirdparty.saker.util.io.IOUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
@@ -95,6 +102,7 @@ import saker.java.compiler.impl.signature.element.ModuleSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature.DirectiveSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature.DirectiveSignatureKind;
 import saker.java.compiler.impl.signature.element.ModuleSignature.RequiresDirectiveSignature;
+import saker.java.compiler.jdk.impl.JavaCompilationUtils;
 import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignatureParser;
 
 public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalCompilationInvokerBase {
@@ -114,8 +122,6 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
 			String[] optionsarray, String sourceversionoptionname, String targetversionoptionname) throws IOException {
 		super.initCompilation(director, directorypaths, optionsarray, sourceversionoptionname, targetversionoptionname);
-		context = new Context();
-		context.put(DiagnosticListener.class, getDiagnosticListener());
 
 		java.util.List<String> options = ObjectUtils.newArrayList(optionsarray);
 		String sourceversionname = CompilationHandler.sourceVersionToParameterString(sourceversionoptionname);
@@ -124,7 +130,15 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			options.remove("--enable-preview");
 		}
 
-		JavaFileManager putfilemanager = fileManager;
+		//it seems the file manager has its own context
+		Context filemanagercontext = new Context();
+		filemanagercontext.put(DiagnosticListener.class, getDiagnosticListener());
+		filemanagercontext.put(Locale.class, (Locale) null);
+		//TODO we should have a proper stream for the out/err log key, instead of standard err
+		filemanagercontext.put(Log.errKey, new PrintWriter(System.err));
+		CacheFSInfo.preRegister(filemanagercontext);
+
+		JavaFileManager putfilemanager = null;
 
 		int releaseidx = options.indexOf("--release");
 		if (releaseidx >= 0) {
@@ -145,27 +159,31 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			int release = Integer.parseInt(releaseval);
 			try {
 				Method getFileManagerMethod = PlatformDescription.class.getMethod("getFileManager");
-				JavaFileManager fm = (JavaFileManager) getFileManagerMethod.invoke(platformdesc);
+				javacFileManager = (StandardJavaFileManager) getFileManagerMethod.invoke(platformdesc);
 				//we are running on java 10 or later
-				//use the file manager
-				putfilemanager = fileManager instanceof StandardJavaFileManager
-						? new DelegatingStandardJavaFileManager(fm, (StandardJavaFileManager) fileManager, release)
-						: new DelegatingJavaFileManager(fm, fileManager, release);
+				//use the file manager below
+				putfilemanager = new DelegatingJavaFileManager(javacFileManager,
+						JavaCompilationUtils.createFileManager(javacFileManager, directorypaths), release);
 			} catch (NoSuchMethodException e) {
 				//we're running on Java 9
+				javacFileManager = new JavacFileManager(filemanagercontext, true, StandardCharsets.UTF_8);
 				if (release == 9) {
 					//do nothing with the file manager
 				} else if (release < 9) {
 					//release is 8 or lower
 					//set the platform class path
+					//the handling of release 8 on Java 9 is special, because javac does some internal shenanigans,
+					//see Release8CompilationTaskTest
 					try {
 						Method getPlatformPathMethod = PlatformDescription.class.getMethod("getPlatformPath");
 						@SuppressWarnings("unchecked")
 						Collection<? extends Path> platformpaths = (Collection<? extends Path>) getPlatformPathMethod
 								.invoke(platformdesc);
-						((StandardJavaFileManager) fileManager)
+
+						putfilemanager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+						((StandardJavaFileManager) putfilemanager)
 								.setLocationFromPaths(StandardLocation.PLATFORM_CLASS_PATH, platformpaths);
-						putfilemanager = new ForwardingJavaFileManager<JavaFileManager>(fileManager) {
+						putfilemanager = new ForwardingJavaFileManager<JavaFileManager>(putfilemanager) {
 							@Override
 							public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds,
 									boolean recurse) throws IOException {
@@ -218,6 +236,12 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			} catch (Exception e) {
 				throw new JavacPrivateAPIError(e);
 			}
+		} else {
+			javacFileManager = new JavacFileManager(filemanagercontext, true, StandardCharsets.UTF_8);
+
+		}
+		if (putfilemanager == null) {
+			putfilemanager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
 		}
 
 		context.put(JavaFileManager.class, putfilemanager);
@@ -272,6 +296,15 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		//XXX set these options for javac?
 		// ClassReader.instance(context).saveParameterNames = true
 		// as seen in JavaCompiler.initProcessAnnotations
+	}
+
+	private static JavaFileManager createDelegatingFileManager(JavaFileManager basefilemanager, int release,
+			JavaFileManager platformfilemanager) {
+		if (basefilemanager instanceof StandardJavaFileManager) {
+			return new DelegatingStandardJavaFileManager(platformfilemanager, (StandardJavaFileManager) basefilemanager,
+					release);
+		}
+		return new DelegatingJavaFileManager(platformfilemanager, basefilemanager, release);
 	}
 
 	@Override
@@ -651,8 +684,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 
 		@Override
 		public void close() throws IOException {
-			releaseFM.close();
-			baseFM.close();
+			IOUtils.close(releaseFM, baseFM);
 		}
 
 		@Override
