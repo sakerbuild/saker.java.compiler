@@ -531,6 +531,7 @@ test(
 			#"-agentlib:jdwp=transport=dt_socket,address=localhost:5432,server=y,suspend=y,quiet=y",
 			# temporarily disable until saker.build is updated
 			#--illegal-access=deny
+			"-Xlog:exceptions=info:file=test_jvm_exc.log"
 		],
 		WorkingDirectory: main,
 		MaxJVMCount: 1,
@@ -654,6 +655,24 @@ testjava16(){
 			testing.saker.java.compiler.tests.jdk14.**.*Test,
 			testing.saker.java.compiler.tests.jdk15.**.*Test,
 			testing.saker.java.compiler.tests.jdk16.**.*Test,
+		],
+	)
+}
+testjava17(){
+	test(
+		jre: saker.java.sdk(17),
+		testclasses: [
+			testing.saker.java.compiler.tests.tasks.**.*Test,
+			testing.saker.java.compiler.tests.only.jdk17.**.*Test,
+			testing.saker.java.compiler.tests.jdk9.**.*Test,
+			testing.saker.java.compiler.tests.jdk10.**.*Test,
+			testing.saker.java.compiler.tests.jdk11.**.*Test,
+			testing.saker.java.compiler.tests.jdk12.**.*Test,
+			testing.saker.java.compiler.tests.jdk13.**.*Test,
+			testing.saker.java.compiler.tests.jdk14.**.*Test,
+			testing.saker.java.compiler.tests.jdk15.**.*Test,
+			testing.saker.java.compiler.tests.jdk16.**.*Test,
+			testing.saker.java.compiler.tests.jdk17.**.*Test,
 		],
 	)
 }
