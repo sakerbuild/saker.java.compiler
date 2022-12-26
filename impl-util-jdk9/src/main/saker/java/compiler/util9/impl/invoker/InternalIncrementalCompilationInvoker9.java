@@ -130,15 +130,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			options.remove("--enable-preview");
 		}
 
-		//it seems the file manager has its own context
-		Context filemanagercontext = new Context();
-		filemanagercontext.put(DiagnosticListener.class, getDiagnosticListener());
-		filemanagercontext.put(Locale.class, (Locale) null);
-		//TODO we should have a proper stream for the out/err log key, instead of standard err
-		filemanagercontext.put(Log.errKey, new PrintWriter(System.err));
-		CacheFSInfo.preRegister(filemanagercontext);
-
-		JavaFileManager putfilemanager = null;
+		JavaFileManager putfilemanager;
 
 		int releaseidx = options.indexOf("--release");
 		if (releaseidx >= 0) {
@@ -149,6 +141,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 			if (platformdesc == null) {
 				throw new IllegalArgumentException("Platform not found for --release " + releaseval);
 			}
+			resourceCloser.add(platformdesc);
 			context.put(PlatformDescription.class, platformdesc);
 			if (sourceversionname == null) {
 				sourceversionname = platformdesc.getSourceVersion();
@@ -157,92 +150,12 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 				targetversionname = platformdesc.getTargetVersion();
 			}
 			int release = Integer.parseInt(releaseval);
-			try {
-				Method getFileManagerMethod = PlatformDescription.class.getMethod("getFileManager");
-				javacFileManager = (StandardJavaFileManager) getFileManagerMethod.invoke(platformdesc);
-				//we are running on java 10 or later
-				//use the file manager below
-				putfilemanager = new DelegatingJavaFileManager(javacFileManager,
-						JavaCompilationUtils.createFileManager(javacFileManager, directorypaths), release);
-			} catch (NoSuchMethodException e) {
-				//we're running on Java 9
-				javacFileManager = new JavacFileManager(filemanagercontext, true, StandardCharsets.UTF_8);
-				if (release == 9) {
-					//do nothing with the file manager
-				} else if (release < 9) {
-					//release is 8 or lower
-					//set the platform class path
-					//the handling of release 8 on Java 9 is special, because javac does some internal shenanigans,
-					//see Release8CompilationTaskTest
-					try {
-						Method getPlatformPathMethod = PlatformDescription.class.getMethod("getPlatformPath");
-						@SuppressWarnings("unchecked")
-						Collection<? extends Path> platformpaths = (Collection<? extends Path>) getPlatformPathMethod
-								.invoke(platformdesc);
-
-						putfilemanager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
-						((StandardJavaFileManager) putfilemanager)
-								.setLocationFromPaths(StandardLocation.PLATFORM_CLASS_PATH, platformpaths);
-						putfilemanager = new ForwardingJavaFileManager<JavaFileManager>(putfilemanager) {
-							@Override
-							public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds,
-									boolean recurse) throws IOException {
-								if (location instanceof StandardLocation) {
-									return super.list(location, packageName, kinds, recurse);
-								}
-								//fall back to the platform class path for any module related things
-								Iterable<JavaFileObject> superresult = super.list(StandardLocation.PLATFORM_CLASS_PATH,
-										packageName, kinds, recurse);
-								//override the Kind of the returned objects as the caller doesn't handle sig files properly on JDK9
-								ArrayList<JavaFileObject> result = new ArrayList<>();
-								for (JavaFileObject jfo : superresult) {
-									result.add(new ClassKindOverridingForwardingJavaFileObject(jfo));
-								}
-								return result;
-							}
-
-							@Override
-							public String inferBinaryName(Location location, JavaFileObject file) {
-								if (file instanceof ClassKindOverridingForwardingJavaFileObject) {
-									return super.inferBinaryName(location,
-											((ClassKindOverridingForwardingJavaFileObject) file).getFileObject());
-								}
-								return super.inferBinaryName(location, file);
-							}
-
-							@Override
-							public boolean isSameFile(FileObject a, FileObject b) {
-								if (a instanceof ClassKindOverridingForwardingJavaFileObject) {
-									a = ((ClassKindOverridingForwardingJavaFileObject) a).getFileObject();
-								}
-								if (b instanceof ClassKindOverridingForwardingJavaFileObject) {
-									b = ((ClassKindOverridingForwardingJavaFileObject) a).getFileObject();
-								}
-								return super.isSameFile(a, b);
-							}
-
-						};
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
-							| NoSuchMethodException | SecurityException e1) {
-						e1.addSuppressed(e);
-						throw new JavacPrivateAPIError(e1);
-					}
-				} else {
-					//release is 10 or above
-					//this should not happen as we're running on Java 9
-					//  because the getFileManager method was not found
-					throw new JavacPrivateAPIError(e);
-				}
-			} catch (Exception e) {
-				throw new JavacPrivateAPIError(e);
-			}
+			putfilemanager = createFileManagerForRelease(directorypaths, platformdesc, release);
 		} else {
-			javacFileManager = new JavacFileManager(filemanagercontext, true, StandardCharsets.UTF_8);
-
+			putfilemanager = createFileManagerWithoutSpecificRelease(directorypaths);
 		}
-		if (putfilemanager == null) {
-			putfilemanager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
-		}
+		resourceCloser.add(putfilemanager);
+		fileManager = putfilemanager;
 
 		context.put(JavaFileManager.class, putfilemanager);
 
@@ -296,6 +209,130 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		//XXX set these options for javac?
 		// ClassReader.instance(context).saveParameterNames = true
 		// as seen in JavaCompiler.initProcessAnnotations
+	}
+
+	private JavaFileManager createFileManagerWithoutSpecificRelease(IncrementalDirectoryPaths directorypaths) {
+		javacFileManager = new JavacFileManager(createJavacFileManagerContext(), true, StandardCharsets.UTF_8);
+		try {
+			return JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+		} catch (Throwable e) {
+			IOUtils.addExc(e, IOUtils.closeExc(javacFileManager));
+			javacFileManager = null;
+			throw e;
+		}
+	}
+
+	private JavaFileManager createFileManagerForRelease(IncrementalDirectoryPaths directorypaths,
+			PlatformDescription platformdesc, int release) {
+		try {
+			Method getFileManagerMethod = PlatformDescription.class.getMethod("getFileManager");
+			javacFileManager = (StandardJavaFileManager) getFileManagerMethod.invoke(platformdesc);
+		} catch (NoSuchMethodException e) {
+			//we're running on Java 9
+			javacFileManager = new JavacFileManager(createJavacFileManagerContext(), true, StandardCharsets.UTF_8);
+			try {
+				if (release == 9) {
+					//do nothing extra with the file manager
+					return JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+				}
+				if (release < 9) {
+					//--release is 8 or lower
+					try {
+						return createJava8OrLowerReleaseFileManagerOnJDK9(directorypaths, platformdesc);
+					} catch (Exception e1) {
+						e1.addSuppressed(e);
+						throw new JavacPrivateAPIError(e1);
+					}
+				}
+				//release is 10 or above
+				//this should not happen as we're running on Java 9
+				//  because the getFileManager method was not found
+				throw new JavacPrivateAPIError(e);
+			} catch (Throwable e2) {
+				IOUtils.addExc(e2, IOUtils.closeExc(javacFileManager));
+				javacFileManager = null;
+				throw e2;
+			}
+		} catch (Exception e) {
+			throw new JavacPrivateAPIError(e);
+		}
+		//we are running on java 10 or later
+		//use the file manager below
+		try {
+			JavaFileManager basefm = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+			return new DelegatingJavaFileManager(javacFileManager, basefm, release);
+		} catch (Throwable e) {
+			IOUtils.addExc(e, IOUtils.closeExc(javacFileManager));
+			javacFileManager = null;
+			throw e;
+		}
+	}
+
+	private Context createJavacFileManagerContext() {
+		//it seems the file manager has its own context
+		Context filemanagercontext = new Context();
+		filemanagercontext.put(DiagnosticListener.class, getDiagnosticListener());
+		filemanagercontext.put(Locale.class, (Locale) null);
+		//TODO we should have a proper stream for the out/err log key, instead of standard err
+		filemanagercontext.put(Log.errKey, new PrintWriter(System.err));
+		CacheFSInfo.preRegister(filemanagercontext);
+		return filemanagercontext;
+	}
+
+	private JavaFileManager createJava8OrLowerReleaseFileManagerOnJDK9(IncrementalDirectoryPaths directorypaths,
+			PlatformDescription platformdesc)
+			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, IOException {
+		//set the platform class path
+		//the handling of release 8 on Java 9 is special, because javac does some internal shenanigans,
+		//see Release8CompilationTaskTest
+
+		Method getPlatformPathMethod = PlatformDescription.class.getMethod("getPlatformPath");
+		@SuppressWarnings("unchecked")
+		Collection<? extends Path> platformpaths = (Collection<? extends Path>) getPlatformPathMethod
+				.invoke(platformdesc);
+
+		JavaFileManager basefilemanager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+		((StandardJavaFileManager) basefilemanager).setLocationFromPaths(StandardLocation.PLATFORM_CLASS_PATH,
+				platformpaths);
+		return new ForwardingJavaFileManager<JavaFileManager>(basefilemanager) {
+			@Override
+			public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds,
+					boolean recurse) throws IOException {
+				if (location instanceof StandardLocation) {
+					return super.list(location, packageName, kinds, recurse);
+				}
+				//fall back to the platform class path for any module related things
+				Iterable<JavaFileObject> superresult = super.list(StandardLocation.PLATFORM_CLASS_PATH, packageName,
+						kinds, recurse);
+				//override the Kind of the returned objects as the caller doesn't handle sig files properly on JDK9
+				ArrayList<JavaFileObject> result = new ArrayList<>();
+				for (JavaFileObject jfo : superresult) {
+					result.add(new ClassKindOverridingForwardingJavaFileObject(jfo));
+				}
+				return result;
+			}
+
+			@Override
+			public String inferBinaryName(Location location, JavaFileObject file) {
+				if (file instanceof ClassKindOverridingForwardingJavaFileObject) {
+					return super.inferBinaryName(location,
+							((ClassKindOverridingForwardingJavaFileObject) file).getFileObject());
+				}
+				return super.inferBinaryName(location, file);
+			}
+
+			@Override
+			public boolean isSameFile(FileObject a, FileObject b) {
+				if (a instanceof ClassKindOverridingForwardingJavaFileObject) {
+					a = ((ClassKindOverridingForwardingJavaFileObject) a).getFileObject();
+				}
+				if (b instanceof ClassKindOverridingForwardingJavaFileObject) {
+					b = ((ClassKindOverridingForwardingJavaFileObject) a).getFileObject();
+				}
+				return super.isSameFile(a, b);
+			}
+
+		};
 	}
 
 	private static JavaFileManager createDelegatingFileManager(JavaFileManager basefilemanager, int release,

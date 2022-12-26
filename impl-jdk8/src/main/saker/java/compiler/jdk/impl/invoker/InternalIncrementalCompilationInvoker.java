@@ -58,6 +58,7 @@ import com.sun.tools.javac.util.Context.Key;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.thirdparty.saker.util.io.IOUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
@@ -76,43 +77,41 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 			String[] optionsarray, String sourceversionoptionname, String targetversionoptionname) throws IOException {
 		super.initCompilation(director, directorypaths, optionsarray, sourceversionoptionname, targetversionoptionname);
 
+		//we're running on java 8, a different invoker is instantiated for 9+
+
 		java.util.List<String> options = ObjectUtils.newArrayList(optionsarray);
 		String sourceversionname = CompilationHandler.sourceVersionToParameterString(sourceversionoptionname);
 		String targetversionname = CompilationHandler.sourceVersionToParameterString(targetversionoptionname);
-		int currentmajor = JavaTools.getCurrentJavaMajorVersion();
-		if (currentmajor < 11) {
-			options.remove("--enable-preview");
-			if (currentmajor < 9) {
-				CompilationHandler.removeNonModularArgumentsFromOptionsList(options);
-				int releaseidx = options.indexOf("--release");
-				if (releaseidx >= 0) {
-					//remove the release argument and its value
-					options.remove(releaseidx);
-					String releaseval = options.remove(releaseidx);
 
-					//set these for compatibility, but only if they aren't set to other values
-					if (sourceversionname == null) {
-						sourceversionname = releaseval;
-					}
-					if (targetversionname == null) {
-						targetversionname = releaseval;
-					}
-				}
+		options.remove("--enable-preview");
+		CompilationHandler.removeNonModularArgumentsFromOptionsList(options);
+		int releaseidx = options.indexOf("--release");
+		if (releaseidx >= 0) {
+			//remove the release argument and its value
+			options.remove(releaseidx);
+			String releaseval = options.remove(releaseidx);
+
+			//set these for compatibility, but only if they aren't set to other values
+			if (sourceversionname == null) {
+				sourceversionname = releaseval;
+			}
+			if (targetversionname == null) {
+				targetversionname = releaseval;
 			}
 		}
 
-		//it seems the file manager has its own context
-		Context filemanagercontext = new Context();
-		filemanagercontext.put(DiagnosticListener.class, getDiagnosticListener());
-		filemanagercontext.put(Locale.class, (Locale) null);
-		//TODO we should have a proper stream for the out/err log key, instead of standard err
-		filemanagercontext.put(Log.outKey, new PrintWriter(System.err));
-		CacheFSInfo.preRegister(filemanagercontext);
-		javacFileManager = new JavacFileManager(filemanagercontext, true, StandardCharsets.UTF_8);
+		javacFileManager = new JavacFileManager(createJavacFileManagerContext(), true, StandardCharsets.UTF_8);
 		//the instantiation used to be like this:
 		//javacFileManager = JavacTool.create().getStandardFileManager(getDiagnosticListener(), null, StandardCharsets.UTF_8);
 		//but we don't need to go through the JavacTool
-		fileManager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+		try {
+			fileManager = JavaCompilationUtils.createFileManager(javacFileManager, directorypaths);
+		} catch (Throwable e) {
+			IOUtils.addExc(e, IOUtils.closeExc(javacFileManager));
+			javacFileManager = null;
+			throw e;
+		}
+		resourceCloser.add(fileManager);
 
 		context.put(JavaFileManager.class, fileManager);
 
@@ -145,6 +144,17 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 		javac.genEndPos = true;
 
 		super.sourceVersion = Source.toSourceVersion(Source.instance(context));
+	}
+
+	private Context createJavacFileManagerContext() {
+		//it seems the file manager has its own context
+		Context filemanagercontext = new Context();
+		filemanagercontext.put(DiagnosticListener.class, getDiagnosticListener());
+		filemanagercontext.put(Locale.class, (Locale) null);
+		//TODO we should have a proper stream for the out/err log key, instead of standard err
+		filemanagercontext.put(Log.outKey, new PrintWriter(System.err));
+		CacheFSInfo.preRegister(filemanagercontext);
+		return filemanagercontext;
 	}
 
 	@Override

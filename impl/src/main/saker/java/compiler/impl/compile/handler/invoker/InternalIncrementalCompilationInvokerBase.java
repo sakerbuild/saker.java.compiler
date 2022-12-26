@@ -48,6 +48,7 @@ import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
 import saker.build.thirdparty.saker.util.ConcurrentPrependEntryAccumulator;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.io.IOUtils;
+import saker.build.thirdparty.saker.util.io.ResourceCloser;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils.ThreadWorkPool;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
@@ -77,6 +78,8 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 
 	protected CompilationUnitSignatureParser signatureParser;
 	protected SourcePositions sourcePositions;
+
+	protected final ResourceCloser resourceCloser = new ResourceCloser();
 
 	protected TaskListener classGenerationTaskListener = new TaskListener() {
 		@Override
@@ -135,13 +138,8 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 
 	@Override
 	public void close() throws IOException {
-		try {
-			//close some resources
-			IOUtils.close(fileManager);
-		} finally {
-			fileManager = null;
-		}
-
+		//close the resources
+		IOUtils.close(resourceCloser);
 	}
 
 	@Override
