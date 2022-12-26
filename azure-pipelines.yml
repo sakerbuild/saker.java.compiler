@@ -12,9 +12,11 @@ strategy:
     Java9:
       J_JAVA_MAJOR: '9'
       J_JDKS: '8 9 12 13 14 15 16'
-    Java10:
-      J_JAVA_MAJOR: '10'
-      J_JDKS: '8 9 10 12 13 14 15 16'
+#JDK 10 has some errors that we're unable to reproduce reliably and diagnose on local build environments.
+#see https://github.com/sakerbuild/saker.java.compiler/issues/16
+#    Java10:
+#      J_JAVA_MAJOR: '10'
+#      J_JDKS: '8 9 10 12 13 14 15 16'
     Java11:
       J_JAVA_MAJOR: '11'
       J_JDKS: '8 9 11 12 13 14 15 16'
