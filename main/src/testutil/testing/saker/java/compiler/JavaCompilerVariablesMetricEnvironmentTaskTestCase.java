@@ -15,18 +15,43 @@
  */
 package testing.saker.java.compiler;
 
+import java.util.Map.Entry;
+
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import testing.saker.SakerTestCase;
 import testing.saker.nest.util.NestRepositoryCachingEnvironmentTestCase;
 
-public abstract class JavaCompilerVariablesMetricEnvironmentTaskTestCase extends NestRepositoryCachingEnvironmentTestCase {
+public abstract class JavaCompilerVariablesMetricEnvironmentTaskTestCase
+		extends NestRepositoryCachingEnvironmentTestCase {
 	public static final SakerPath SRC_PATH_BASE = PATH_WORKING_DIRECTORY.resolve("src");
 
 	@Override
 	protected CompilerCollectingTestMetric createMetricImpl() {
 		return new CompilerCollectingTestMetric();
+	}
+
+	@Override
+	public void executeRunning() throws Exception {
+		try {
+			super.executeRunning();
+		} catch (Throwable e) {
+			//print the system properties in case of a test failure
+			//this is to help us diagnose issues that seem to only occurr on devices
+			//that we don't have access to (like CI)
+			try {
+				StringBuilder sb = new StringBuilder("System properties:\n");
+				for (Entry<Object, Object> entry : System.getProperties().entrySet()) {
+					sb.append(entry);
+					sb.append('\n');
+				}
+				System.err.println(sb);
+			} catch (Throwable e2) {
+				e.addSuppressed(e2);
+			}
+			throw e;
+		}
 	}
 
 	@Override
