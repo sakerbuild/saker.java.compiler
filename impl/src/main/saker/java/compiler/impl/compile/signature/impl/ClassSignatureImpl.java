@@ -244,7 +244,6 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 		annotations = SerialUtils.readExternalImmutableList(in);
 		typeParameters = SerialUtils.readExternalImmutableList(in);
 		permittedSubclasses = (PermittedSubclassesList) in.readObject();
-		;
 		docComment = (String) in.readObject();
 	}
 
