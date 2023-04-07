@@ -90,24 +90,34 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 	}
 
 	public void addMember(ClassSignature enclosingclass, FieldSignature field, MemberABIUsage usage) {
-		MemberABIUsage prev = fields.put(new FieldABIInfo(enclosingclass, field), usage);
+		Objects.requireNonNull(enclosingclass, "class signature");
+		Objects.requireNonNull(field, "field");
+		Objects.requireNonNull(usage, "abi usage");
+		FieldABIInfo abiinfo = new FieldABIInfo(enclosingclass, field);
+		MemberABIUsage prev = fields.putIfAbsent(abiinfo, usage);
 		if (prev != null) {
-			throw new AssertionError("Member usage defined multiple times: " + field);
+			throw new AssertionError("Member usage defined multiple times: " + enclosingclass.getClass().getName()
+					+ ": " + enclosingclass + " field: " + field.getClass().getName() + ": " + field + " for "
+					+ abiinfo);
 		}
 	}
 
 	public void addMember(ClassSignature enclosingclass, MethodSignature method, MemberABIUsage usage) {
+		Objects.requireNonNull(enclosingclass, "class signature");
+		Objects.requireNonNull(method, "method");
+		Objects.requireNonNull(usage, "abi usage");
 		methods.computeIfAbsent(new MethodABIInfo(enclosingclass, method), Functionals.arrayListComputer()).add(usage);
-//		MemberABIUsage prev = methods.put(new MethodABIInfo(method), usage);
-//		if (prev != null) {
-//			throw new AssertionError("Member usage defined multiple times: " + method);
-//		}
+		//not checked for duplicates, as the key only contains the method name, not the method signature
 	}
 
 	public void addMember(ClassSignature clazz, MemberABIUsage usage) {
-		MemberABIUsage prev = classes.put(new ClassABIInfo(clazz), usage);
+		Objects.requireNonNull(clazz, "class signature");
+		Objects.requireNonNull(usage, "abi usage");
+		ClassABIInfo abiinfo = new ClassABIInfo(clazz);
+		MemberABIUsage prev = classes.putIfAbsent(abiinfo, usage);
 		if (prev != null) {
-			throw new AssertionError("Member usage defined multiple times: " + clazz);
+			throw new AssertionError("Member usage defined multiple times: " + clazz.getClass().getName() + ": " + clazz
+					+ " for " + abiinfo);
 		}
 	}
 

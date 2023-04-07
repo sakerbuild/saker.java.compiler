@@ -30,7 +30,7 @@ import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 
 public interface TopLevelAbiUsage extends AbiUsage {
-	public static class ClassABIInfo implements Comparable<ClassABIInfo>, Externalizable {
+	public static final class ClassABIInfo implements Comparable<ClassABIInfo>, Externalizable {
 		private static final long serialVersionUID = 1L;
 
 		protected String canonicalName;
@@ -85,7 +85,8 @@ public interface TopLevelAbiUsage extends AbiUsage {
 
 		@Override
 		public String toString() {
-			return "ClassABIInfo [" + (canonicalName != null ? "canonicalName=" + canonicalName : "") + "]";
+			return getClass().getSimpleName() + "[" + (canonicalName != null ? "canonicalName=" + canonicalName : "")
+					+ "]";
 		}
 
 		@Override
@@ -99,7 +100,7 @@ public interface TopLevelAbiUsage extends AbiUsage {
 		}
 	}
 
-	public static class MethodABIInfo implements Comparable<MethodABIInfo>, Externalizable {
+	public static final class MethodABIInfo implements Comparable<MethodABIInfo>, Externalizable {
 		private static final long serialVersionUID = 1L;
 
 		protected String classCanonicalName;
@@ -174,7 +175,7 @@ public interface TopLevelAbiUsage extends AbiUsage {
 
 		@Override
 		public String toString() {
-			return "MethodABIInfo ["
+			return getClass().getSimpleName() + "["
 					+ (classCanonicalName != null ? "classCanonicalName=" + classCanonicalName + ", " : "")
 					+ (methodName != null ? "methodName=" + methodName : "") + "]";
 		}
@@ -192,7 +193,7 @@ public interface TopLevelAbiUsage extends AbiUsage {
 		}
 	}
 
-	public static class FieldABIInfo implements Comparable<FieldABIInfo>, Externalizable {
+	public static final class FieldABIInfo implements Comparable<FieldABIInfo>, Externalizable {
 		private static final long serialVersionUID = 1L;
 
 		protected String classCanonicalName;
@@ -280,7 +281,7 @@ public interface TopLevelAbiUsage extends AbiUsage {
 
 		@Override
 		public String toString() {
-			return "FieldABIInfo ["
+			return getClass().getSimpleName() + "["
 					+ (classCanonicalName != null ? "classCanonicalName=" + classCanonicalName + ", " : "")
 					+ (fieldName != null ? "fieldName=" + fieldName + ", " : "") + "hasConstantValue="
 					+ hasConstantValue + "]";
