@@ -83,12 +83,15 @@ import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
 
 import saker.build.file.path.SakerPath;
+import saker.build.thirdparty.saker.util.ConcatIterable;
+import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.IOUtils;
 import saker.build.util.java.JavaTools;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
+import saker.java.compiler.impl.compile.file.JavaCompilerJavaFileObject;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
 import saker.java.compiler.impl.compile.handler.incremental.JavacPrivateAPIError;
 import saker.java.compiler.impl.compile.handler.info.ClassGenerationInfo;
@@ -618,8 +621,8 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		}
 	}
 
+	@com.sun.tools.javac.api.ClientCodeWrapper.Trusted
 	private static class DelegatingJavaFileManager implements JavaFileManager {
-
 		private final JavaFileManager releaseFM;
 		private final JavaFileManager baseFM;
 		private final int release;
@@ -646,14 +649,21 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse)
 				throws IOException {
 			try {
-				if (release > 8) {
-					return delegate(location).list(location, packageName, kinds, recurse);
+				if (release >= 9 || location instanceof StandardLocation) {
+					//release is 9 or greater, so module locations are supported
+					//query both file managers
+					Iterable<JavaFileObject> relobjs = releaseFM.list(location, packageName, kinds, recurse);
+					Iterable<JavaFileObject> baseobjs = baseFM.list(location, packageName, kinds, recurse);
+					if (relobjs == null) {
+						return baseobjs;
+					}
+					if (baseobjs == null) {
+						return relobjs;
+					}
+					return new ConcatIterable<>(ImmutableUtils.asUnmodifiableArrayList(relobjs, baseobjs));
 				}
 				//the release is 8 or earlier 
-				// non-standard (i.e. module oriented) locations should be delegated to release fm
-				if (location instanceof StandardLocation) {
-					return delegate(location).list(location, packageName, kinds, recurse);
-				}
+				// non-standard (i.e. module oriented) locations should be delegated to release fm using the platform classpath
 				return releaseFM.list(StandardLocation.PLATFORM_CLASS_PATH, packageName, kinds, recurse);
 			} catch (RuntimeException e) {
 				//add call information to the exception
@@ -672,6 +682,11 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 
 		@Override
 		public String inferBinaryName(Location location, JavaFileObject file) {
+			if (file instanceof JavaCompilerJavaFileObject) {
+				//if the file object was returned by the saker.java.compiler module, then call the 
+				//infer binary name directly, otherwise it might cause an AssertionError or similar on the javac file manager
+				return ((JavaCompilerJavaFileObject) file).getInferredBinaryName();
+			}
 			return delegate(location).inferBinaryName(location, file);
 		}
 
@@ -765,6 +780,7 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 
 	}
 
+	@com.sun.tools.javac.api.ClientCodeWrapper.Trusted
 	private static final class DelegatingStandardJavaFileManager extends DelegatingJavaFileManager
 			implements StandardJavaFileManager {
 

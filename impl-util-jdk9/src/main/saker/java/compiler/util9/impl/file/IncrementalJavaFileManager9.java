@@ -16,6 +16,7 @@
 package saker.java.compiler.util9.impl.file;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
@@ -93,7 +94,12 @@ public class IncrementalJavaFileManager9 extends IncrementalJavaFileManager8 {
 		if (location instanceof ModulePathLocationImpl) {
 			ModulePathLocationImpl loc = (ModulePathLocationImpl) location;
 			//dont call super.list, as they wouldn't recognize the location
-			return listInDirectoryLocationImpl(packageName, kinds, recurse, loc.getDirectoryLocation());
+			Collection<JavaFileObject> listed = listInDirectoryLocationImpl(packageName, kinds, recurse,
+					loc.getDirectoryLocation());
+			if (listed == null) {
+				return Collections.emptyList();
+			}
+			return listed;
 		}
 		return super.list(location, packageName, kinds, recurse);
 	}

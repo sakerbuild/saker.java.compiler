@@ -1,0 +1,39 @@
+$cc1 = saker.java.compile(
+	SourceDirectories: src1,
+	SourceVersion: 8,
+	TargetVersion: 8,
+	Parameters: [--release, 8,],
+)
+
+saker.java.compile(
+	SourceDirectories: src2,
+	ClassPath: [
+		$cc1,
+		mpath.jar,
+	],
+	SourceVersion: 8,
+	TargetVersion: 8,
+	Parameters: [--release, 8,],
+)
+
+# try without release as well
+saker.java.compile(
+	SourceDirectories: src2,
+	ClassPath: [
+		$cc1,
+		mpath.jar,
+	],
+	SourceVersion: 8,
+	TargetVersion: 8,
+	Identifier: norelease
+)
+
+# try without any special version option
+saker.java.compile(
+	SourceDirectories: src2,
+	ClassPath: [
+		$cc1,
+		mpath.jar,
+	],
+	Identifier: plain
+)

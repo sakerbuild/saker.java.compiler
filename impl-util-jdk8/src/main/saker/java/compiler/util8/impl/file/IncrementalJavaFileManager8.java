@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -91,6 +92,9 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 		}
 
 		Collection<JavaFileObject> selfresult = listInDirectoryLocationImpl(packageName, kinds, recurse, dirloc);
+		if (selfresult == null) {
+			return superresult;
+		}
 		@SuppressWarnings("unchecked")
 		ConcatIterable<JavaFileObject> result = new ConcatIterable<>(
 				ImmutableUtils.asUnmodifiableArrayList(superresult, selfresult));
@@ -102,14 +106,20 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 		if (dirloc == null) {
 			return null;
 		}
-		Collection<JavaFileObject> selfresult = new ArrayList<>();
 		Iterable<? extends IncrementalDirectoryFile> listed = dirloc.list(packageName, kinds, recurse);
 		if (listed != null) {
-			for (IncrementalDirectoryFile dirfile : listed) {
-				selfresult.add(new IncrementalDirectoryJavaInputFileObject(dirfile));
+			Iterator<? extends IncrementalDirectoryFile> it = listed.iterator();
+			if (!it.hasNext()) {
+				return null;
 			}
+			Collection<JavaFileObject> selfresult = new ArrayList<>();
+			do {
+				IncrementalDirectoryFile dirfile = it.next();
+				selfresult.add(new IncrementalDirectoryJavaInputFileObject(dirfile));
+			} while (it.hasNext());
+			return selfresult;
 		}
-		return selfresult;
+		return null;
 	}
 
 	@Override
