@@ -187,9 +187,11 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		}
 
 		public SignaturePath pushSignaturePath() {
-			SignaturePath result = new SignaturePath();
+			SignaturePath result;
 			if (!signaturePathStack.isEmpty()) {
-				result.setParent(signaturePathStack.getLast());
+				result = new SignaturePath(signaturePathStack.getLast());
+			} else {
+				result = new SignaturePath();
 			}
 			signaturePathStack.addLast(result);
 			return result;
