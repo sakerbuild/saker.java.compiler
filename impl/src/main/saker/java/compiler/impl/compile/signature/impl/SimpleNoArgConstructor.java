@@ -42,6 +42,15 @@ import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 public final class SimpleNoArgConstructor implements MethodSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
+	private static final SimpleNoArgConstructor INSTANCE_MODIFIERS_NONE = new SimpleNoArgConstructor(
+			ImmutableModifierSet.FLAG_NONE);
+	private static final SimpleNoArgConstructor INSTANCE_MODIFIERS_PUBLIC = new SimpleNoArgConstructor(
+			ImmutableModifierSet.FLAG_PUBLIC);
+	private static final SimpleNoArgConstructor INSTANCE_MODIFIERS_PROTECTED = new SimpleNoArgConstructor(
+			ImmutableModifierSet.FLAG_PROTECTED);
+	private static final SimpleNoArgConstructor INSTANCE_MODIFIERS_PRIVATE = new SimpleNoArgConstructor(
+			ImmutableModifierSet.FLAG_PRIVATE);
+
 	protected short modifierFlags;
 
 	/**
@@ -50,8 +59,26 @@ public final class SimpleNoArgConstructor implements MethodSignature, Externaliz
 	public SimpleNoArgConstructor() {
 	}
 
-	public SimpleNoArgConstructor(Set<Modifier> modifiers) {
-		this.modifierFlags = ImmutableModifierSet.getFlag(modifiers);
+	private SimpleNoArgConstructor(short modifierFlags) {
+		this.modifierFlags = modifierFlags;
+	}
+
+	public static MethodSignature create(Set<Modifier> modifiers) {
+		//based on JLS, only the following modifiers are possible, so cache them
+		short modflags = ImmutableModifierSet.getFlag(modifiers);
+		switch (modflags) {
+			case ImmutableModifierSet.FLAG_NONE:
+				return INSTANCE_MODIFIERS_NONE;
+			case ImmutableModifierSet.FLAG_PUBLIC:
+				return INSTANCE_MODIFIERS_PUBLIC;
+			case ImmutableModifierSet.FLAG_PROTECTED:
+				return INSTANCE_MODIFIERS_PROTECTED;
+			case ImmutableModifierSet.FLAG_PRIVATE:
+				return INSTANCE_MODIFIERS_PRIVATE;
+			default:
+				//if by any chance the modifiers are different, create a new instance
+				return new SimpleNoArgConstructor(modflags);
+		}
 	}
 
 	@Override

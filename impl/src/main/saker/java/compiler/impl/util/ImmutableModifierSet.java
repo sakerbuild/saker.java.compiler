@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -31,6 +32,7 @@ import java.util.function.Predicate;
 import javax.lang.model.element.Modifier;
 
 import saker.java.compiler.api.processing.exc.ModifierNotFoundException;
+import testing.saker.java.compiler.TestFlag;
 
 public final class ImmutableModifierSet extends AbstractSet<Modifier> {
 	private static final ImmutableModifierSet EMPTY_INSTANCE = new ImmutableModifierSet((short) 0);
@@ -93,6 +95,22 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> {
 		}
 		ALL_RECOGNIZED_FLAGS_MASK = allrecognized;
 		MODIFIER_SEALED = ENUM_VALUES[INDEX_SEALED];
+	}
+
+	public static final short FLAG_NONE = 0;
+	public static final short FLAG_PUBLIC = 1 << 0;
+	public static final short FLAG_PROTECTED = 1 << 1;
+	public static final short FLAG_PRIVATE = 1 << 2;
+
+	static {
+		if (TestFlag.ENABLED) {
+			if (FLAG_PUBLIC != getFlag(EnumSet.of(Modifier.PUBLIC))
+					|| FLAG_PROTECTED != getFlag(EnumSet.of(Modifier.PROTECTED))
+					|| FLAG_PRIVATE != getFlag(EnumSet.of(Modifier.PRIVATE))) {
+				//sanity checks that the compile time constants equal the converted ones
+				throw new AssertionError("Flag value mismatch.");
+			}
+		}
 	}
 
 	private final short flags;
