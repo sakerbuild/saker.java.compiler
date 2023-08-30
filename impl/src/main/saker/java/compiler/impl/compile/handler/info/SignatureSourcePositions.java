@@ -150,10 +150,6 @@ public class SignatureSourcePositions implements Externalizable {
 		return result;
 	}
 
-	public Map<SignaturePath, Position> getPositions() {
-		return positions;
-	}
-
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		SerialUtils.writeExternalMap(out, positions);
