@@ -20,21 +20,53 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
+import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
+import saker.java.compiler.impl.compile.signature.type.impl.SimpleUnresolvedTypeSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
 public class SimpleAnnotationSignature implements AnnotationSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
+	public static final SimpleAnnotationSignature INSTANCE_OVERRIDE = new SimpleAnnotationSignature(
+			SimpleUnresolvedTypeSignature.INSTANCE_OVERRIDE);
+	public static final SimpleAnnotationSignature INSTANCE_JAVA_LANG_OVERRIDE = new SimpleAnnotationSignature(
+			SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_OVERRIDE);
+	public static final SimpleAnnotationSignature INSTANCE_DEPRECATED = new SimpleAnnotationSignature(
+			SimpleUnresolvedTypeSignature.INSTANCE_DEPRECATED);
+	public static final SimpleAnnotationSignature INSTANCE_JAVA_LANG_DEPRECATED = new SimpleAnnotationSignature(
+			SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_DEPRECATED);
+
+	private static final Map<TypeSignature, SimpleAnnotationSignature> SIMPLE_CACHE = new HashMap<>();
+	static {
+		initSimpleCache(INSTANCE_OVERRIDE);
+		initSimpleCache(INSTANCE_JAVA_LANG_OVERRIDE);
+		initSimpleCache(INSTANCE_DEPRECATED);
+		initSimpleCache(INSTANCE_JAVA_LANG_DEPRECATED);
+	}
+
+	private static void initSimpleCache(SimpleAnnotationSignature sig) {
+		SIMPLE_CACHE.put(sig.getAnnotationType(), sig);
+	}
+
 	private TypeSignature annotationType;
 
 	public SimpleAnnotationSignature() {
 	}
 
-	public SimpleAnnotationSignature(TypeSignature annotationType) {
+	private SimpleAnnotationSignature(TypeSignature annotationType) {
 		this.annotationType = annotationType;
+	}
+
+	public static SimpleAnnotationSignature create(TypeSignature annotationType) {
+		SimpleAnnotationSignature cached = SIMPLE_CACHE.get(annotationType);
+		if (cached != null) {
+			return cached;
+		}
+		return new SimpleAnnotationSignature(annotationType);
 	}
 
 	@Override
@@ -55,6 +87,10 @@ public class SimpleAnnotationSignature implements AnnotationSignature, Externali
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		annotationType = (TypeSignature) in.readObject();
+	}
+
+	private Object readResolve() {
+		return SIMPLE_CACHE.getOrDefault(annotationType, this);
 	}
 
 	@Override

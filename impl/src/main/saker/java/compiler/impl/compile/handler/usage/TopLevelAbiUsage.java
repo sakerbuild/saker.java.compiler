@@ -206,14 +206,15 @@ public interface TopLevelAbiUsage extends AbiUsage {
 		public FieldABIInfo() {
 		}
 
-		public FieldABIInfo(String classCanonicalName, String fieldName, boolean hasConstantValue) {
+		private FieldABIInfo(String classCanonicalName, String fieldName, boolean hasConstantValue) {
 			this.classCanonicalName = classCanonicalName;
 			this.fieldName = fieldName;
 			this.hasConstantValue = hasConstantValue;
 		}
 
-		public FieldABIInfo(ClassSignature enclosingclass, FieldSignature signature) {
-			this(enclosingclass.getCanonicalName(), signature.getSimpleName(), signature.getConstantValue() != null);
+		public static FieldABIInfo create(ClassSignature enclosingclass, FieldSignature signature) {
+			return new FieldABIInfo(enclosingclass.getCanonicalName(), signature.getSimpleName(),
+					signature.getConstantValue() != null);
 		}
 
 		public String getClassCanonicalName() {

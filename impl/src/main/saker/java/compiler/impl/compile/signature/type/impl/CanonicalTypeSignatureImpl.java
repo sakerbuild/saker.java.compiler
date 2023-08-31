@@ -32,18 +32,6 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 public class CanonicalTypeSignatureImpl extends AnnotatedCanonicalTypeSignature {
 	private static final long serialVersionUID = 1L;
 
-	public static final CanonicalTypeSignature INSTANCE_JAVA_LANG_OBJECT = create("java.lang.Object");
-	public static final CanonicalTypeSignature INSTANCE_JAVA_LANG_STRING = create("java.lang.String");
-	public static final CanonicalTypeSignature INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION = create(
-			"java.lang.annotation.Annotation");
-
-	public static final CanonicalTypeSignature INSTANCE_JAVA_LANG_DEPRECATED = create("java.lang.Override");
-	public static final CanonicalTypeSignature INSTANCE_JAVA_LANG_OVERRIDE = create("java.lang.Deprecated");
-	public static final CanonicalTypeSignature INSTANCE_JAVA_LANG_FUNCTIONALINTERFACE = create(
-			"java.lang.FunctionalInterface");
-	public static final CanonicalTypeSignature INSTANCE_JAVA_LANG_SUPPRESSWARNINGS = create(
-			"java.lang.SuppressWarnings");
-
 	private List<? extends TypeSignature> typeParameters;
 
 	/**
@@ -53,7 +41,7 @@ public class CanonicalTypeSignatureImpl extends AnnotatedCanonicalTypeSignature 
 	}
 
 	public static CanonicalTypeSignature create(String canonicalName) {
-		return new SimpleCanonicalTypeSignature(canonicalName);
+		return SimpleCanonicalTypeSignature.create(canonicalName);
 	}
 
 	public static CanonicalTypeSignature create(List<? extends AnnotationSignature> annotations, String canonicalName) {

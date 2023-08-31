@@ -37,8 +37,8 @@ import javax.lang.model.type.TypeMirror;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
-import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
+import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.model.CommonTypeElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
@@ -46,8 +46,8 @@ import saker.java.compiler.impl.compile.handler.incremental.model.mirror.Increme
 import saker.java.compiler.impl.compile.signature.impl.ClassSignatureImpl;
 import saker.java.compiler.impl.compile.signature.impl.FullMethodSignature;
 import saker.java.compiler.impl.compile.signature.impl.MethodParameterSignatureImpl;
-import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.PrimitiveTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
@@ -65,15 +65,15 @@ public class IncrementalTypeElement extends IncrementalElement<ClassSignature>
 			IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null, null,
 			PrimitiveTypeSignatureImpl.create(TypeKind.INT), null, ElementKind.METHOD, null, null, false, null);
 	private static final MethodSignature RECORD_IMLICIT_TOSTRING_SIGNATURE = FullMethodSignature.create("toString",
-			IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null, CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING,
-			null, ElementKind.METHOD, null, null, false, null);
+			IncrementalElementsTypes.MODIFIERS_PUBLIC, null, null,
+			SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null, null, false, null);
 	private static final MethodSignature RECORD_IMLICIT_FINAL_TOSTRING_SIGNATURE = FullMethodSignature.create(
 			"toString", IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL, null, null,
-			CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null, null, false, null);
+			SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_STRING, null, ElementKind.METHOD, null, null, false, null);
 	private static final MethodSignature RECORD_IMLICIT_EQUALS_SIGNATURE = FullMethodSignature.create("equals",
 			IncrementalElementsTypes.MODIFIERS_PUBLIC_FINAL,
 			Collections.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
-					CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT, "o")),
+					SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_OBJECT, "o")),
 			null, PrimitiveTypeSignatureImpl.create(TypeKind.BOOLEAN), null, ElementKind.METHOD, null, null, false,
 			null);
 

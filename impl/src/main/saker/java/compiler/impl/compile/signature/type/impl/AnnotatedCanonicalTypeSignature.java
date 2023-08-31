@@ -48,7 +48,7 @@ public class AnnotatedCanonicalTypeSignature extends AnnotatedSignatureImpl impl
 
 	public static CanonicalTypeSignature create(List<? extends AnnotationSignature> annotations, String canonicalName) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
-			return new SimpleCanonicalTypeSignature(canonicalName);
+			return SimpleCanonicalTypeSignature.create(canonicalName);
 		}
 		return new AnnotatedCanonicalTypeSignature(annotations, canonicalName);
 	}

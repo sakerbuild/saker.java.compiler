@@ -35,12 +35,12 @@ public class ArrayTypeSignatureImpl extends AnnotatedSignatureImpl implements Ar
 	}
 
 	public static ArrayTypeSignature create(TypeSignature componentType) {
-		return new SimpleArrayTypeSignature(componentType);
+		return SimpleArrayTypeSignature.create(componentType);
 	}
 
 	public static ArrayTypeSignature create(List<AnnotationSignature> annotations, TypeSignature componentType) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
-			return create(componentType);
+			return SimpleArrayTypeSignature.create(componentType);
 		}
 		return new ArrayTypeSignatureImpl(annotations, componentType);
 	}

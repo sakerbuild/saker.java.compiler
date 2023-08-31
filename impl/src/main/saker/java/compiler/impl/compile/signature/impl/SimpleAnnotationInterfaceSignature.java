@@ -25,7 +25,7 @@ import javax.lang.model.element.NestingKind;
 
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
-import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.type.CanonicalTypeSignature;
@@ -33,7 +33,7 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 
 public class SimpleAnnotationInterfaceSignature extends ClassSignatureBase {
 	private static final List<CanonicalTypeSignature> LIST_SUPER_INTERFACES_JAVA_LANG_ANNOTATION_ANNOTATION = ImmutableUtils
-			.singletonList(CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION);
+			.singletonList(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION);
 	private static final long serialVersionUID = 1L;
 
 	/**

@@ -27,10 +27,12 @@ import saker.java.compiler.impl.compile.handler.incremental.model.scope.SimpleIm
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.StaticImportDeclaration;
 import saker.java.compiler.impl.compile.signature.annot.val.LiteralValueImpl;
 import saker.java.compiler.impl.compile.signature.impl.AnnotationSignatureImpl;
+import saker.java.compiler.impl.compile.signature.impl.SimpleAnnotationSignature;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
 import saker.java.compiler.impl.compile.signature.type.impl.SimpleExtendsWildcardTypeSignature;
 import saker.java.compiler.impl.compile.signature.type.impl.SimpleSuperWildcardTypeSignature;
+import saker.java.compiler.impl.compile.signature.type.impl.SimpleUnresolvedTypeSignature;
 import saker.java.compiler.impl.compile.signature.type.impl.UnresolvedTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.value.LiteralConstantResolver;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
@@ -61,26 +63,44 @@ public class ParserCache {
 	private ConcurrentSkipListMap<String, UnresolvedTypeSignature> unresolvedSignatures = new ConcurrentSkipListMap<>();
 
 	{
-		simpleCanonicalTypeSignatures.put(CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING.getCanonicalName(),
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING);
-		simpleCanonicalTypeSignatures.put(CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT.getCanonicalName(),
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT);
-		simpleCanonicalTypeSignatures.put(
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION.getCanonicalName(),
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION);
+		putCanonicalCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_STRING);
+		putCanonicalCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_OBJECT);
+		putCanonicalCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION);
 
-		simpleCanonicalTypeSignatures.put(CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OVERRIDE.getCanonicalName(),
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OVERRIDE);
-		simpleCanonicalTypeSignatures.put(CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_DEPRECATED.getCanonicalName(),
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_DEPRECATED);
-		simpleCanonicalTypeSignatures.put(
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_FUNCTIONALINTERFACE.getCanonicalName(),
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_FUNCTIONALINTERFACE);
-		simpleCanonicalTypeSignatures.put(
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_SUPPRESSWARNINGS.getCanonicalName(),
-				CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_SUPPRESSWARNINGS);
+		putCanonicalCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_OVERRIDE);
+		putCanonicalCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_DEPRECATED);
+		putCanonicalCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_FUNCTIONALINTERFACE);
+		putCanonicalCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_SUPPRESSWARNINGS);
+
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_OBJECT);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_OVERRIDE);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_STRING);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_BOOLEAN);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_BYTE);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_SHORT);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_INTEGER);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_LONG);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_FLOAT);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_DOUBLE);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_VOID);
+		putUnresolvedCache(SimpleUnresolvedTypeSignature.INSTANCE_CHARACTER);
+
+		putSimpleAnnotationCache(SimpleAnnotationSignature.INSTANCE_OVERRIDE);
+		putSimpleAnnotationCache(SimpleAnnotationSignature.INSTANCE_JAVA_LANG_OVERRIDE);
 
 		emptyImportScopes.put("", EmptyImportScope.EMPTY_SCOPE_INSANCE);
+	}
+
+	private void putSimpleAnnotationCache(SimpleAnnotationSignature sig) {
+		simpleAnnotationSignatures.put(sig.getAnnotationType(), sig);
+	}
+
+	private void putCanonicalCache(CanonicalTypeSignature sig) {
+		simpleCanonicalTypeSignatures.put(sig.getCanonicalName(), sig);
+	}
+
+	private void putUnresolvedCache(UnresolvedTypeSignature sig) {
+		unresolvedSignatures.put(sig.getUnresolvedName(), sig);
 	}
 
 	public ParserCache() {
@@ -117,14 +137,14 @@ public class ParserCache {
 
 	public CanonicalTypeSignature canonicalTypeSignature(String canonicalname) {
 		return simpleCanonicalTypeSignatures.computeIfAbsent(canonicalname,
-				cn -> new SimpleCanonicalTypeSignature(string(cn)));
+				cn -> SimpleCanonicalTypeSignature.create(string(cn)));
 	}
 
 	public LiteralConstantResolver literalConstantResolver(Object literal) {
 		if (literal == null) {
 			return LiteralConstantResolver.NULL_RESOLVER;
 		}
-		return literalConstantResolvers.computeIfAbsent(literal, LiteralConstantResolver::new);
+		return literalConstantResolvers.computeIfAbsent(literal, LiteralConstantResolver::create);
 	}
 
 	public LiteralValue literalAnnotationValue(Object literal) {

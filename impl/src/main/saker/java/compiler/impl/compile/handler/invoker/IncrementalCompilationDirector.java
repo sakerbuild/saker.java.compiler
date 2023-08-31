@@ -631,7 +631,6 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 			parseEnteredSourcePaths.addAll(unitpaths.keySet());
 
-			
 			unitpathbytes = new SakerPathBytes[unitpaths.size()];
 			{
 				int i = 0;
@@ -826,52 +825,57 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 			}
 		}
 		CompilationHandler.printDiagnosticEntries(info, suppresswarnings, processorsuppresswarnings,
-				new DiagnosticPositionTable() {
-					@Override
-					public DiagnosticLocation getForPathSignature(SakerPath path, SignaturePath signature) {
-						if (path == null) {
-							return DiagnosticLocation.EMPTY_INSTANCE;
-						}
-						if (signature == null) {
-							return DiagnosticLocation.create(path);
-						}
-						Position pos = getPosition(path, signature);
-						if (pos == null) {
-							return DiagnosticLocation.create(path);
-						}
+				new BasicDiagnosticPositionTable(info));
+	}
 
-						int lineNumber = pos.getLineIndex();
-						int linePositionStart = pos.getLinePositionIndex();
-						int linePositionEnd = pos.getLinePositionIndex()
-								+ (pos.getEndPosition() - pos.getStartPosition());
-						return DiagnosticLocation.create(path, lineNumber, linePositionStart, linePositionEnd);
-					}
+	private static final class BasicDiagnosticPositionTable implements DiagnosticPositionTable {
+		private final CompilationInfo info;
 
-					private Position getPosition(SakerPath path, SignaturePath signature) {
-						SourceFileData src = info.getSourceFiles().get(path);
-						if (src != null) {
-							SignatureSourcePositions srcpositions = src.getSourcePositions();
-							return getPathPosition(signature, srcpositions);
-						}
-						src = info.getGeneratedSourceFiles().get(path);
-						if (src != null) {
-							return src.getSourcePositions().getPosition(signature);
-						}
-						return null;
-					}
+		private BasicDiagnosticPositionTable(CompilationInfo info) {
+			this.info = info;
+		}
 
-					private Position getPathPosition(SignaturePath signaturepath,
-							SignatureSourcePositions srcpositions) {
-						do {
-							Position res = srcpositions.getPosition(signaturepath);
-							if (res != null) {
-								return res;
-							}
-							signaturepath = signaturepath.getParent();
-						} while (signaturepath != null);
-						return null;
-					}
-				});
+		@Override
+		public DiagnosticLocation getForPathSignature(SakerPath path, SignaturePath signature) {
+			if (path == null) {
+				return DiagnosticLocation.EMPTY_INSTANCE;
+			}
+			if (signature == null) {
+				return DiagnosticLocation.create(path);
+			}
+			Position pos = getPosition(path, signature);
+			if (pos == null) {
+				return DiagnosticLocation.create(path);
+			}
+
+			int lineNumber = pos.getLineIndex();
+			int linePositionStart = pos.getLinePositionIndex();
+			int linePositionEnd = pos.getLinePositionIndex() + (pos.getEndPosition() - pos.getStartPosition());
+			return DiagnosticLocation.create(path, lineNumber, linePositionStart, linePositionEnd);
+		}
+
+		private Position getPosition(SakerPath path, SignaturePath signature) {
+			SourceFileData src = info.getSourceFiles().get(path);
+			if (src == null) {
+				src = info.getGeneratedSourceFiles().get(path);
+			}
+			if (src == null) {
+				return null;
+			}
+			SignatureSourcePositions srcpositions = src.getSourcePositions();
+			return getPathPosition(signature, srcpositions);
+		}
+
+		private static Position getPathPosition(SignaturePath signaturepath, SignatureSourcePositions srcpositions) {
+			do {
+				Position res = srcpositions.getPosition(signaturepath);
+				if (res != null) {
+					return res;
+				}
+				signaturepath = signaturepath.getParent();
+			} while (signaturepath != null);
+			return null;
+		}
 	}
 
 	private void warnUnrecognizedProcessorOptions() {

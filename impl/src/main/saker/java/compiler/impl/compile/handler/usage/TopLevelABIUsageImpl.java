@@ -93,7 +93,7 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		Objects.requireNonNull(enclosingclass, "class signature");
 		Objects.requireNonNull(field, "field");
 		Objects.requireNonNull(usage, "abi usage");
-		FieldABIInfo abiinfo = new FieldABIInfo(enclosingclass, field);
+		FieldABIInfo abiinfo = FieldABIInfo.create(enclosingclass, field);
 		MemberABIUsage prev = fields.putIfAbsent(abiinfo, usage);
 		if (prev != null) {
 			throw new AssertionError("Member usage defined multiple times: " + enclosingclass.getClass().getName()

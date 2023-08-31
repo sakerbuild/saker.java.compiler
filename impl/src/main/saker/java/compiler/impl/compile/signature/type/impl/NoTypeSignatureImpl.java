@@ -18,15 +18,20 @@ package saker.java.compiler.impl.compile.signature.type.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.lang.model.type.TypeKind;
 
+import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
+import saker.java.compiler.impl.compile.signature.impl.SimpleAnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.NoTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -34,15 +39,29 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 public class NoTypeSignatureImpl extends AnnotatedSignatureImpl implements NoTypeSignature {
 	private static final long serialVersionUID = 1L;
 
-	private static final NoTypeSignatureImpl INSTANCE_NONE = new NoTypeSignatureImpl(Collections.emptyList(),
+	public static final NoTypeSignatureImpl INSTANCE_NONE = new NoTypeSignatureImpl(Collections.emptyList(),
 			TypeKind.NONE);
-	private static final NoTypeSignatureImpl INSTANCE_VOID = new NoTypeSignatureImpl(Collections.emptyList(),
+	public static final NoTypeSignatureImpl INSTANCE_VOID = new NoTypeSignatureImpl(Collections.emptyList(),
 			TypeKind.VOID);
 
 	private static final EnumMap<TypeKind, NoTypeSignature> SIMPLE_NOTYPE_SIGNATURES = new EnumMap<>(TypeKind.class);
 	static {
 		SIMPLE_NOTYPE_SIGNATURES.put(TypeKind.VOID, INSTANCE_VOID);
 		SIMPLE_NOTYPE_SIGNATURES.put(TypeKind.NONE, INSTANCE_NONE);
+	}
+
+	private static final Map<TypeSignature, NoTypeSignature> SIMPLE_ANNOTATED_VOID_SIGNATURES = new HashMap<>();
+	static {
+		//cache commonly occurring signatures
+		initAnnotatedVoidCacheMap(SimpleAnnotationSignature.INSTANCE_JAVA_LANG_OVERRIDE);
+		initAnnotatedVoidCacheMap(SimpleAnnotationSignature.INSTANCE_OVERRIDE);
+		initAnnotatedVoidCacheMap(SimpleAnnotationSignature.INSTANCE_JAVA_LANG_DEPRECATED);
+		initAnnotatedVoidCacheMap(SimpleAnnotationSignature.INSTANCE_DEPRECATED);
+	}
+
+	private static void initAnnotatedVoidCacheMap(SimpleAnnotationSignature sig) {
+		SIMPLE_ANNOTATED_VOID_SIGNATURES.put(sig.getAnnotationType(),
+				new NoTypeSignatureImpl(ImmutableUtils.singletonList(sig), TypeKind.VOID));
 	}
 
 	private TypeKind kind;
@@ -66,7 +85,22 @@ public class NoTypeSignatureImpl extends AnnotatedSignatureImpl implements NoTyp
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return create(kind);
 		}
+		if (kind == TypeKind.VOID && annotations.size() == 1) {
+			AnnotationSignature annot = annotations.get(0);
+			NoTypeSignature cached = getSimpleAnnotatedVoidCached(annot);
+			if (cached != null) {
+				return cached;
+			}
+		}
 		return new NoTypeSignatureImpl(annotations, kind);
+	}
+
+	private static NoTypeSignature getSimpleAnnotatedVoidCached(AnnotationSignature annot) {
+		NoTypeSignature cached = null;
+		if (ObjectUtils.isNullOrEmpty(annot.getValues())) {
+			return SIMPLE_ANNOTATED_VOID_SIGNATURES.get(annot.getAnnotationType());
+		}
+		return cached;
 	}
 
 	private NoTypeSignatureImpl(List<? extends AnnotationSignature> annotations, TypeKind kind) {
@@ -122,6 +156,21 @@ public class NoTypeSignatureImpl extends AnnotatedSignatureImpl implements NoTyp
 		super.readExternal(in);
 
 		kind = (TypeKind) in.readObject();
+	}
+
+	private Object readResolve() {
+		Collection<? extends AnnotationSignature> annots = getAnnotations();
+		if (ObjectUtils.isNullOrEmpty(annots)) {
+			return SIMPLE_NOTYPE_SIGNATURES.get(this.kind);
+		}
+		if (this.kind == TypeKind.VOID && annots.size() == 1) {
+			AnnotationSignature annot = annotations.get(0);
+			NoTypeSignature cached = getSimpleAnnotatedVoidCached(annot);
+			if (cached != null) {
+				return cached;
+			}
+		}
+		return this;
 	}
 
 	@Override

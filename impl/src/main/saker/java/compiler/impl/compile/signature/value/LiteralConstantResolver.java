@@ -36,8 +36,15 @@ public class LiteralConstantResolver implements ConstantValueResolver, Externali
 	public LiteralConstantResolver() {
 	}
 
-	public LiteralConstantResolver(Object value) {
+	private LiteralConstantResolver(Object value) {
 		this.value = value;
+	}
+
+	public static LiteralConstantResolver create(Object value) {
+		if (value == null) {
+			return NULL_RESOLVER;
+		}
+		return new LiteralConstantResolver(value);
 	}
 
 	@Override

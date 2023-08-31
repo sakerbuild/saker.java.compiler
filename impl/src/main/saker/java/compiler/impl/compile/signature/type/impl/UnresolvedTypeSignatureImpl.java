@@ -43,7 +43,7 @@ public class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSignatur
 	}
 
 	public static UnresolvedTypeSignature create(String qualifiedName) {
-		return new SimpleUnresolvedTypeSignature(qualifiedName);
+		return SimpleUnresolvedTypeSignature.create(qualifiedName);
 	}
 
 	public static UnresolvedTypeSignature create(ParserCache cache, String qualifiedName) {

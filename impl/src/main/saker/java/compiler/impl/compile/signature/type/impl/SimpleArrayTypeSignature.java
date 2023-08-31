@@ -21,6 +21,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ArrayTypeSignature;
@@ -28,6 +30,37 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 
 public class SimpleArrayTypeSignature implements ArrayTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
+
+	private static final Map<TypeSignature, SimpleArrayTypeSignature> SIMPLE_CACHE = new HashMap<>();
+	static {
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_BOOLEAN);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_BYTE);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_SHORT);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_INTEGER);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_LONG);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_FLOAT);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_DOUBLE);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_CHARACTER);
+
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_OBJECT);
+		initSimpleCache(SimpleUnresolvedTypeSignature.INSTANCE_STRING);
+
+		initSimpleCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_OBJECT);
+		initSimpleCache(SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_STRING);
+
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_BOOLEAN);
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_BYTE);
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_SHORT);
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_INT);
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_LONG);
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_FLOAT);
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_DOUBLE);
+		initSimpleCache(PrimitiveTypeSignatureImpl.INSTANCE_CHAR);
+	}
+
+	private static void initSimpleCache(TypeSignature sig) {
+		SIMPLE_CACHE.put(sig, new SimpleArrayTypeSignature(sig));
+	}
 
 	private TypeSignature componentType;
 
@@ -37,8 +70,16 @@ public class SimpleArrayTypeSignature implements ArrayTypeSignature, Externaliza
 	public SimpleArrayTypeSignature() {
 	}
 
-	public SimpleArrayTypeSignature(TypeSignature componentType) {
+	private SimpleArrayTypeSignature(TypeSignature componentType) {
 		this.componentType = componentType;
+	}
+
+	public static SimpleArrayTypeSignature create(TypeSignature componentType) {
+		SimpleArrayTypeSignature cached = SIMPLE_CACHE.get(componentType);
+		if (cached != null) {
+			return cached;
+		}
+		return new SimpleArrayTypeSignature(componentType);
 	}
 
 	@Override
@@ -69,6 +110,10 @@ public class SimpleArrayTypeSignature implements ArrayTypeSignature, Externaliza
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		componentType = (TypeSignature) in.readObject();
+	}
+
+	private Object readResolve() {
+		return SIMPLE_CACHE.getOrDefault(componentType, this);
 	}
 
 	@Override

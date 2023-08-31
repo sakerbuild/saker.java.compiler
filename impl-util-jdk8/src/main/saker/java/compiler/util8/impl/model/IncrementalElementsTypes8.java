@@ -177,6 +177,7 @@ import saker.java.compiler.impl.compile.signature.type.impl.IntersectionTypeSign
 import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.NullTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.PrimitiveTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeParameterTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
@@ -5188,7 +5189,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			List<? extends TypeMirror> bounds = e.getBounds();
 			int boundssize = bounds.size();
 			if (boundssize == 0) {
-				upperbound = CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_OBJECT;
+				upperbound = SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_OBJECT;
 			} else {
 				if (boundssize == 1) {
 					upperbound = createTypeSignature(bounds.get(0), cache);

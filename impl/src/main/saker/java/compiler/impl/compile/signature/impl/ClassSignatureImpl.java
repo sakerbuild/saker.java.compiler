@@ -34,6 +34,7 @@ import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.ArrayTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
@@ -53,7 +54,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 
 	private static final List<MethodParameterSignature> ENUM_VALUEOF_PARAMETER_SIGNATURES = ImmutableUtils
 			.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
-					CanonicalTypeSignatureImpl.INSTANCE_JAVA_LANG_STRING, "name"));
+					SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_STRING, "name"));
 
 	private List<TypeParameterTypeSignature> typeParameters = Collections.emptyList();
 	private List<AnnotationSignature> annotations = Collections.emptyList();

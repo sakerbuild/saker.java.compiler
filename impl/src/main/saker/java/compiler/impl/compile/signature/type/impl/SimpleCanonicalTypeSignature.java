@@ -22,6 +22,8 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.CanonicalTypeSignature;
@@ -31,6 +33,38 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 public class SimpleCanonicalTypeSignature implements CanonicalTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
+	public static final SimpleCanonicalTypeSignature INSTANCE_JAVA_LANG_OBJECT = new SimpleCanonicalTypeSignature(
+			"java.lang.Object");
+	public static final SimpleCanonicalTypeSignature INSTANCE_JAVA_LANG_STRING = new SimpleCanonicalTypeSignature(
+			"java.lang.String");
+	public static final SimpleCanonicalTypeSignature INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION = new SimpleCanonicalTypeSignature(
+			"java.lang.annotation.Annotation");
+
+	public static final SimpleCanonicalTypeSignature INSTANCE_JAVA_LANG_DEPRECATED = new SimpleCanonicalTypeSignature(
+			"java.lang.Deprecated");
+	public static final SimpleCanonicalTypeSignature INSTANCE_JAVA_LANG_OVERRIDE = new SimpleCanonicalTypeSignature(
+			"java.lang.Override");
+	public static final SimpleCanonicalTypeSignature INSTANCE_JAVA_LANG_FUNCTIONALINTERFACE = new SimpleCanonicalTypeSignature(
+			"java.lang.FunctionalInterface");
+	public static final SimpleCanonicalTypeSignature INSTANCE_JAVA_LANG_SUPPRESSWARNINGS = new SimpleCanonicalTypeSignature(
+			"java.lang.SuppressWarnings");
+
+	private static final Map<String, SimpleCanonicalTypeSignature> SIMPLE_CACHE = new TreeMap<>();
+	static {
+		initSimpleCache(INSTANCE_JAVA_LANG_OBJECT);
+		initSimpleCache(INSTANCE_JAVA_LANG_STRING);
+		initSimpleCache(INSTANCE_JAVA_LANG_ANNOTATION_ANNOTATION);
+
+		initSimpleCache(INSTANCE_JAVA_LANG_DEPRECATED);
+		initSimpleCache(INSTANCE_JAVA_LANG_OVERRIDE);
+		initSimpleCache(INSTANCE_JAVA_LANG_FUNCTIONALINTERFACE);
+		initSimpleCache(INSTANCE_JAVA_LANG_SUPPRESSWARNINGS);
+	}
+
+	private static void initSimpleCache(SimpleCanonicalTypeSignature sig) {
+		SIMPLE_CACHE.put(sig.getCanonicalName(), sig);
+	}
+
 	protected String canonicalName;
 
 	/**
@@ -39,8 +73,16 @@ public class SimpleCanonicalTypeSignature implements CanonicalTypeSignature, Ext
 	public SimpleCanonicalTypeSignature() {
 	}
 
-	public SimpleCanonicalTypeSignature(String name) {
-		this.canonicalName = name;
+	protected SimpleCanonicalTypeSignature(String canonicalName) {
+		this.canonicalName = canonicalName;
+	}
+
+	public static SimpleCanonicalTypeSignature create(String name) {
+		SimpleCanonicalTypeSignature cached = SIMPLE_CACHE.get(name);
+		if (cached != null) {
+			return cached;
+		}
+		return new SimpleCanonicalTypeSignature(name);
 	}
 
 	@Override
@@ -76,6 +118,10 @@ public class SimpleCanonicalTypeSignature implements CanonicalTypeSignature, Ext
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		canonicalName = in.readUTF();
+	}
+
+	private Object readResolve() {
+		return SIMPLE_CACHE.getOrDefault(canonicalName, this);
 	}
 
 	@Override

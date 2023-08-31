@@ -41,12 +41,12 @@ public class AnnotationSignatureImpl implements Externalizable, AnnotationSignat
 	}
 
 	public static AnnotationSignature create(TypeSignature annotationType) {
-		return new SimpleAnnotationSignature(annotationType);
+		return SimpleAnnotationSignature.create(annotationType);
 	}
 
 	public static AnnotationSignature create(TypeSignature annotationType, Map<String, Value> values) {
 		if (ObjectUtils.isNullOrEmpty(values)) {
-			return create(annotationType);
+			return SimpleAnnotationSignature.create(annotationType);
 		}
 		return new AnnotationSignatureImpl(annotationType, values);
 	}

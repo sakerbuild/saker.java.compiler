@@ -433,7 +433,10 @@ public class JavaUtil {
 	}
 
 	public static String annotationsToStringWithSpace(List<? extends AnnotationSignature> annots) {
-		return ObjectUtils.isNullOrEmpty(annots) ? "" : (StringUtils.toStringJoin(" ", annots) + " ");
+		if (ObjectUtils.isNullOrEmpty(annots)) {
+			return "";
+		}
+		return StringUtils.toStringJoin(" ", annots) + " ";
 	}
 
 	private static final ImmutableElementTypeSet DEFAULT_TARGETS = ImmutableElementTypeSet.of(
