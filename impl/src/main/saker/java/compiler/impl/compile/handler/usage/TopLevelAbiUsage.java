@@ -135,11 +135,7 @@ public interface TopLevelAbiUsage extends AbiUsage {
 			if (cmp != 0) {
 				return cmp;
 			}
-			cmp = methodName.compareTo(o.methodName);
-			if (cmp != 0) {
-				return cmp;
-			}
-			return 0;
+			return methodName.compareTo(o.methodName);
 		}
 
 		@Override
@@ -193,12 +189,11 @@ public interface TopLevelAbiUsage extends AbiUsage {
 		}
 	}
 
-	public static final class FieldABIInfo implements Comparable<FieldABIInfo>, Externalizable {
+	public static class FieldABIInfo implements Comparable<FieldABIInfo>, Externalizable {
 		private static final long serialVersionUID = 1L;
 
 		protected String classCanonicalName;
 		protected String fieldName;
-		protected boolean hasConstantValue;
 
 		/**
 		 * For {@link Externalizable}.
@@ -206,15 +201,36 @@ public interface TopLevelAbiUsage extends AbiUsage {
 		public FieldABIInfo() {
 		}
 
-		private FieldABIInfo(String classCanonicalName, String fieldName, boolean hasConstantValue) {
+		private FieldABIInfo(String classCanonicalName, String fieldName) {
 			this.classCanonicalName = classCanonicalName;
 			this.fieldName = fieldName;
-			this.hasConstantValue = hasConstantValue;
 		}
 
 		public static FieldABIInfo create(ClassSignature enclosingclass, FieldSignature signature) {
-			return new FieldABIInfo(enclosingclass.getCanonicalName(), signature.getSimpleName(),
-					signature.getConstantValue() != null);
+			if (signature.getConstantValue() != null) {
+				return new ConstantFieldABIInfo(enclosingclass.getCanonicalName(), signature.getSimpleName());
+			}
+			return new FieldABIInfo(enclosingclass.getCanonicalName(), signature.getSimpleName());
+		}
+
+		private static class ConstantFieldABIInfo extends FieldABIInfo {
+			private static final long serialVersionUID = 1L;
+
+			/**
+			 * For {@link Externalizable}.
+			 */
+			public ConstantFieldABIInfo() {
+			}
+
+			protected ConstantFieldABIInfo(String classCanonicalName, String fieldName) {
+				super(classCanonicalName, fieldName);
+			}
+
+			@Override
+			public boolean hasConstantValue() {
+				return true;
+			}
+
 		}
 
 		public String getClassCanonicalName() {
@@ -226,7 +242,7 @@ public interface TopLevelAbiUsage extends AbiUsage {
 		}
 
 		public boolean hasConstantValue() {
-			return hasConstantValue;
+			return false;
 		}
 
 		@Override
@@ -239,11 +255,7 @@ public interface TopLevelAbiUsage extends AbiUsage {
 			if (cmp != 0) {
 				return cmp;
 			}
-			cmp = Boolean.compare(hasConstantValue, o.hasConstantValue);
-			if (cmp != 0) {
-				return cmp;
-			}
-			return 0;
+			return Boolean.compare(hasConstantValue(), o.hasConstantValue());
 		}
 
 		@Override
@@ -252,7 +264,6 @@ public interface TopLevelAbiUsage extends AbiUsage {
 			int result = 1;
 			result = prime * result + ((classCanonicalName == null) ? 0 : classCanonicalName.hashCode());
 			result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
-			result = prime * result + (hasConstantValue ? 1231 : 1237);
 			return result;
 		}
 
@@ -275,8 +286,6 @@ public interface TopLevelAbiUsage extends AbiUsage {
 					return false;
 			} else if (!fieldName.equals(other.fieldName))
 				return false;
-			if (hasConstantValue != other.hasConstantValue)
-				return false;
 			return true;
 		}
 
@@ -284,24 +293,20 @@ public interface TopLevelAbiUsage extends AbiUsage {
 		public String toString() {
 			return getClass().getSimpleName() + "["
 					+ (classCanonicalName != null ? "classCanonicalName=" + classCanonicalName + ", " : "")
-					+ (fieldName != null ? "fieldName=" + fieldName + ", " : "") + "hasConstantValue="
-					+ hasConstantValue + "]";
+					+ (fieldName != null ? "fieldName=" + fieldName + ", " : "") + "]";
 		}
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
 			out.writeObject(classCanonicalName);
 			out.writeObject(fieldName);
-			out.writeBoolean(hasConstantValue);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 			classCanonicalName = (String) in.readObject();
 			fieldName = (String) in.readObject();
-			hasConstantValue = in.readBoolean();
 		}
-
 	}
 
 	public Map<ClassABIInfo, ? extends AbiUsage> getClasses();
