@@ -22,9 +22,11 @@ import java.io.ObjectOutput;
 
 import javax.lang.model.element.Element;
 
+import saker.build.util.data.annotation.ValueType;
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 
+@ValueType
 public class TernaryConstantOperator implements ConstantValueResolver, Externalizable {
 	private static final long serialVersionUID = 1L;
 

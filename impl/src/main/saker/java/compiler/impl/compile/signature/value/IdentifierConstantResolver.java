@@ -24,6 +24,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
+import saker.build.util.data.annotation.ValueType;
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.compile.signature.type.impl.CanonicalTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.UnknownTypeSignatureImpl;
@@ -32,6 +33,7 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
+@ValueType
 public class IdentifierConstantResolver implements EnumOrConstantValueResolver, Externalizable {
 	private static final long serialVersionUID = 1L;
 

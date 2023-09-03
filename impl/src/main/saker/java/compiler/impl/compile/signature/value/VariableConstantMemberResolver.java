@@ -25,11 +25,13 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
+import saker.build.util.data.annotation.ValueType;
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
+@ValueType
 public class VariableConstantMemberResolver implements EnumOrConstantValueResolver, Externalizable {
 	private static final long serialVersionUID = 1L;
 

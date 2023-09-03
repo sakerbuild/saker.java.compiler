@@ -23,9 +23,11 @@ import java.util.Objects;
 
 import javax.lang.model.element.Element;
 
+import saker.build.util.data.annotation.ValueType;
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 
+@ValueType
 public class LiteralConstantResolver implements ConstantValueResolver, Externalizable {
 	private static final long serialVersionUID = 1L;
 
@@ -64,10 +66,7 @@ public class LiteralConstantResolver implements ConstantValueResolver, Externali
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
-		return result;
+		return value == null ? 0 : value.hashCode();
 	}
 
 	@Override

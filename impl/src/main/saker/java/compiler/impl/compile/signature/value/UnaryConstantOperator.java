@@ -26,10 +26,12 @@ import javax.lang.model.element.Element;
 
 import com.sun.source.tree.Tree.Kind;
 
+import saker.build.util.data.annotation.ValueType;
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.impl.util.operators.UnaryOperators;
 
+@ValueType
 public class UnaryConstantOperator implements ConstantValueResolver, Externalizable {
 	private static final long serialVersionUID = 1L;
 

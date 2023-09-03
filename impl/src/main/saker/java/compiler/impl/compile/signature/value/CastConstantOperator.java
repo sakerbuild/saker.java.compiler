@@ -23,10 +23,12 @@ import java.util.function.Function;
 
 import javax.lang.model.element.Element;
 
+import saker.build.util.data.annotation.ValueType;
 import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.impl.util.operators.CastOperators;
 
+@ValueType
 public class CastConstantOperator implements ConstantValueResolver, Externalizable {
 	private static final long serialVersionUID = 1L;
 
