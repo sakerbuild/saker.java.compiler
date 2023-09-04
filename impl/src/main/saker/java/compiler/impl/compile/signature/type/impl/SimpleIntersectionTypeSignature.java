@@ -55,7 +55,7 @@ public class SimpleIntersectionTypeSignature implements IntersectionTypeSignatur
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return Collections.emptyList();
 	}
 

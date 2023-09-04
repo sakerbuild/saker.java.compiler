@@ -39,6 +39,7 @@ import saker.java.compiler.impl.compile.handler.incremental.model.elem.Increment
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.elem.ForwardingElement;
 import saker.java.compiler.impl.compile.handler.incremental.model.forwarded.mirror.ForwardingDeclaredType;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalDeclaredType;
+import saker.java.compiler.impl.compile.handler.info.SignaturePath;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
 import saker.java.compiler.impl.signature.element.ClassSignature;
@@ -71,7 +72,8 @@ public interface IncrementalElementsTypesBase extends SakerElementsTypes {
 
 	public DeclaredType captureImpl(DeclaredType declaredType);
 
-	public Object getAnnotationValue(Value value, TypeMirror targettype, Element enclosingresolutionelement);
+	public Object getAnnotationValue(SignaturePath annotationSignaturePath, Value value, TypeMirror targettype,
+			Element enclosingresolutionelement);
 
 	public List<? extends AnnotationValue> forwardAnnotationValues(List<? extends AnnotationValue> list);
 

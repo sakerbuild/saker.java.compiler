@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,7 +43,7 @@ public abstract class AnnotatedSignatureImpl implements AnnotatedSignature, Exte
 	}
 
 	@Override
-	public final Collection<? extends AnnotationSignature> getAnnotations() {
+	public final List<? extends AnnotationSignature> getAnnotations() {
 		return annotations;
 	}
 

@@ -158,6 +158,7 @@ import saker.java.compiler.impl.compile.handler.incremental.model.scope.Enclosin
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.MethodResolutionScope;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
 import saker.java.compiler.impl.compile.handler.info.ClassHoldingFileData;
+import saker.java.compiler.impl.compile.handler.info.SignaturePath;
 import saker.java.compiler.impl.compile.handler.invoker.CompilationContextInformation;
 import saker.java.compiler.impl.compile.signature.annot.val.AnnotValueImpl;
 import saker.java.compiler.impl.compile.signature.annot.val.ArrayValueImpl;
@@ -963,8 +964,13 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			if (ee != null) {
 				//ee can be null, if we have an erroneous annotation.
 				//e.g. an annotation method just got removed and the referencing annotation still has it referenced.
-				result.put(ee, new IncrementalAnnotationValue(this, entry.getValue(), ee.getReturnType(),
-						enclosingresolutionelement));
+				String fieldname = ee.getSimpleName().toString();
+				AnnotationSignature.Value annotvalue = entry.getValue();
+
+				SignaturePath valpath = SignaturePath.createIndexed(a.getAnnotationSignaturePath(), annotvalue,
+						fieldname);
+				result.put(ee, new IncrementalAnnotationValue(this, annotvalue, ee.getReturnType(),
+						enclosingresolutionelement, valpath));
 			}
 		}
 		if (includedefaults) {
@@ -3577,9 +3583,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	@Override
-	public Object getAnnotationValue(AnnotationSignature.Value value, TypeMirror targettype,
-			Element enclosingresolutionelement) {
-		return targettype.accept(new AnnotationValueResolverVisitor(enclosingresolutionelement), value);
+	public Object getAnnotationValue(SignaturePath annotationSignaturePath, AnnotationSignature.Value value,
+			TypeMirror targettype, Element enclosingresolutionelement) {
+		return targettype
+				.accept(new AnnotationValueResolverVisitor(annotationSignaturePath, enclosingresolutionelement), value);
 	}
 
 	public static TypeElement getSuperClassOf(TypeElement element) {
@@ -3602,10 +3609,12 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 	private final class AnnotationValueResolverVisitor extends SimpleTypeVisitor8<Object, Value>
 			implements DefaultedTypeVisitor<Object, Value> {
+		private SignaturePath annotationSignaturePath;
 		private Element resolutionElement;
 
-		public AnnotationValueResolverVisitor(Element enclosingresolutionelement) {
-			this.resolutionElement = enclosingresolutionelement;
+		public AnnotationValueResolverVisitor(SignaturePath annotationSignaturePath, Element resolutionElement) {
+			this.annotationSignaturePath = annotationSignaturePath;
+			this.resolutionElement = resolutionElement;
 		}
 
 		@Override
@@ -3637,14 +3646,23 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 				ArrayValue av = (ArrayValue) value;
 				List<? extends Value> avvalues = av.getValues();
 				List<AnnotationValue> list = JavaTaskUtils.cloneImmutableList(avvalues,
-						v -> new IncrementalAnnotationValue(IncrementalElementsTypes8.this, v, componenttype,
-								resolutionElement));
+						new Function<Value, AnnotationValue>() {
+							private int index = 0;
+
+							@Override
+							public AnnotationValue apply(Value v) {
+								SignaturePath valpath = SignaturePath.createIndexed(annotationSignaturePath, v,
+										index++);
+								return new IncrementalAnnotationValue(IncrementalElementsTypes8.this, v, componenttype,
+										resolutionElement, valpath);
+							}
+						});
 				return list;
 			}
 			//value is not an arrayvalue
 			//convert single value to array
 			return ImmutableUtils.singletonList(new IncrementalAnnotationValue(IncrementalElementsTypes8.this, value,
-					componenttype, resolutionElement));
+					componenttype, resolutionElement, annotationSignaturePath));
 		}
 
 		@Override
@@ -3653,8 +3671,9 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			switch (type.getKind()) {
 				case ANNOTATION_TYPE: {
 					if (value instanceof AnnotValue) {
-						return new IncrementalAnnotationMirror(IncrementalElementsTypes8.this,
-								((AnnotValue) value).getAnnotation(), resolutionElement);
+						AnnotationSignature annotsig = ((AnnotValue) value).getAnnotation();
+						return new IncrementalAnnotationMirror(IncrementalElementsTypes8.this, annotsig,
+								resolutionElement, new SignaturePath(annotationSignaturePath, annotsig));
 					}
 					return "<error-not-annotation>";
 				}

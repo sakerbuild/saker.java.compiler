@@ -76,7 +76,7 @@ public class AnnotationAttributeMethodSignature implements MethodSignature, Exte
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return returnType.getAnnotations();
 	}
 

@@ -71,7 +71,7 @@ public class SimpleMethodSignature extends MethodSignatureBase {
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return returnType.getAnnotations();
 	}
 

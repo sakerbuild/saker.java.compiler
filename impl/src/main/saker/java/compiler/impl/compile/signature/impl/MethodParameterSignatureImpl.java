@@ -19,7 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
@@ -63,7 +63,7 @@ public class MethodParameterSignatureImpl implements MethodParameterSignature, E
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return type.getAnnotations();
 	}
 

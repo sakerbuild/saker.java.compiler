@@ -71,7 +71,7 @@ public class ExtendedAnnotationInterfaceSignature extends SimpleAnnotationInterf
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return annotations;
 	}
 

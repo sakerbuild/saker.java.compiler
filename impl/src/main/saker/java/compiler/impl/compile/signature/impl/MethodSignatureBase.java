@@ -66,7 +66,7 @@ public abstract class MethodSignatureBase implements MethodSignature, Externaliz
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return getReturnType().getAnnotations();
 	}
 

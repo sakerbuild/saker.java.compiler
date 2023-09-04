@@ -50,7 +50,7 @@ public class SimpleTypeReferenceSignature implements ParameterizedTypeSignature,
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return Collections.emptyList();
 	}
 

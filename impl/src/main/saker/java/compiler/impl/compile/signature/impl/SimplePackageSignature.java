@@ -19,8 +19,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
@@ -41,7 +41,7 @@ public class SimplePackageSignature implements PackageSignature, Externalizable 
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return Collections.emptyList();
 	}
 

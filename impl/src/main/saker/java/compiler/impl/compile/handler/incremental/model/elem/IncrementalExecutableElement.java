@@ -36,7 +36,8 @@ import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalAnn
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalName;
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalExecutableType;
-import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
+import saker.java.compiler.impl.compile.handler.info.SignaturePath;
+import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
@@ -80,7 +81,7 @@ public class IncrementalExecutableElement extends IncrementalElement<MethodSigna
 			elementTypes = IncrementalElementsTypes.ELEMENT_TYPE_METHOD;
 		}
 	}
-	
+
 	@Override
 	public byte getKindIndex() {
 		return signature.getKindIndex();
@@ -225,9 +226,9 @@ public class IncrementalExecutableElement extends IncrementalElement<MethodSigna
 
 	@Override
 	public AnnotationValue getDefaultValue() {
-		Value defval = signature.getDefaultValue();
+		AnnotationSignature.Value defval = signature.getDefaultValue();
 		if (defval != null) {
-			return new IncrementalAnnotationValue(elemTypes, defval, getReturnType(), this);
+			return new IncrementalAnnotationValue(elemTypes, defval, getReturnType(), this, new SignaturePath(defval));
 		}
 		return null;
 	}

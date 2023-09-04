@@ -26,6 +26,7 @@ import javax.lang.model.type.TypeMirror;
 
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementallyModelled;
+import saker.java.compiler.impl.compile.handler.info.SignaturePath;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 
 public class IncrementalAnnotationValue implements IncrementallyModelled, AnnotationValue {
@@ -37,22 +38,29 @@ public class IncrementalAnnotationValue implements IncrementallyModelled, Annota
 
 	private Element resolutionElement;
 
+	private SignaturePath annotationSignaturePath;
+
 	public IncrementalAnnotationValue(IncrementalElementsTypesBase elementTypes, AnnotationSignature.Value value,
-			TypeMirror targettypemirror, Element resolutionElement) {
+			TypeMirror targettypemirror, Element resolutionElement, SignaturePath annotationSignaturePath) {
 		this.elementTypes = elementTypes;
 		this.value = value;
 		this.targetTypeMirror = targettypemirror;
 		this.resolutionElement = resolutionElement;
+		this.annotationSignaturePath = annotationSignaturePath;
 	}
 
 	public AnnotationSignature.Value getSignatureValue() {
 		return value;
 	}
 
+	public SignaturePath getAnnotationSignaturePath() {
+		return annotationSignaturePath;
+	}
+
 	@Override
 	public Object getValue() {
 		//XXX cache this?
-		return elementTypes.getAnnotationValue(value, targetTypeMirror, resolutionElement);
+		return elementTypes.getAnnotationValue(annotationSignaturePath, value, targetTypeMirror, resolutionElement);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -136,9 +136,9 @@ public final class FullMethodSignature extends MethodSignatureBase {
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		if (returnType == null) {
-			return Collections.emptySet();
+			return Collections.emptyList();
 		}
 		return returnType.getAnnotations();
 	}

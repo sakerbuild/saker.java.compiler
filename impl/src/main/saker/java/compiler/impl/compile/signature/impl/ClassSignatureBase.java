@@ -105,7 +105,7 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return Collections.emptyList();
 	}
 

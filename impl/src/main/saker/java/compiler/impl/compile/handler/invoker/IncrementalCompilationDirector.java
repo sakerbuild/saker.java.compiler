@@ -99,7 +99,6 @@ import saker.java.compiler.api.processor.ProcessorCreator;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
-import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.file.JavaCompilerDirectories;
 import saker.java.compiler.impl.compile.file.SakerFileWrapperFileObject;
 import saker.java.compiler.impl.compile.handler.CompilationHandler;
@@ -850,7 +849,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 
 			int lineNumber = pos.getLineIndex();
 			int linePositionStart = pos.getLinePositionIndex();
-			int linePositionEnd = pos.getLinePositionIndex() + (pos.getEndPosition() - pos.getStartPosition());
+			int linePositionEnd = pos.getLinePositionIndex() + pos.getLength();
 			return DiagnosticLocation.create(path, lineNumber, linePositionStart, linePositionEnd);
 		}
 
@@ -2589,7 +2588,7 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 					Signature s = incelem.getSignature();
 					if (s != null) {
 						if (IncrementalElementsTypes.ELEMENT_KIND_TYPES.contains(incelemkind)) {
-							s = new SignaturePath.ClassSignaturePathSignature(((ClassSignature) s).getBinaryName());
+							s = SignaturePath.getClassSignature((ClassSignature) s);
 						}
 						SignaturePath npath = new SignaturePath(s);
 						if (path == null) {
@@ -2602,16 +2601,18 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 					e = incelem.getEnclosingElement();
 				}
 			}
-			if (a instanceof IncrementalAnnotationMirror) {
-				AnnotationSignature amsig = ((IncrementalAnnotationMirror) a).getSignature();
-				if (amsig != null) {
-					path = new SignaturePath(path, amsig);
+			if (path != null) {
+				if (v instanceof IncrementalAnnotationValue) {
+					SignaturePath valpath = ((IncrementalAnnotationValue) v).getAnnotationSignaturePath();
+					if (valpath != null) {
+						return valpath.cloneWithPrefixed(path);
+					}
 				}
-			}
-			if (v instanceof IncrementalAnnotationValue) {
-				Value avsig = ((IncrementalAnnotationValue) v).getSignatureValue();
-				if (avsig != null) {
-					path = new SignaturePath(path, avsig);
+				if (a instanceof IncrementalAnnotationMirror) {
+					SignaturePath valpath = ((IncrementalAnnotationMirror) a).getAnnotationSignaturePath();
+					if (valpath != null) {
+						return valpath.cloneWithPrefixed(path);
+					}
 				}
 			}
 			return path;
@@ -2655,8 +2656,8 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 //										+ (pos.getEndPosition() - pos.getStartPosition());
 //							}
 //						}
-						location = new PathSignatureDiagnosticLocationReference(path,
-								getDiagnosticPositionSignaturePath(positions, e, a, v));
+						SignaturePath diagpath = getDiagnosticPositionSignaturePath(positions, e, a, v);
+						location = new PathSignatureDiagnosticLocationReference(path, diagpath);
 					}
 				}
 			}

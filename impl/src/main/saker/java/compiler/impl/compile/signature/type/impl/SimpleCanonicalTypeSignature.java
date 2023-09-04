@@ -101,7 +101,7 @@ public class SimpleCanonicalTypeSignature implements CanonicalTypeSignature, Ext
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return Collections.emptyList();
 	}
 

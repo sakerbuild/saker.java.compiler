@@ -25,6 +25,7 @@ import javax.lang.model.type.DeclaredType;
 
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementallyModelled;
+import saker.java.compiler.impl.compile.handler.info.SignaturePath;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 
 public class IncrementalAnnotationMirror implements AnnotationMirror, IncrementallyModelled {
@@ -32,11 +33,14 @@ public class IncrementalAnnotationMirror implements AnnotationMirror, Incrementa
 	private AnnotationSignature signature;
 	private Element enclosingElement;
 
+	private SignaturePath annotationSignaturePath;
+
 	public IncrementalAnnotationMirror(IncrementalElementsTypesBase elementTypes, AnnotationSignature signature,
-			Element enclosingElement) {
+			Element enclosingElement, SignaturePath annotationSignaturePath) {
 		this.elemTypes = elementTypes;
 		this.signature = signature;
 		this.enclosingElement = enclosingElement;
+		this.annotationSignaturePath = annotationSignaturePath;
 	}
 
 	public Element getResolutionEnclosingElement() {
@@ -45,6 +49,10 @@ public class IncrementalAnnotationMirror implements AnnotationMirror, Incrementa
 
 	public AnnotationSignature getSignature() {
 		return signature;
+	}
+
+	public SignaturePath getAnnotationSignaturePath() {
+		return annotationSignaturePath;
 	}
 
 	@Override

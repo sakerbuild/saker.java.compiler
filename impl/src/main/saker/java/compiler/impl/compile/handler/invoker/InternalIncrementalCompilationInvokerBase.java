@@ -129,10 +129,7 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 			//in case of a method access error or others
 			throw new JavacPrivateAPIError(e);
 		} finally {
-			JavaCompiler jc = this.javac;
-			if (jc != null) {
-				closeJavaCompiler(jc);
-			}
+			closeJavaCompiler(this.javac);
 		}
 	}
 
@@ -148,6 +145,9 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 	}
 
 	private static void closeJavaCompiler(JavaCompiler jc) {
+		if (jc == null) {
+			return;
+		}
 		if (TestFlag.ENABLED) {
 			TestFlag.metric().javacAddCompilationFinishClosing(jc::close);
 			return;

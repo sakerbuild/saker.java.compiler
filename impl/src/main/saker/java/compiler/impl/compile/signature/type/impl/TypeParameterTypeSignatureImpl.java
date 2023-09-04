@@ -67,7 +67,7 @@ public class TypeParameterTypeSignatureImpl extends ExtendingTypeParameterTypeSi
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return annotations;
 	}
 

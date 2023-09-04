@@ -17,7 +17,6 @@ package saker.java.compiler.impl.compile.handler.incremental.model;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.IncompleteAnnotationException;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Repeatable;
@@ -35,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
@@ -54,6 +52,7 @@ import saker.build.thirdparty.saker.util.function.LazySupplier;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.model.elem.IncrementalAnnotationMirror;
+import saker.java.compiler.impl.compile.handler.info.SignaturePath;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.AnnotValue;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.ArrayValue;
@@ -115,11 +114,13 @@ public abstract class IncrementalAnnotatedConstruct implements AnnotatedConstruc
 			thisannotationmirrors = Collections.emptyList();
 		} else {
 			ArrayList<AnnotationMirror> nannotationmirrors = new ArrayList<>(annots.size());
+			int index = 0;
 			for (AnnotationSignature a : annots) {
 				if (!shouldIncludeAnnotation(a)) {
 					continue;
 				}
-				nannotationmirrors.add(new IncrementalAnnotationMirror(elemTypes, a, getEnclosingResolutionElement()));
+				nannotationmirrors.add(new IncrementalAnnotationMirror(elemTypes, a, getEnclosingResolutionElement(),
+						SignaturePath.createIndexed(a, index++)));
 			}
 			thisannotationmirrors = ImmutableUtils.makeImmutableList(nannotationmirrors);
 		}

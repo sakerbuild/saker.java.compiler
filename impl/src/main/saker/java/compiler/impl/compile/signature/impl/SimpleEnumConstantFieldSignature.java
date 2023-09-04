@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -70,7 +71,7 @@ public class SimpleEnumConstantFieldSignature implements FieldSignature, Externa
 	}
 
 	@Override
-	public final Collection<? extends AnnotationSignature> getAnnotations() {
+	public final List<? extends AnnotationSignature> getAnnotations() {
 		return type.getAnnotations();
 	}
 

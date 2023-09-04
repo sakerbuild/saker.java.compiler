@@ -136,7 +136,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	}
 
 	@Override
-	public Collection<? extends AnnotationSignature> getAnnotations() {
+	public List<? extends AnnotationSignature> getAnnotations() {
 		return annotations;
 	}
 

@@ -30,6 +30,7 @@ import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -112,7 +113,6 @@ import saker.java.compiler.impl.compile.handler.incremental.model.scope.ImportDe
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.ImportScope;
 import saker.java.compiler.impl.compile.handler.incremental.model.scope.SimpleImportScope;
 import saker.java.compiler.impl.compile.handler.info.SignaturePath;
-import saker.java.compiler.impl.compile.handler.info.SignaturePath.ClassSignaturePathSignature;
 import saker.java.compiler.impl.compile.signature.annot.val.AnnotValueImpl;
 import saker.java.compiler.impl.compile.signature.annot.val.ArrayValueImpl;
 import saker.java.compiler.impl.compile.signature.annot.val.LiteralValueImpl;
@@ -142,9 +142,9 @@ import saker.java.compiler.impl.compile.signature.value.VariableConstantMemberRe
 import saker.java.compiler.impl.signature.Signature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
-import saker.java.compiler.impl.signature.element.ClassSignature.PermittedSubclassesList;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
+import saker.java.compiler.impl.signature.element.ClassSignature.PermittedSubclassesList;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
@@ -155,7 +155,6 @@ import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
-import saker.java.compiler.jdk.impl.JavaCompilationUtils;
 import saker.java.compiler.jdk.impl.compat.tree.DefaultedTreeVisitor;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
@@ -195,6 +194,35 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 			}
 			signaturePathStack.addLast(result);
 			return result;
+		}
+
+		public SignaturePath pushIndexedSignaturePath(Object index) {
+			if (index == null) {
+				return pushSignaturePath();
+			}
+			SignaturePath result;
+			if (!signaturePathStack.isEmpty()) {
+				result = SignaturePath.createIndexed(signaturePathStack.getLast(), index);
+			} else {
+				result = SignaturePath.createIndexed(index);
+			}
+			signaturePathStack.addLast(result);
+			return result;
+		}
+
+		public SignaturePath pushSignaturePath(Signature signature) {
+			SignaturePath result;
+			if (!signaturePathStack.isEmpty()) {
+				result = new SignaturePath(signaturePathStack.getLast(), signature);
+			} else {
+				result = new SignaturePath(signature);
+			}
+			signaturePathStack.addLast(result);
+			return result;
+		}
+
+		public void popSignaturePath() {
+			signaturePathStack.removeLast();
 		}
 
 		public void popSignaturePath(Tree tree) {
@@ -629,8 +657,14 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 	private AnnotationSignature.ArrayValue getAnnotationArray(NewArrayTree nat, ParseContext context) {
 		//annotations of the NewArrayTree are irrelevant, as they are not accessible from the Model API
 		List<? extends ExpressionTree> initializers = nat.getInitializers();
-		List<Value> valuelist = JavaTaskUtils.cloneImmutableList(initializers,
-				initer -> createAnnotationValue(initer, context));
+		List<Value> valuelist = JavaTaskUtils.cloneImmutableList(initializers, new Function<ExpressionTree, Value>() {
+			private int index = 0;
+
+			@Override
+			public Value apply(ExpressionTree initer) {
+				return createAnnotationValue(initer, context, index++);
+			}
+		});
 		return ArrayValueImpl.create(valuelist);
 	}
 
@@ -782,7 +816,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				return getAnnotationArray((NewArrayTree) expression, context);
 			}
 			case PARENTHESIZED: {
-				return createAnnotationValue(((ParenthesizedTree) expression).getExpression(), context);
+				return createAnnotationValueImpl(((ParenthesizedTree) expression).getExpression(), context);
 			}
 			case CHAR_LITERAL:
 			case DOUBLE_LITERAL:
@@ -853,8 +887,8 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		}
 	}
 
-	private AnnotationSignature.Value createAnnotationValue(Tree expression, ParseContext context) {
-		SignaturePath sigpath = context.pushSignaturePath();
+	private AnnotationSignature.Value createAnnotationValue(Tree expression, ParseContext context, Object indexval) {
+		SignaturePath sigpath = context.pushIndexedSignaturePath(indexval);
 
 		Value result = createAnnotationValueImpl(expression, context);
 		context.treeSignatures.put(expression, result);
@@ -865,19 +899,19 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 	}
 
 	public List<AnnotationSignature> getAnnotations(List<? extends AnnotationTree> annotations, ParseContext context) {
-		return getAnnotationSignatures(annotations, context);
+		return getIndexedAnnotationSignatures(annotations, context);
 	}
 
-	public List<AnnotationSignature> getAnnotations(AnnotatedTypeTree annotatedtree, ParseContext context) {
-		return getAnnotations(annotatedtree.getAnnotations(), context);
+	private List<AnnotationSignature> getAnnotations(AnnotatedTypeTree annotatedtree, ParseContext context) {
+		return getIndexedAnnotationSignatures(annotatedtree.getAnnotations(), context);
 	}
 
-	public List<AnnotationSignature> getAnnotations(TypeParameterTree annotatedtree, ParseContext context) {
-		return getAnnotations(annotatedtree.getAnnotations(), context);
+	private List<AnnotationSignature> getAnnotations(TypeParameterTree annotatedtree, ParseContext context) {
+		return getIndexedAnnotationSignatures(annotatedtree.getAnnotations(), context);
 	}
 
-	public List<AnnotationSignature> getAnnotations(ModifiersTree modtree, ParseContext context) {
-		return getAnnotations(modtree.getAnnotations(), context);
+	private List<AnnotationSignature> getAnnotations(ModifiersTree modtree, ParseContext context) {
+		return getIndexedAnnotationSignatures(modtree.getAnnotations(), context);
 	}
 
 	private List<AnnotationSignature> getAnnotationSignatures(List<? extends AnnotationTree> annotations,
@@ -885,8 +919,24 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		return JavaTaskUtils.cloneImmutableList(annotations, annot -> createAnnotationSignature(annot, context));
 	}
 
+	private List<AnnotationSignature> getIndexedAnnotationSignatures(List<? extends AnnotationTree> annotations,
+			ParseContext context) {
+		return JavaTaskUtils.cloneImmutableList(annotations, new Function<AnnotationTree, AnnotationSignature>() {
+			private int index = 0;
+
+			@Override
+			public AnnotationSignature apply(AnnotationTree annot) {
+				return createAnnotationSignature(annot, context, index++);
+			}
+		});
+	}
+
 	private AnnotationSignature createAnnotationSignature(AnnotationTree annot, ParseContext context) {
-		SignaturePath sigpath = context.pushSignaturePath();
+		return createAnnotationSignature(annot, context, null);
+	}
+
+	private AnnotationSignature createAnnotationSignature(AnnotationTree annot, ParseContext context, Object index) {
+		SignaturePath sigpath = context.pushIndexedSignaturePath(index);
 
 		TypeSignature typesig = typeResolver.resolve(annot.getAnnotationType(), context);
 		Map<String, Value> annotvalues = getAnnotationValues(annot, context);
@@ -910,7 +960,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 			if (arg instanceof AssignmentTree) {
 				AssignmentTree at = (AssignmentTree) arg;
 				valuetree = at.getExpression();
-				// there are not dots in the name, however we use the dotted name collector to convert
+				// there are no dots in the name, however we use the dotted name collector to convert
 				// the variable name to a string rather than using .toString() on the tree
 				String varname = context.collectDottedName(at.getVariable());
 				name = cache.string(varname);
@@ -918,7 +968,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				valuetree = arg;
 				name = "value";
 			}
-			result.put(name, createAnnotationValue(valuetree, context));
+			result.put(name, createAnnotationValue(valuetree, context, name));
 		}
 		return result;
 	}
@@ -965,7 +1015,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		List<TypeSignature> throwntypes = JavaTaskUtils.cloneImmutableList(throwstrees,
 				th -> typeResolver.resolve(th, context));
 
-		AnnotationSignature.Value defval = defvaltree == null ? null : createAnnotationValue(defvaltree, context);
+		AnnotationSignature.Value defval = defvaltree == null ? null : createAnnotationValue(defvaltree, context, null);
 
 		List<TypeParameterTypeSignature> typeparams = JavaTaskUtils.cloneImmutableList(typeparametertrees,
 				tp -> createTypeParameterTypeSignature(tp, context));
@@ -1009,7 +1059,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 	private TypeParameterTypeSignature createTypeParameterTypeSignature(TypeParameterTree tree, ParseContext context) {
 		SignaturePath sigpath = context.pushSignaturePath();
 
-		List<AnnotationSignature> typeparamannotations = getAnnotations(tree.getAnnotations(), context);
+		List<AnnotationSignature> typeparamannotations = getAnnotations(tree, context);
 
 		List<? extends Tree> bounds = tree.getBounds();
 		//bounds is in the equals clause
@@ -1126,7 +1176,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		context.setNestingKind(currentnestingkind);
 		context.popClassSignature();
 
-		sigpath.setSignature(new ClassSignaturePathSignature(classsignature.getBinaryName()));
+		sigpath.setSignature(SignaturePath.getClassSignature(classsignature));
 		context.popSignaturePath(tree);
 
 		return classsignature;
