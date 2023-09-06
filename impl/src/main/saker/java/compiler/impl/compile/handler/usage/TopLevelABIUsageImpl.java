@@ -23,10 +23,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
-import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -45,9 +43,6 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 	private static final long serialVersionUID = 1L;
 
 	private String packageName;
-
-	private NavigableSet<String> wildcardTypeImportPaths = null;
-	private NavigableSet<String> wildcardStaticImportPaths = null;
 
 	private NavigableMap<ClassABIInfo, MemberABIUsage> classes = new TreeMap<>();
 	private NavigableMap<MethodABIInfo, Collection<MemberABIUsage>> methods = new TreeMap<>();
@@ -194,39 +189,9 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 	}
 
 	@Override
-	public void addWildcardTypeImportPath(String qualifiedpath) {
-		if (wildcardTypeImportPaths == null) {
-			wildcardTypeImportPaths = new TreeSet<>();
-		}
-		this.wildcardTypeImportPaths.add(qualifiedpath);
-	}
-
-	@Override
-	public void addWildcardStaticImportPath(String qualifiedpath) {
-		if (wildcardStaticImportPaths == null) {
-			wildcardStaticImportPaths = new TreeSet<>();
-		}
-		this.wildcardStaticImportPaths.add(qualifiedpath);
-	}
-
-	@Override
-	public boolean hasWildcardTypeImportPath(String path) {
-		return (wildcardTypeImportPaths != null && wildcardTypeImportPaths.contains(path))
-				|| Objects.equals(packageName, path) || "java.lang".equals(path);
-	}
-
-	@Override
-	public boolean hasWildcardStaticImportPath(String path) {
-		return wildcardStaticImportPaths != null && wildcardStaticImportPaths.contains(path);
-	}
-
-	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
 		out.writeObject(packageName);
-
-		SerialUtils.writeExternalCollection(out, wildcardTypeImportPaths);
-		SerialUtils.writeExternalCollection(out, wildcardStaticImportPaths);
 
 		SerialUtils.writeExternalMap(out, classes);
 		SerialUtils.writeExternalMap(out, fields);
@@ -237,9 +202,6 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		packageName = (String) in.readObject();
-
-		wildcardTypeImportPaths = SerialUtils.readExternalSortedImmutableNavigableSet(in);
-		wildcardStaticImportPaths = SerialUtils.readExternalSortedImmutableNavigableSet(in);
 
 		classes = SerialUtils.readExternalSortedImmutableNavigableMap(in);
 		fields = SerialUtils.readExternalSortedImmutableNavigableMap(in);

@@ -20,106 +20,133 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.SortedSet;
+import java.util.Objects;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
-import saker.build.thirdparty.saker.util.ObjectUtils;
-import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 
 public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 	private static final long serialVersionUID = 1L;
 
-	private NavigableSet<String> presentSimpleTypeIdentifiers = null;
-	private NavigableSet<String> presentSimpleVariableIdentifiers = null;
-	private NavigableSet<String> presentTypeCanonicalNames = null;
+	private static final byte FLAG_PRESENT_SIMPLE_TYPE_IDENTIFIER = 1 << 0;
+	private static final byte FLAG_PRESENT_SIMPLE_VARIABLE_IDENTIFIER = 1 << 1;
+	private static final byte FLAG_PRESENT_TYPE_CANONICAL_NAME = 1 << 2;
+	private static final byte FLAG_USED_TYPE_CANONICAL_NAME = 1 << 3;
+	private static final byte FLAG_INHERITED_TYPE_CANONICAL_NAME = 1 << 4;
+	private static final byte FLAG_WILDCARD_TYPE_IMPORT_PATH = 1 << 5;
+	private static final byte FLAG_WILDCARD_STATIC_IMPORT_PATH = 1 << 6;
 
-	private NavigableSet<String> usedTypeCanonicalNames = null;
-	private NavigableMap<String, NavigableSet<String>> referencedTypeFields = null;
-	private NavigableMap<String, NavigableSet<String>> referencedTypeMethods = null;
-	/**
-	 * Represents all type names, that are being inherited from in this ABIUsage
-	 */
-	private NavigableSet<String> inheritedTypeCanonicalNames = null;
+	private static final byte FLAGS_RESERVED = (byte) (1 << 7);
+
+	private static final byte REFERENCED_TYPE_FLAG_FIELD = 1 << 0;
+	private static final byte REFERENCED_TYPE_FLAG_METHOD = 1 << 1;
+
+	//cached boxed Byte instances to avoid auto boxing in compute methods
+	private static final Byte BOXED_REFERENCED_TYPE_FLAG_FIELD = 1 << 0;
+	private static final Byte BOXED_REFERENCED_TYPE_FLAG_METHOD = 1 << 1;
+
+	private NavigableMap<String, ReferenceInfo> referenceInfos = null;
+
+	private transient byte presentSimpleFlags;
 
 	public AbiUsageImpl() {
 	}
 
-	public abstract void addWildcardTypeImportPath(String qualifiedpath);
+	private NavigableMap<String, ReferenceInfo> getReferenceInfos() {
+		return referenceInfos;
+	}
 
-	public abstract void addWildcardStaticImportPath(String qualifiedpath);
+	private NavigableMap<String, ReferenceInfo> getReferenceInfosCreate() {
+		NavigableMap<String, ReferenceInfo> map = referenceInfos;
+		if (map != null) {
+			return map;
+		}
+		map = new TreeMap<>();
+		referenceInfos = map;
+		return map;
+	}
+
+	private ReferenceInfo getReferenceInfoCreate(String identifier) {
+		return getReferenceInfosCreate().computeIfAbsent(identifier, x -> new ReferenceInfo());
+	}
+
+	private ReferenceInfo getReferenceInfo(String identifier) {
+		NavigableMap<String, ReferenceInfo> refinfos = getReferenceInfos();
+		if (refinfos == null) {
+			return null;
+		}
+		return refinfos.get(identifier);
+	}
+
+	public void addWildcardTypeImportPath(String qualifiedpath) {
+		getReferenceInfoCreate(qualifiedpath).flags |= FLAG_WILDCARD_TYPE_IMPORT_PATH;
+	}
+
+	public void addWildcardStaticImportPath(String qualifiedpath) {
+		getReferenceInfoCreate(qualifiedpath).flags |= FLAG_WILDCARD_STATIC_IMPORT_PATH;
+	}
 
 	@Override
-	public abstract boolean hasWildcardTypeImportPath(String path);
+	public boolean hasWildcardTypeImportPath(String path) {
+		if (Objects.equals(getPackageName(), path) || "java.lang".equals(path)) {
+			return true;
+		}
+		ReferenceInfo ri = getReferenceInfo(path);
+		if (ri != null) {
+			return (ri.flags & (FLAG_WILDCARD_TYPE_IMPORT_PATH)) != 0;
+		}
+		return false;
+	}
 
 	@Override
-	public abstract boolean hasWildcardStaticImportPath(String path);
+	public boolean hasWildcardStaticImportPath(String path) {
+		ReferenceInfo ri = getReferenceInfo(path);
+		if (ri != null) {
+			return (ri.flags & (FLAG_WILDCARD_STATIC_IMPORT_PATH)) != 0;
+		}
+		return false;
+	}
 
 	public void addFieldMemberReference(String typename, String field) {
-		if (referencedTypeFields == null) {
-			referencedTypeFields = new TreeMap<>();
-		}
-		referencedTypeFields.computeIfAbsent(typename, Functionals.treeSetComputer()).add(field);
+		getReferenceInfoCreate(typename).getMemberFlagsCreate().compute(field,
+				(k, v) -> v == null ? BOXED_REFERENCED_TYPE_FLAG_FIELD
+						: (byte) (v.byteValue() | REFERENCED_TYPE_FLAG_FIELD));
 	}
 
 	public void addMethodMemberReference(String typename, String method) {
-		if (referencedTypeMethods == null) {
-			referencedTypeMethods = new TreeMap<>();
-		}
-		referencedTypeMethods.computeIfAbsent(typename, Functionals.treeSetComputer()).add(method);
+		getReferenceInfoCreate(typename).getMemberFlagsCreate().compute(method,
+				(k, v) -> v == null ? BOXED_REFERENCED_TYPE_FLAG_METHOD
+						: (byte) (v.byteValue() | REFERENCED_TYPE_FLAG_METHOD));
 	}
 
 	public void addTypeNameReference(String typename) {
-		if (presentTypeCanonicalNames == null) {
-			presentTypeCanonicalNames = new TreeSet<>();
-		}
-		presentTypeCanonicalNames.add(typename);
+		getReferenceInfoCreate(typename).flags |= FLAG_PRESENT_TYPE_CANONICAL_NAME;
 	}
 
 	public void addUsedType(String typename) {
-		if (usedTypeCanonicalNames == null) {
-			usedTypeCanonicalNames = new TreeSet<>();
-		}
-		this.usedTypeCanonicalNames.add(typename);
+		getReferenceInfoCreate(typename).flags |= FLAG_USED_TYPE_CANONICAL_NAME;
 	}
 
 	public void addPresentSimpleTypeIdentifier(String identifier) {
-		if (presentSimpleTypeIdentifiers == null) {
-			presentSimpleTypeIdentifiers = new TreeSet<>();
-		}
-		presentSimpleTypeIdentifiers.add(identifier);
+		presentSimpleFlags |= FLAG_PRESENT_SIMPLE_TYPE_IDENTIFIER;
+		getReferenceInfoCreate(identifier).flags |= FLAG_PRESENT_SIMPLE_TYPE_IDENTIFIER;
 	}
 
 	public void addPresentSimpleVariableIdentifier(String identifier) {
-		if (presentSimpleVariableIdentifiers == null) {
-			presentSimpleVariableIdentifiers = new TreeSet<>();
-		}
-		presentSimpleVariableIdentifiers.add(identifier);
+		presentSimpleFlags |= FLAG_PRESENT_SIMPLE_VARIABLE_IDENTIFIER;
+		getReferenceInfoCreate(identifier).flags |= FLAG_PRESENT_SIMPLE_VARIABLE_IDENTIFIER;
 	}
 
 	public void addTypeInheritance(String superclass) {
-		if (inheritedTypeCanonicalNames == null) {
-			inheritedTypeCanonicalNames = new TreeSet<>();
-		}
-		if (usedTypeCanonicalNames == null) {
-			usedTypeCanonicalNames = new TreeSet<>();
-		}
-		inheritedTypeCanonicalNames.add(superclass);
-		usedTypeCanonicalNames.add(superclass);
+		getReferenceInfoCreate(superclass).flags |= FLAG_USED_TYPE_CANONICAL_NAME | FLAG_INHERITED_TYPE_CANONICAL_NAME;
 	}
 
 	@Override
-	public boolean isReferencesClass(String canonicaltypenameame) {
-		if (presentTypeCanonicalNames != null && presentTypeCanonicalNames.contains(canonicaltypenameame)) {
-			return true;
-		}
-		if (usedTypeCanonicalNames != null && usedTypeCanonicalNames.contains(canonicaltypenameame)) {
-			return true;
-		}
-		if (inheritedTypeCanonicalNames != null && inheritedTypeCanonicalNames.contains(canonicaltypenameame)) {
-			return true;
+	public boolean isReferencesClass(String canonicaltypename) {
+		ReferenceInfo ri = getReferenceInfo(canonicaltypename);
+		if (ri != null) {
+			return (ri.flags & (FLAG_PRESENT_TYPE_CANONICAL_NAME | FLAG_USED_TYPE_CANONICAL_NAME
+					| FLAG_INHERITED_TYPE_CANONICAL_NAME)) != 0;
 		}
 		return false;
 	}
@@ -130,13 +157,7 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 			return true;
 		}
 		String searchfor = packagename + ".";
-		if (isReferencesPackageOrSubPackageInTypeNameMapImpl(searchfor, presentTypeCanonicalNames)) {
-			return true;
-		}
-		if (isReferencesPackageOrSubPackageInTypeNameMapImpl(searchfor, usedTypeCanonicalNames)) {
-			return true;
-		}
-		if (isReferencesPackageOrSubPackageInTypeNameMapImpl(searchfor, inheritedTypeCanonicalNames)) {
+		if (isReferencesPackageOrSubPackageInTypeNameMapImpl(searchfor, referenceInfos)) {
 			return true;
 		}
 		if (hasWildcardTypeImportPath(packagename)) {
@@ -146,9 +167,9 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 	}
 
 	private static boolean isReferencesPackageOrSubPackageInTypeNameMapImpl(String searchfor,
-			NavigableSet<String> typenamemap) {
+			NavigableMap<String, ?> typenamemap) {
 		if (typenamemap != null) {
-			String higher = typenamemap.higher(searchfor);
+			String higher = typenamemap.higherKey(searchfor);
 			if (higher != null && higher.startsWith(searchfor)) {
 				return true;
 			}
@@ -158,110 +179,184 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 
 	@Override
 	public boolean isSimpleTypePresent(String simplename) {
-		return presentSimpleTypeIdentifiers != null && presentSimpleTypeIdentifiers.contains(simplename);
+		ReferenceInfo ri = getReferenceInfo(simplename);
+		if (ri != null) {
+			return (ri.flags & (FLAG_PRESENT_SIMPLE_TYPE_IDENTIFIER)) != 0;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean hasAnySimpleTypeIdentifier() {
-		return !ObjectUtils.isNullOrEmpty(presentSimpleTypeIdentifiers);
+		if ((presentSimpleFlags & FLAG_PRESENT_SIMPLE_TYPE_IDENTIFIER) != 0) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean isSimpleVariablePresent(String simplename) {
-		return presentSimpleVariableIdentifiers != null && presentSimpleVariableIdentifiers.contains(simplename);
+		ReferenceInfo ri = getReferenceInfo(simplename);
+		if (ri != null) {
+			return (ri.flags & (FLAG_PRESENT_SIMPLE_VARIABLE_IDENTIFIER)) != 0;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean hasAnySimpleVariableIdentifier() {
-		return !ObjectUtils.isNullOrEmpty(presentSimpleVariableIdentifiers);
+		if ((presentSimpleFlags & FLAG_PRESENT_SIMPLE_VARIABLE_IDENTIFIER) != 0) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean isReferencesField(String canonicaltypename, String member) {
-		if (referencedTypeFields == null) {
+		ReferenceInfo refinfo = getReferenceInfo(canonicaltypename);
+		if (refinfo == null) {
 			return false;
 		}
-		SortedSet<String> fields = referencedTypeFields.get(canonicaltypename);
-		if (fields != null) {
-			return fields.contains(member);
+		Byte flags = refinfo.getMemberFlag(member);
+		if (flags == null) {
+			return false;
 		}
-		return false;
+		return (flags & REFERENCED_TYPE_FLAG_FIELD) != 0;
 	}
 
 	@Override
 	public boolean isReferencesMethod(String canonicaltypename, String name) {
-		if (referencedTypeMethods == null) {
+		ReferenceInfo refinfo = getReferenceInfo(canonicaltypename);
+		if (refinfo == null) {
 			return false;
 		}
-		SortedSet<String> fields = referencedTypeMethods.get(canonicaltypename);
-		if (fields != null) {
-			return fields.contains(name);
+		Byte flags = refinfo.getMemberFlag(name);
+		if (flags == null) {
+			return false;
+		}
+		return (flags & REFERENCED_TYPE_FLAG_METHOD) != 0;
+	}
+
+	@Override
+	public boolean isTypeChangeAware(String canonicaltypename) {
+		ReferenceInfo ri = getReferenceInfo(canonicaltypename);
+		if (ri != null) {
+			return (ri.flags & (FLAG_USED_TYPE_CANONICAL_NAME | FLAG_INHERITED_TYPE_CANONICAL_NAME)) != 0;
 		}
 		return false;
 	}
 
 	@Override
-	public boolean isTypeChangeAware(String canonicaltypename) {
-		return (inheritedTypeCanonicalNames != null && inheritedTypeCanonicalNames.contains(canonicaltypename))
-				|| (usedTypeCanonicalNames != null && usedTypeCanonicalNames.contains(canonicaltypename));
-	}
-
-	@Override
 	public boolean isInheritanceChangeAffected(String canonicaltypename) {
-		return (inheritedTypeCanonicalNames != null && inheritedTypeCanonicalNames.contains(canonicaltypename))
-				|| (usedTypeCanonicalNames != null && usedTypeCanonicalNames.contains(canonicaltypename));
+		ReferenceInfo ri = getReferenceInfo(canonicaltypename);
+		if (ri != null) {
+			return (ri.flags & (FLAG_USED_TYPE_CANONICAL_NAME | FLAG_INHERITED_TYPE_CANONICAL_NAME)) != 0;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean isInheritesFromClass(String canonicalname) {
-		return inheritedTypeCanonicalNames != null && inheritedTypeCanonicalNames.contains(canonicalname);
+		ReferenceInfo ri = getReferenceInfo(canonicalname);
+		if (ri != null) {
+			return (ri.flags & (FLAG_INHERITED_TYPE_CANONICAL_NAME)) != 0;
+		}
+		return false;
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		SerialUtils.writeExternalCollection(out, inheritedTypeCanonicalNames);
-		SerialUtils.writeExternalCollection(out, presentSimpleTypeIdentifiers);
-		SerialUtils.writeExternalCollection(out, presentSimpleVariableIdentifiers);
-		SerialUtils.writeExternalCollection(out, presentTypeCanonicalNames);
-		SerialUtils.writeExternalCollection(out, usedTypeCanonicalNames);
-
-		SerialUtils.writeExternalMap(out, referencedTypeFields, ObjectOutput::writeUTF,
-				SerialUtils::writeExternalCollection);
-		SerialUtils.writeExternalMap(out, referencedTypeMethods, ObjectOutput::writeUTF,
-				SerialUtils::writeExternalCollection);
+		SerialUtils.writeExternalMap(out, referenceInfos, ObjectOutput::writeUTF, (o, info) -> info.writeExternal(o));
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		inheritedTypeCanonicalNames = SerialUtils.readExternalSortedImmutableNavigableSet(in);
-		presentSimpleTypeIdentifiers = SerialUtils.readExternalSortedImmutableNavigableSet(in);
-		presentSimpleVariableIdentifiers = SerialUtils.readExternalSortedImmutableNavigableSet(in);
-		presentTypeCanonicalNames = SerialUtils.readExternalSortedImmutableNavigableSet(in);
-		usedTypeCanonicalNames = SerialUtils.readExternalSortedImmutableNavigableSet(in);
+		referenceInfos = SerialUtils.readExternalSortedImmutableNavigableMap(in, ObjectInput::readUTF, i -> {
+			ReferenceInfo ri = new ReferenceInfo();
+			ri.readExternal(i);
+			presentSimpleFlags |= ri.flags;
+			return ri;
+		});
+	}
 
-		referencedTypeFields = SerialUtils.readExternalSortedImmutableNavigableMap(in, ObjectInput::readUTF,
-				SerialUtils::readExternalSortedImmutableNavigableSet);
-		referencedTypeMethods = SerialUtils.readExternalSortedImmutableNavigableMap(in, ObjectInput::readUTF,
-				SerialUtils::readExternalSortedImmutableNavigableSet);
+	protected static void writeStringByteMap(ObjectOutput out, NavigableMap<String, Byte> map) throws IOException {
+		SerialUtils.writeExternalMap(out, map, ObjectOutput::writeUTF, (ObjectOutput o, Byte b) -> o.writeByte(b));
+	}
+
+	protected static NavigableMap<String, Byte> readStringByteMap(ObjectInput in)
+			throws ClassNotFoundException, IOException {
+		return SerialUtils.readExternalSortedImmutableNavigableMap(in, ObjectInput::readUTF, i -> i.readByte());
 	}
 
 	@Override
 	public String toString() {
-		return "ABIUsage ["
-				+ (presentSimpleTypeIdentifiers != null
-						? "presentSimpleTypeIdentifiers=" + presentSimpleTypeIdentifiers + ", "
-						: "")
-				+ (presentSimpleVariableIdentifiers != null
-						? "presentSimpleVariableIdentifiers=" + presentSimpleVariableIdentifiers + ", "
-						: "")
-				+ (presentTypeCanonicalNames != null ? "presentTypeCanonicalNames=" + presentTypeCanonicalNames + ", "
-						: "")
-				+ (usedTypeCanonicalNames != null ? "usedTypeCanonicalNames=" + usedTypeCanonicalNames + ", " : "")
-				+ (referencedTypeFields != null ? "referencedTypeFields=" + referencedTypeFields + ", " : "")
-				+ (referencedTypeMethods != null ? "referencedTypeMethods=" + referencedTypeMethods + ", " : "")
-				+ (inheritedTypeCanonicalNames != null ? "inheritedTypeCanonicalNames=" + inheritedTypeCanonicalNames
-						: "")
-				+ "]";
+		return getClass().getSimpleName() + "[" + referenceInfos + "]";
 	}
 
+	private static final class ReferenceInfo implements Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		protected byte flags;
+		protected NavigableMap<String, Byte> memberFlags;
+
+		public ReferenceInfo() {
+		}
+
+		public NavigableMap<String, Byte> getMemberFlags() {
+			return memberFlags;
+		}
+
+		public Byte getMemberFlag(String member) {
+			NavigableMap<String, Byte> memflags = this.memberFlags;
+			if (memflags == null) {
+				return null;
+			}
+			return memflags.get(member);
+		}
+
+		public NavigableMap<String, Byte> getMemberFlagsCreate() {
+			NavigableMap<String, Byte> map = this.memberFlags;
+			if (map != null) {
+				return map;
+			}
+			map = new TreeMap<>();
+			this.memberFlags = map;
+			return map;
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			if (memberFlags == null) {
+				//use the reserved flag to convey the presence of the member map, this lets us write a few bytes less to the output
+				out.writeByte(flags);
+			} else {
+				out.writeByte(flags | FLAGS_RESERVED);
+				writeStringByteMap(out, memberFlags);
+			}
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			flags = in.readByte();
+			if ((flags & FLAGS_RESERVED) != 0) {
+				memberFlags = readStringByteMap(in);
+				flags = (byte) (flags & ~FLAGS_RESERVED);
+			}
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(getClass().getSimpleName());
+			sb.append("[flags=");
+			sb.append(flags);
+			if (memberFlags != null) {
+				sb.append(", memberFlags=");
+				sb.append(memberFlags);
+			}
+			sb.append("]");
+			return sb.toString();
+		}
+
+	}
 }
