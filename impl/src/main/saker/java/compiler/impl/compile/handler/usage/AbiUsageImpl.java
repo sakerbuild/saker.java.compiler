@@ -19,11 +19,12 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.TreeMap;
 
-import saker.build.thirdparty.saker.util.io.SerialUtils;
+import saker.build.thirdparty.saker.util.ImmutableUtils;
 
 public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 	private static final long serialVersionUID = 1L;
@@ -266,26 +267,88 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		SerialUtils.writeExternalMap(out, referenceInfos, ObjectOutput::writeUTF, (o, info) -> info.writeExternal(o));
+		if (referenceInfos == null) {
+			out.writeInt(-1);
+			return;
+		}
+		int size = referenceInfos.size();
+		out.writeInt(size);
+		byte[] flags = new byte[size];
+		int i = 0;
+		for (Entry<String, ReferenceInfo> entry : referenceInfos.entrySet()) {
+			out.writeUTF(entry.getKey());
+			flags[i++] = entry.getValue().getSerializationFlags();
+		}
+
+		out.write(flags);
+		i = 0;
+		for (ReferenceInfo ri : referenceInfos.values()) {
+			ri.writeForFlags(flags[i++], out);
+		}
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		referenceInfos = SerialUtils.readExternalSortedImmutableNavigableMap(in, ObjectInput::readUTF, i -> {
+		int size = in.readInt();
+		if (size < 0) {
+			//nothing to read
+			return;
+		}
+		byte[] flags = new byte[size];
+		String[] names = new String[size];
+		ReferenceInfo[] infos = new ReferenceInfo[size];
+
+		for (int i = 0; i < names.length; i++) {
+			names[i] = in.readUTF();
+		}
+
+		in.readFully(flags);
+
+		for (int i = 0; i < infos.length; i++) {
 			ReferenceInfo ri = new ReferenceInfo();
-			ri.readExternal(i);
-			presentSimpleFlags |= ri.flags;
-			return ri;
-		});
+			ri.readForFlags(flags[i], in);
+			infos[i] = ri;
+
+			this.presentSimpleFlags |= ri.flags;
+		}
+
+		this.referenceInfos = ImmutableUtils.unmodifiableNavigableMap(names, infos);
 	}
 
 	protected static void writeStringByteMap(ObjectOutput out, NavigableMap<String, Byte> map) throws IOException {
-		SerialUtils.writeExternalMap(out, map, ObjectOutput::writeUTF, (ObjectOutput o, Byte b) -> o.writeByte(b));
+		//this serialization probably saves us some bytes in the output as we don't write the byte flags individually
+		if (map == null) {
+			out.writeInt(-1);
+			return;
+		}
+		int size = map.size();
+		out.writeInt(size);
+		int i = 0;
+		byte[] bytes = new byte[size];
+		for (Entry<String, Byte> entry : map.entrySet()) {
+			out.writeUTF(entry.getKey());
+			bytes[i++] = entry.getValue();
+		}
+		out.write(bytes);
 	}
 
-	protected static NavigableMap<String, Byte> readStringByteMap(ObjectInput in)
-			throws ClassNotFoundException, IOException {
-		return SerialUtils.readExternalSortedImmutableNavigableMap(in, ObjectInput::readUTF, i -> i.readByte());
+	protected static NavigableMap<String, Byte> readStringByteMap(ObjectInput in) throws IOException {
+		int size = in.readInt();
+		if (size < 0) {
+			return null;
+		}
+		String[] keys = new String[size];
+		byte[] valbytes = new byte[size];
+		for (int i = 0; i < keys.length; i++) {
+			keys[i] = in.readUTF();
+		}
+		in.readFully(valbytes);
+		Byte[] vals = new Byte[size];
+		for (int i = 0; i < valbytes.length; i++) {
+			vals[i] = valbytes[i];
+		}
+
+		return ImmutableUtils.unmodifiableNavigableMap(keys, vals);
 	}
 
 	@Override
@@ -293,9 +356,7 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 		return getClass().getSimpleName() + "[" + referenceInfos + "]";
 	}
 
-	private static final class ReferenceInfo implements Externalizable {
-		private static final long serialVersionUID = 1L;
-
+	private static final class ReferenceInfo {
 		protected byte flags;
 		protected NavigableMap<String, Byte> memberFlags;
 
@@ -324,7 +385,29 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 			return map;
 		}
 
-		@Override
+		protected byte getSerializationFlags() {
+			if (memberFlags == null) {
+				return flags;
+			}
+			return (byte) (flags | FLAGS_RESERVED);
+		}
+
+		protected void writeForFlags(byte flags, ObjectOutput out) throws IOException {
+			if ((flags & FLAGS_RESERVED) != 0) {
+				writeStringByteMap(out, memberFlags);
+			}
+		}
+
+		protected void readForFlags(byte flags, ObjectInput in) throws IOException {
+			if ((flags & FLAGS_RESERVED) != 0) {
+				this.flags = (byte) (flags & ~FLAGS_RESERVED);
+				memberFlags = readStringByteMap(in);
+			} else {
+				this.flags = flags;
+			}
+
+		}
+
 		public void writeExternal(ObjectOutput out) throws IOException {
 			if (memberFlags == null) {
 				//use the reserved flag to convey the presence of the member map, this lets us write a few bytes less to the output
@@ -335,7 +418,6 @@ public abstract class AbiUsageImpl implements Externalizable, AbiUsage {
 			}
 		}
 
-		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 			flags = in.readByte();
 			if ((flags & FLAGS_RESERVED) != 0) {
