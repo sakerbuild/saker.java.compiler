@@ -501,8 +501,9 @@ public abstract class CompilationHandler {
 				if (suppresswarnings.contains(entry.getWarningType())) {
 					continue;
 				}
-				if (entry.getOrigin() != null) {
-					Collection<String> sup = processorsuppresswarnings.get(entry.getOrigin().getProcessorDetails());
+				GeneratedFileOrigin origin = entry.getOrigin();
+				if (origin != null) {
+					Collection<String> sup = processorsuppresswarnings.get(origin.getProcessorDetails());
 					if (sup != null && sup.contains(entry.getWarningType())) {
 						continue;
 					}

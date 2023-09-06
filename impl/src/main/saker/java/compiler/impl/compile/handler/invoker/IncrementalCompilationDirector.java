@@ -2109,6 +2109,10 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 		return result;
 	}
 
+	private static GeneratedFileOrigin makeOrigin(ProcessorDetails procdetails) {
+		return new GeneratedFileOrigin(procdetails);
+	}
+
 	private GeneratedFileOrigin makeOrigin(ProcessorDetails procdetails, Element... originatingElements) {
 		return new GeneratedFileOrigin(elemTypes.mapElementsToFiles(topLevelElementify(originatingElements)),
 				procdetails);
@@ -2628,34 +2632,6 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 					SakerPath path = elemfd.getPath();
 					if (path != null) {
 						SignatureSourcePositions positions = elemfd.getSourcePositions();
-//						Signature signature;
-//						if (positions != null) {
-//							Position pos = null;
-//							if (v instanceof IncrementalAnnotationValue) {
-//								Value avsig = ((IncrementalAnnotationValue) v).getSignatureValue();
-//								pos = positions.getPosition(avsig);
-//							}
-//							if (pos == null && a instanceof IncrementalAnnotationMirror) {
-//								AnnotationSignature amsig = ((IncrementalAnnotationMirror) a).getSignature();
-//								pos = positions.getPosition(amsig);
-//							}
-//							if (pos == null) {
-//								while (e instanceof SignaturedElement) {
-//									SignaturedElement<?> incelem = (SignaturedElement<?>) e;
-//									pos = positions.getPosition(incelem.getSignature());
-//									if (pos != null) {
-//										break;
-//									}
-//									e = incelem.getEnclosingElement();
-//								}
-//							}
-//							if (pos != null) {
-//								result.lineNumber = pos.getLineIndex();
-//								result.linePositionStart = pos.getLinePositionIndex();
-//								result.linePositionEnd = pos.getLinePositionIndex()
-//										+ (pos.getEndPosition() - pos.getStartPosition());
-//							}
-//						}
 						SignaturePath diagpath = getDiagnosticPositionSignaturePath(positions, e, a, v);
 						location = new PathSignatureDiagnosticLocationReference(path, diagpath);
 					}
