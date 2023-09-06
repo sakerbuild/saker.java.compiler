@@ -22,8 +22,8 @@ import java.util.function.Consumer;
 import javax.lang.model.element.Modifier;
 
 import saker.java.compiler.impl.compile.handler.usage.AbiUsage;
+import saker.java.compiler.impl.compile.handler.usage.FieldABIInfo;
 import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage;
-import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage.FieldABIInfo;
 import saker.java.compiler.impl.compile.signature.change.AbiChange;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
@@ -60,13 +60,14 @@ public class FieldAddedABIChange implements AbiChange {
 			//can only affect constant initializers if the field is static
 			for (Entry<FieldABIInfo, ? extends AbiUsage> entry : usage.getFields().entrySet()) {
 				FieldABIInfo field = entry.getKey();
-				if (field.hasConstantValue()) {
-					//field can possibly be a constant value
-					AbiUsage entryusage = entry.getValue();
-					if (entryusage.isReferencesField(classCanonicalName, fieldname)
-							|| (issimplevisible && entryusage.isSimpleVariablePresent(fieldname))) {
-						foundchanges.accept(new FieldInitializerABIChange(field));
-					}
+				if (!field.hasConstantValue()) {
+					continue;
+				}
+				//field can possibly be a constant value
+				AbiUsage entryusage = entry.getValue();
+				if (entryusage.isReferencesField(classCanonicalName, fieldname)
+						|| (issimplevisible && entryusage.isSimpleVariablePresent(fieldname))) {
+					foundchanges.accept(new FieldInitializerABIChange(field));
 				}
 			}
 		}

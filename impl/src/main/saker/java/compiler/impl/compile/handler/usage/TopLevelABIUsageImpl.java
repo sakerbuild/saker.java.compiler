@@ -60,12 +60,10 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		this.packageName = packageName;
 	}
 
-	@Override
 	public Map<ClassABIInfo, MemberABIUsage> getClasses() {
 		return classes;
 	}
 
-	@Override
 	public Map<MethodABIInfo, Collection<MemberABIUsage>> getMethods() {
 		return methods;
 	}

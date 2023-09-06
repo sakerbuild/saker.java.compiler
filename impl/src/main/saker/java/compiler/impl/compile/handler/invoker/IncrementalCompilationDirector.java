@@ -144,8 +144,8 @@ import saker.java.compiler.impl.compile.handler.info.SignatureSourcePositions.Po
 import saker.java.compiler.impl.compile.handler.info.SourceFileData;
 import saker.java.compiler.impl.compile.handler.invoker.JavaCompilationInvoker.ABIParseInfo;
 import saker.java.compiler.impl.compile.handler.usage.AbiUsage;
+import saker.java.compiler.impl.compile.handler.usage.FieldABIInfo;
 import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage;
-import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage.FieldABIInfo;
 import saker.java.compiler.impl.compile.signature.change.AbiChange;
 import saker.java.compiler.impl.compile.signature.change.ClassAddedABIChange;
 import saker.java.compiler.impl.compile.signature.change.ClassRemovedABIChange;

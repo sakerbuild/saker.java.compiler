@@ -19,8 +19,8 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import saker.java.compiler.impl.compile.handler.usage.AbiUsage;
+import saker.java.compiler.impl.compile.handler.usage.FieldABIInfo;
 import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage;
-import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage.FieldABIInfo;
 import saker.java.compiler.impl.compile.signature.change.AbiChange;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;

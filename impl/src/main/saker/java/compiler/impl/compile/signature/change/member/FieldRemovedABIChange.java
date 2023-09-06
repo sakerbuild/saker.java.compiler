@@ -22,8 +22,8 @@ import java.util.function.Consumer;
 import javax.lang.model.element.Modifier;
 
 import saker.java.compiler.impl.compile.handler.usage.AbiUsage;
+import saker.java.compiler.impl.compile.handler.usage.FieldABIInfo;
 import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage;
-import saker.java.compiler.impl.compile.handler.usage.TopLevelAbiUsage.FieldABIInfo;
 import saker.java.compiler.impl.compile.signature.change.AbiChange;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
@@ -52,11 +52,12 @@ public class FieldRemovedABIChange implements AbiChange {
 			boolean result = false;
 			for (Entry<FieldABIInfo, ? extends AbiUsage> entry : usage.getFields().entrySet()) {
 				FieldABIInfo usagefield = entry.getKey();
-				if (usagefield.hasConstantValue()) {
-					if (entry.getValue().isReferencesField(classCanonicalName, fieldname)) {
-						foundchanges.accept(new FieldInitializerABIChange(usagefield));
-						result = true;
-					}
+				if (!usagefield.hasConstantValue()) {
+					continue;
+				}
+				if (entry.getValue().isReferencesField(classCanonicalName, fieldname)) {
+					foundchanges.accept(new FieldInitializerABIChange(usagefield));
+					result = true;
 				}
 			}
 			if (result) {
