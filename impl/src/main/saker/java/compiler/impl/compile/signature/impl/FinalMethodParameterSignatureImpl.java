@@ -23,7 +23,7 @@ import javax.lang.model.element.Modifier;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
-public class FinalMethodParameterSignatureImpl extends MethodParameterSignatureImpl {
+public final class FinalMethodParameterSignatureImpl extends MethodParameterSignatureImpl {
 	private static final long serialVersionUID = 1L;
 
 	/**

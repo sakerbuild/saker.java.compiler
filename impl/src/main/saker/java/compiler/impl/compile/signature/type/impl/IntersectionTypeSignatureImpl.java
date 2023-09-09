@@ -28,7 +28,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.IntersectionTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class IntersectionTypeSignatureImpl extends AnnotatedSignatureImpl implements IntersectionTypeSignature {
+public final class IntersectionTypeSignatureImpl extends AnnotatedSignatureImpl implements IntersectionTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private List<? extends TypeSignature> bounds;

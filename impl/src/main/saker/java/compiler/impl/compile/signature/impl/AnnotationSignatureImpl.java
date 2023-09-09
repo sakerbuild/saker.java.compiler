@@ -20,15 +20,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class AnnotationSignatureImpl implements Externalizable, AnnotationSignature {
+public final class AnnotationSignatureImpl implements Externalizable, AnnotationSignature {
 	private static final long serialVersionUID = 1L;
 
 	private TypeSignature annotationType;
@@ -108,26 +108,36 @@ public class AnnotationSignatureImpl implements Externalizable, AnnotationSignat
 				return false;
 		} else if (!annotationType.equals(other.annotationType))
 			return false;
-		if (values == null) {
-			if (other.values != null)
-				return false;
-		} else if (!values.equals(other.values))
+		//the map iterator order should be the same, because annotation processors may (althought shouldnt) rely on that
+		if (!ObjectUtils.mapOrderedEquals(values, other.values))
 			return false;
 		return true;
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		SerialUtils.writeExternalMap(out, values);
+		if (values != null) {
+			for (Entry<String, Value> entry : values.entrySet()) {
+				out.writeObject(entry.getKey());
+				out.writeObject(entry.getValue());
+			}
+		}
 
 		out.writeObject(annotationType);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		values = SerialUtils.readExternalImmutableLinkedHashMap(in);
-
-		annotationType = (TypeSignature) in.readObject();
+		this.values = new LinkedHashMap<>();
+		while (true) {
+			Object k = in.readObject();
+			if (!(k instanceof String)) {
+				this.annotationType = (TypeSignature) k;
+				break;
+			}
+			Object v = in.readObject();
+			this.values.put((String) k, (Value) v);
+		}
 	}
 
 }

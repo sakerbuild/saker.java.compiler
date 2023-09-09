@@ -24,7 +24,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.NullTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class NullTypeSignatureImpl extends AnnotatedSignatureImpl implements NullTypeSignature {
+public final class NullTypeSignatureImpl extends AnnotatedSignatureImpl implements NullTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private static final NullTypeSignature INSTANCE = new NullTypeSignatureImpl();

@@ -31,6 +31,8 @@ public abstract class AnnotatedSignatureImpl implements AnnotatedSignature, Exte
 	private static final long serialVersionUID = 1L;
 
 	protected List<? extends AnnotationSignature> annotations;
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
 
 	/**
 	 * For {@link Externalizable}.

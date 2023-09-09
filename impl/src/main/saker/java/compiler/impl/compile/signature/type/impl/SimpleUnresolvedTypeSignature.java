@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +73,8 @@ public class SimpleUnresolvedTypeSignature implements UnresolvedTypeSignature, E
 	}
 
 	protected String qualifiedName;
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
 
 	/**
 	 * For {@link Externalizable}.

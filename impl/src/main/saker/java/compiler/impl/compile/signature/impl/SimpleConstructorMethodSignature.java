@@ -31,6 +31,9 @@ import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 public class SimpleConstructorMethodSignature extends MethodSignatureBase {
 	private static final long serialVersionUID = 1L;
 
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
+
 	/**
 	 * For {@link Externalizable}.
 	 */

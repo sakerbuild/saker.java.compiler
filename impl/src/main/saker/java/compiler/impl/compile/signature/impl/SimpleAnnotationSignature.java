@@ -28,7 +28,7 @@ import saker.java.compiler.impl.compile.signature.type.impl.SimpleUnresolvedType
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class SimpleAnnotationSignature implements AnnotationSignature, Externalizable {
+public final class SimpleAnnotationSignature implements AnnotationSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	public static final SimpleAnnotationSignature INSTANCE_OVERRIDE = new SimpleAnnotationSignature(

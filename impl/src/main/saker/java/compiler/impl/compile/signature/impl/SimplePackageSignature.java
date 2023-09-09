@@ -25,7 +25,7 @@ import java.util.List;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
 
-public class SimplePackageSignature implements PackageSignature, Externalizable {
+public final class SimplePackageSignature implements PackageSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private String name;

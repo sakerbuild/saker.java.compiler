@@ -28,7 +28,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ArrayTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class SimpleArrayTypeSignature implements ArrayTypeSignature, Externalizable {
+public final class SimpleArrayTypeSignature implements ArrayTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private static final Map<TypeSignature, SimpleArrayTypeSignature> SIMPLE_CACHE = new HashMap<>();

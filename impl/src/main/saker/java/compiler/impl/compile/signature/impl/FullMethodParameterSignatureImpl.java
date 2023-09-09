@@ -26,7 +26,7 @@ import javax.lang.model.element.Modifier;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
 
-public class FullMethodParameterSignatureImpl extends MethodParameterSignatureImpl {
+public final class FullMethodParameterSignatureImpl extends MethodParameterSignatureImpl {
 	private static final long serialVersionUID = 1L;
 
 	private short modifierFlags;

@@ -19,18 +19,19 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class TypeReferenceSignatureImpl extends AnnotatedSignatureImpl implements ParameterizedTypeSignature {
+public final class TypeReferenceSignatureImpl extends AnnotatedSignatureImpl implements ParameterizedTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private ParameterizedTypeSignature enclosingSignature;
@@ -62,7 +63,8 @@ public class TypeReferenceSignatureImpl extends AnnotatedSignatureImpl implement
 	}
 
 	public static ParameterizedTypeSignature create(List<? extends AnnotationSignature> annotations,
-			ParameterizedTypeSignature enclosingSignature, String simpleName, List<? extends TypeSignature> typeParameters) {
+			ParameterizedTypeSignature enclosingSignature, String simpleName,
+			List<? extends TypeSignature> typeParameters) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return create(enclosingSignature, simpleName, typeParameters);
 		}
@@ -98,20 +100,23 @@ public class TypeReferenceSignatureImpl extends AnnotatedSignatureImpl implement
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
+		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
 
+		out.writeObject(simpleName);
 		out.writeObject(enclosingSignature);
-		out.writeUTF(simpleName);
-		SerialUtils.writeExternalCollection(out, typeParameters);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		ArrayList<TypeSignature> typeparams = new ArrayList<>();
+		this.annotations = annotations;
+		this.typeParameters = typeparams;
 
-		enclosingSignature = (ParameterizedTypeSignature) in.readObject();
-		simpleName = in.readUTF();
-		typeParameters = SerialUtils.readExternalImmutableList(in);
+		Object next = JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
+		this.simpleName = (String) JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, typeparams, in);
+		this.enclosingSignature = (ParameterizedTypeSignature) in.readObject();
 	}
 
 	@Override

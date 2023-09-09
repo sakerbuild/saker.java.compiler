@@ -27,7 +27,7 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignatureVisitor;
 import saker.java.compiler.impl.signature.type.TypeVariableTypeSignature;
 
-public class SimpleTypeVariableTypeSignature implements TypeVariableTypeSignature, Externalizable {
+public final class SimpleTypeVariableTypeSignature implements TypeVariableTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private String variableName;

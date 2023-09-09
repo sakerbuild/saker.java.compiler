@@ -18,6 +18,7 @@ package saker.java.compiler.impl.compile.signature.type.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,8 +28,9 @@ import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.WildcardTypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class WildcardTypeSignatureImpl extends AnnotatedSignatureImpl implements WildcardTypeSignature {
+public final class WildcardTypeSignatureImpl extends AnnotatedSignatureImpl implements WildcardTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private static final WildcardTypeSignature BOUNDLESS_INSTANCE = new WildcardTypeSignatureImpl(
@@ -90,6 +92,22 @@ public class WildcardTypeSignatureImpl extends AnnotatedSignatureImpl implements
 	}
 
 	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
+		out.writeObject(lowerBounds);
+		out.writeObject(upperBounds);
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.lowerBounds = (TypeSignature) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations,
+				in);
+		this.upperBounds = (TypeSignature) in.readObject();
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
@@ -134,19 +152,5 @@ public class WildcardTypeSignatureImpl extends AnnotatedSignatureImpl implements
 			sb.append(lowerBounds);
 		}
 		return sb.toString();
-	}
-
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeObject(upperBounds);
-		out.writeObject(lowerBounds);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		upperBounds = (TypeSignature) in.readObject();
-		lowerBounds = (TypeSignature) in.readObject();
 	}
 }

@@ -26,7 +26,7 @@ import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
 
-public class ModuleSignatureImpl extends AnnotatedSignatureImpl implements ModuleSignature {
+public final class ModuleSignatureImpl extends AnnotatedSignatureImpl implements ModuleSignature {
 	private static final long serialVersionUID = 1L;
 
 	public static final ModuleSignature UNNAMED = new ModuleSignatureImpl(Collections.emptyList(), "", false,

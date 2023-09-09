@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,12 +28,15 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.UnresolvedTypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public class AnnotatedUnresolvedTypeSignature extends AnnotatedSignatureImpl
 		implements UnresolvedTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	protected String qualifiedName;
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
 
 	/**
 	 * For {@link Externalizable}.
@@ -62,14 +66,15 @@ public class AnnotatedUnresolvedTypeSignature extends AnnotatedSignatureImpl
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeUTF(qualifiedName);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
+		out.writeObject(qualifiedName);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		qualifiedName = in.readUTF();
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.qualifiedName = (String) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
 	}
 
 	@Override

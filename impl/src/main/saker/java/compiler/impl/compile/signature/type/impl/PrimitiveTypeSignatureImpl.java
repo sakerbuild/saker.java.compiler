@@ -18,6 +18,7 @@ package saker.java.compiler.impl.compile.signature.type.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -36,8 +37,9 @@ import saker.java.compiler.impl.compile.signature.impl.SimpleAnnotationSignature
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.PrimitiveTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class PrimitiveTypeSignatureImpl extends AnnotatedSignatureImpl implements PrimitiveTypeSignature {
+public final class PrimitiveTypeSignatureImpl extends AnnotatedSignatureImpl implements PrimitiveTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	public static final PrimitiveTypeSignature INSTANCE_BOOLEAN = new PrimitiveTypeSignatureImpl(
@@ -162,14 +164,15 @@ public class PrimitiveTypeSignatureImpl extends AnnotatedSignatureImpl implement
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
 		out.writeObject(typeKind);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		typeKind = (TypeKind) in.readObject();
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.typeKind = (TypeKind) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
 	}
 
 	private Object readResolve() {

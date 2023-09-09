@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.List;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
@@ -28,8 +29,9 @@ import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.CanonicalTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class CanonicalTypeSignatureImpl extends AnnotatedCanonicalTypeSignature {
+public final class CanonicalTypeSignatureImpl extends AnnotatedCanonicalTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private List<? extends TypeSignature> typeParameters;
@@ -114,14 +116,20 @@ public class CanonicalTypeSignatureImpl extends AnnotatedCanonicalTypeSignature 
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		SerialUtils.writeExternalCollection(out, typeParameters);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
+		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
+		out.writeObject(canonicalName);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		typeParameters = SerialUtils.readExternalImmutableList(in);
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		ArrayList<TypeSignature> typeparams = new ArrayList<>();
+		this.annotations = annotations;
+		this.typeParameters = typeparams;
+
+		Object next = JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
+		this.canonicalName = (String) JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, typeparams, in);
 	}
 
 	@Override

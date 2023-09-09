@@ -28,7 +28,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.UnionTypeSignature;
 
-public class UnionTypeSignatureImpl extends AnnotatedSignatureImpl implements UnionTypeSignature {
+public final class UnionTypeSignatureImpl extends AnnotatedSignatureImpl implements UnionTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private List<? extends TypeSignature> alternatives;

@@ -19,14 +19,16 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class PackageSignatureImpl extends AnnotatedSignatureImpl implements PackageSignature {
+public final class PackageSignatureImpl extends AnnotatedSignatureImpl implements PackageSignature {
 	private static final long serialVersionUID = 1L;
 
 	private String name;
@@ -114,16 +116,17 @@ public class PackageSignatureImpl extends AnnotatedSignatureImpl implements Pack
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
 		out.writeObject(name);
 		out.writeObject(docComment);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		name = (String) in.readObject();
-		docComment = (String) in.readObject();
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.name = (String) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
+		this.docComment = (String) in.readObject();
 	}
 
 }

@@ -19,18 +19,20 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.UnresolvedTypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSignature {
+public final class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private List<? extends TypeSignature> typeParameters;
@@ -101,16 +103,22 @@ public class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSignatur
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-
-		SerialUtils.writeExternalCollection(out, typeParameters);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
+		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
+		out.writeObject(qualifiedName);
+		out.writeObject(enclosing);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		ArrayList<TypeSignature> typeparams = new ArrayList<>();
+		this.annotations = annotations;
+		this.typeParameters = typeparams;
 
-		typeParameters = SerialUtils.readExternalImmutableList(in);
+		Object next = JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
+		this.qualifiedName = (String) JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, typeparams, in);
+		this.enclosing = (ParameterizedTypeSignature) in.readObject();
 	}
 
 	@Override
@@ -122,7 +130,9 @@ public class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSignatur
 		if (getClass() != obj.getClass())
 			return false;
 		UnresolvedTypeSignatureImpl other = (UnresolvedTypeSignatureImpl) obj;
-		if (!typeParameters.equals(other.typeParameters))
+		if (!Objects.equals(typeParameters, other.typeParameters))
+			return false;
+		if (!Objects.equals(enclosing, other.enclosing))
 			return false;
 		return true;
 	}
@@ -132,20 +142,4 @@ public class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSignatur
 		return super.toString() + (ObjectUtils.isNullOrEmpty(typeParameters) ? ""
 				: StringUtils.toStringJoin("<", ", ", typeParameters, ">"));
 	}
-
-//	@Override
-//	public boolean signatureEquals(TypeSignature o) {
-//		if (!(o instanceof UnresolvedTypeSignatureImpl)) {
-//			return false;
-//		}
-//		if (!ModifiableUnresolvedTypeSignature.super.signatureEquals(o)) {
-//			return false;
-//		}
-//		UnresolvedTypeSignatureImpl other = (UnresolvedTypeSignatureImpl) o;
-//		if (!Objects.equals(qualifiedName, other.qualifiedName)) {
-//			return false;
-//		}
-//		return true;
-//	}
-
 }

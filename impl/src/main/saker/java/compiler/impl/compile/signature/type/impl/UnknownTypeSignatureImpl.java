@@ -18,6 +18,7 @@ package saker.java.compiler.impl.compile.signature.type.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,8 +26,9 @@ import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.UnknownTypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class UnknownTypeSignatureImpl extends AnnotatedSignatureImpl implements UnknownTypeSignature {
+public final class UnknownTypeSignatureImpl extends AnnotatedSignatureImpl implements UnknownTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private String typeDescription;
@@ -89,14 +91,15 @@ public class UnknownTypeSignatureImpl extends AnnotatedSignatureImpl implements 
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
 		out.writeObject(typeDescription);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		typeDescription = (String) in.readObject();
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.typeDescription = (String) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
 	}
 
 	@Override

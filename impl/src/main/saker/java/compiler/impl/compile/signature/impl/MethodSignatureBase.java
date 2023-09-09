@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +42,8 @@ public abstract class MethodSignatureBase implements MethodSignature, Externaliz
 
 	protected short modifierFlags;
 	protected List<? extends MethodParameterSignature> parameters;
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
 
 	/**
 	 * For {@link Externalizable}.

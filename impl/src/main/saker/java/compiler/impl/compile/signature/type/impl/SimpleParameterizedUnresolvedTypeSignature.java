@@ -19,17 +19,17 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class SimpleParameterizedUnresolvedTypeSignature extends SimpleUnresolvedTypeSignature {
+public final class SimpleParameterizedUnresolvedTypeSignature extends SimpleUnresolvedTypeSignature {
 	private static final long serialVersionUID = 1L;
 
-	protected List<? extends TypeSignature> typeParameters = Collections.emptyList();
+	protected List<? extends TypeSignature> typeParameters;
 
 	/**
 	 * For {@link Externalizable}.
@@ -50,14 +50,16 @@ public class SimpleParameterizedUnresolvedTypeSignature extends SimpleUnresolved
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		SerialUtils.writeExternalCollection(out, typeParameters);
+		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
+		out.writeObject(qualifiedName);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		typeParameters = SerialUtils.readExternalImmutableList(in);
+		ArrayList<TypeSignature> typeparams = new ArrayList<>();
+		this.typeParameters = typeparams;
+
+		this.qualifiedName = (String) JavaSerialUtils.readOpenEndedList(TypeSignature.class, typeparams, in);
 	}
 
 	@Override

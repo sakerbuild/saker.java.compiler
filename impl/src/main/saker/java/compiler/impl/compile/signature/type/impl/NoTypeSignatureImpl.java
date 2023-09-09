@@ -18,6 +18,7 @@ package saker.java.compiler.impl.compile.signature.type.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -35,8 +36,9 @@ import saker.java.compiler.impl.compile.signature.impl.SimpleAnnotationSignature
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.NoTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class NoTypeSignatureImpl extends AnnotatedSignatureImpl implements NoTypeSignature {
+public final class NoTypeSignatureImpl extends AnnotatedSignatureImpl implements NoTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	public static final NoTypeSignatureImpl INSTANCE_NONE = new NoTypeSignatureImpl(Collections.emptyList(),
@@ -146,16 +148,16 @@ public class NoTypeSignatureImpl extends AnnotatedSignatureImpl implements NoTyp
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
 
 		out.writeObject(kind);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-
-		kind = (TypeKind) in.readObject();
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.kind = (TypeKind) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
 	}
 
 	private Object readResolve() {

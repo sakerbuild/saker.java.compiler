@@ -19,21 +19,25 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
 
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.ImmutableModifierSet;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public class ExtendedMethodSignature extends SimpleMethodSignature {
 	private static final long serialVersionUID = 1L;
 
 	protected List<? extends TypeParameterTypeSignature> typeParameters;
 	protected List<? extends TypeSignature> throwsTypes;
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
 
 	/**
 	 * For {@link Externalizable}.
@@ -61,18 +65,30 @@ public class ExtendedMethodSignature extends SimpleMethodSignature {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
+		JavaSerialUtils.writeOpenEndedList(parameters, out);
+		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
+		JavaSerialUtils.writeOpenEndedList(throwsTypes, out);
 
-		SerialUtils.writeExternalCollection(out, typeParameters);
-		SerialUtils.writeExternalCollection(out, throwsTypes);
+		out.writeObject(name);
+		out.writeObject(returnType);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
+		this.modifierFlags = ImmutableModifierSet.readExternalFlag(in);
 
-		typeParameters = SerialUtils.readExternalImmutableList(in);
-		throwsTypes = SerialUtils.readExternalImmutableList(in);
+		ArrayList<MethodParameterSignature> parameters = new ArrayList<>();
+		ArrayList<TypeParameterTypeSignature> typeparams = new ArrayList<>();
+		ArrayList<TypeSignature> throwstypes = new ArrayList<>();
+		this.parameters = parameters;
+		this.typeParameters = typeparams;
+		this.throwsTypes = throwstypes;
+
+		Object next = JavaSerialUtils.readOpenEndedList(MethodParameterSignature.class, parameters, in);
+		next = JavaSerialUtils.readOpenEndedList(next, TypeParameterTypeSignature.class, typeparams, in);
+		this.name = (String) JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, throwstypes, in);
+		this.returnType = (TypeSignature) in.readObject();
 	}
 
 	@Override

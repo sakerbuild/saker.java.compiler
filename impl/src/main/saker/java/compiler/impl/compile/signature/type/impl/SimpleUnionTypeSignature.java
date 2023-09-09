@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,7 +28,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.UnionTypeSignature;
 
-public class SimpleUnionTypeSignature implements UnionTypeSignature, Externalizable {
+public final class SimpleUnionTypeSignature implements UnionTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private List<? extends TypeSignature> alternatives;

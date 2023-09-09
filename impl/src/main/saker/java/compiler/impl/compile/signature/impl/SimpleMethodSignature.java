@@ -19,7 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -30,12 +30,16 @@ import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.ImmutableModifierSet;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public class SimpleMethodSignature extends MethodSignatureBase {
 	private static final long serialVersionUID = 1L;
 
 	protected TypeSignature returnType;
 	protected String name;
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
 
 	/**
 	 * For {@link Externalizable}.
@@ -77,16 +81,21 @@ public class SimpleMethodSignature extends MethodSignatureBase {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
+		JavaSerialUtils.writeOpenEndedList(parameters, out);
+
+		out.writeObject(name);
 		out.writeObject(returnType);
-		out.writeUTF(name);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		returnType = (TypeSignature) in.readObject();
-		name = in.readUTF();
+		this.modifierFlags = ImmutableModifierSet.readExternalFlag(in);
+
+		ArrayList<MethodParameterSignature> parameters = new ArrayList<>();
+		this.parameters = parameters;
+		this.name = (String) JavaSerialUtils.readOpenEndedList(MethodParameterSignature.class, parameters, in);
+		this.returnType = (TypeSignature) in.readObject();
 	}
 
 	@Override

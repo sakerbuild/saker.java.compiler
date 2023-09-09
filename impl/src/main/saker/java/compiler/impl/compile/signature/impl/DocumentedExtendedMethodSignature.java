@@ -28,7 +28,7 @@ import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class DocumentedExtendedMethodSignature extends ExtendedMethodSignature {
+public final class DocumentedExtendedMethodSignature extends ExtendedMethodSignature {
 	private static final long serialVersionUID = 1L;
 
 	protected String docComment;

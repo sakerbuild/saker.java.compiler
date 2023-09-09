@@ -26,7 +26,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.WildcardTypeSignature;
 
-public class SimpleExtendsWildcardTypeSignature implements WildcardTypeSignature, Externalizable {
+public final class SimpleExtendsWildcardTypeSignature implements WildcardTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	protected TypeSignature upperBounds;

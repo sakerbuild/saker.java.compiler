@@ -18,6 +18,7 @@ package saker.java.compiler.impl.compile.signature.type.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.List;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
@@ -26,8 +27,9 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignatureVisitor;
 import saker.java.compiler.impl.signature.type.TypeVariableTypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public class TypeVariableTypeSignatureImpl extends AnnotatedSignatureImpl implements TypeVariableTypeSignature {
+public final class TypeVariableTypeSignatureImpl extends AnnotatedSignatureImpl implements TypeVariableTypeSignature {
 	private static final long serialVersionUID = 1L;
 
 	private String variableName;
@@ -73,14 +75,15 @@ public class TypeVariableTypeSignatureImpl extends AnnotatedSignatureImpl implem
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeUTF(variableName);
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
+		out.writeObject(variableName);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		variableName = in.readUTF();
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.variableName = (String) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
 	}
 
 	@Override
