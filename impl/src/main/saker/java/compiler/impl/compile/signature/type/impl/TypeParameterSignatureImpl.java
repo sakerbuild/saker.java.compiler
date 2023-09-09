@@ -18,16 +18,16 @@ package saker.java.compiler.impl.compile.signature.type.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public class TypeParameterSignatureImpl extends ExtendingTypeParameterSignature {
 	private static final long serialVersionUID = 1L;
@@ -38,12 +38,11 @@ public class TypeParameterSignatureImpl extends ExtendingTypeParameterSignature 
 	public TypeParameterSignatureImpl() {
 	}
 
-	public static TypeParameterSignature create(String varName, TypeSignature lowerBounds,
-			TypeSignature upperBounds) {
+	public static TypeParameterSignature create(String varName, TypeSignature lowerBounds, TypeSignature upperBounds) {
 		if (lowerBounds == null) {
 			if (upperBounds == null) {
 				//just a simple name as a type parameter
-				return new SimpleTypeParameterSignature(varName);
+				return SimpleTypeParameterSignature.create(varName);
 			}
 			//T extends Something format
 			return new ExtendingTypeParameterSignature(varName, upperBounds);
@@ -59,8 +58,8 @@ public class TypeParameterSignatureImpl extends ExtendingTypeParameterSignature 
 		return new TypeParameterSignatureImpl(varName, upperBounds, annotations, lowerBounds);
 	}
 
-	public TypeParameterSignatureImpl(String varName, TypeSignature upperBounds,
-			List<AnnotationSignature> annotations, TypeSignature lowerBounds) {
+	public TypeParameterSignatureImpl(String varName, TypeSignature upperBounds, List<AnnotationSignature> annotations,
+			TypeSignature lowerBounds) {
 		super(varName, upperBounds);
 		this.annotations = annotations;
 		this.lowerBounds = lowerBounds;
@@ -80,9 +79,8 @@ public class TypeParameterSignatureImpl extends ExtendingTypeParameterSignature 
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + ((annotations == null) ? 0 : annotations.hashCode());
 		result = prime * result + ((lowerBounds == null) ? 0 : lowerBounds.hashCode());
-		result = prime * result + ((upperBounds == null) ? 0 : upperBounds.hashCode());
-		result = prime * result + ((varName == null) ? 0 : varName.hashCode());
 		return result;
 	}
 
@@ -92,23 +90,18 @@ public class TypeParameterSignatureImpl extends ExtendingTypeParameterSignature 
 			return true;
 		if (!super.equals(obj))
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof TypeParameterSignatureImpl))
 			return false;
 		TypeParameterSignatureImpl other = (TypeParameterSignatureImpl) obj;
+		if (annotations == null) {
+			if (other.annotations != null)
+				return false;
+		} else if (!annotations.equals(other.annotations))
+			return false;
 		if (lowerBounds == null) {
 			if (other.lowerBounds != null)
 				return false;
 		} else if (!lowerBounds.equals(other.lowerBounds))
-			return false;
-		if (upperBounds == null) {
-			if (other.upperBounds != null)
-				return false;
-		} else if (!upperBounds.equals(other.upperBounds))
-			return false;
-		if (varName == null) {
-			if (other.varName != null)
-				return false;
-		} else if (!varName.equals(other.varName))
 			return false;
 		return true;
 	}
@@ -127,16 +120,18 @@ public class TypeParameterSignatureImpl extends ExtendingTypeParameterSignature 
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
 
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
 		out.writeObject(lowerBounds);
-		SerialUtils.writeExternalCollection(out, annotations);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 
-		lowerBounds = (TypeSignature) in.readObject();
-		annotations = SerialUtils.readExternalImmutableList(in);
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		this.lowerBounds = (TypeSignature) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations,
+				in);
 	}
 
 }

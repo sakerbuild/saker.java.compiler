@@ -29,7 +29,16 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 public class SimpleTypeParameterSignature implements TypeParameterSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
-	protected String varName;
+	//type variables are often a single character, so cache some of them
+	private static final SimpleTypeParameterSignature[] SINGLE_CHAR_CACHE = new SimpleTypeParameterSignature['Z' - 'A'
+			+ 1];
+	static {
+		for (char c = 'A'; c <= 'Z'; ++c) {
+			SINGLE_CHAR_CACHE[c - 'A'] = new SimpleTypeParameterSignature(String.valueOf(c));
+		}
+	}
+
+	protected String variableName;
 
 	/**
 	 * For {@link Externalizable}.
@@ -37,13 +46,23 @@ public class SimpleTypeParameterSignature implements TypeParameterSignature, Ext
 	public SimpleTypeParameterSignature() {
 	}
 
-	public SimpleTypeParameterSignature(String varName) {
-		this.varName = varName;
+	protected SimpleTypeParameterSignature(String variableName) {
+		this.variableName = variableName;
+	}
+
+	public static SimpleTypeParameterSignature create(String variableName) {
+		if (variableName != null && variableName.length() == 1) {
+			char c = variableName.charAt(0);
+			if (c >= 'A' && c <= 'Z') {
+				return SINGLE_CHAR_CACHE[c - 'A'];
+			}
+		}
+		return new SimpleTypeParameterSignature(variableName);
 	}
 
 	@Override
 	public final String getVarName() {
-		return varName;
+		return variableName;
 	}
 
 	@Override
@@ -63,25 +82,28 @@ public class SimpleTypeParameterSignature implements TypeParameterSignature, Ext
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeUTF(varName);
+		out.writeUTF(variableName);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		varName = in.readUTF();
+		variableName = in.readUTF();
 	}
 
-	@Override
-	public String toString() {
-		return varName;
+	private Object readResolve() {
+		String varname = this.variableName;
+		if (varname != null && varname.length() == 1) {
+			char c = varname.charAt(0);
+			if (c >= 'A' && c <= 'Z') {
+				return SINGLE_CHAR_CACHE[c - 'A'];
+			}
+		}
+		return this;
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((varName == null) ? 0 : varName.hashCode());
-		return result;
+		return variableName == null ? 0 : variableName.hashCode();
 	}
 
 	@Override
@@ -93,11 +115,16 @@ public class SimpleTypeParameterSignature implements TypeParameterSignature, Ext
 		if (getClass() != obj.getClass())
 			return false;
 		SimpleTypeParameterSignature other = (SimpleTypeParameterSignature) obj;
-		if (varName == null) {
-			if (other.varName != null)
+		if (variableName == null) {
+			if (other.variableName != null)
 				return false;
-		} else if (!varName.equals(other.varName))
+		} else if (!variableName.equals(other.variableName))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return variableName;
 	}
 }

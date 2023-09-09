@@ -30,6 +30,15 @@ import saker.java.compiler.impl.signature.type.TypeVariableTypeSignature;
 public final class SimpleTypeVariableTypeSignature implements TypeVariableTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
+	//type variables are often a single character, so cache some of them
+	private static final SimpleTypeVariableTypeSignature[] SINGLE_CHAR_CACHE = new SimpleTypeVariableTypeSignature['Z'
+			- 'A' + 1];
+	static {
+		for (char c = 'A'; c <= 'Z'; ++c) {
+			SINGLE_CHAR_CACHE[c - 'A'] = new SimpleTypeVariableTypeSignature(String.valueOf(c));
+		}
+	}
+
 	private String variableName;
 
 	/**
@@ -38,8 +47,18 @@ public final class SimpleTypeVariableTypeSignature implements TypeVariableTypeSi
 	public SimpleTypeVariableTypeSignature() {
 	}
 
-	public SimpleTypeVariableTypeSignature(String variableName) {
+	private SimpleTypeVariableTypeSignature(String variableName) {
 		this.variableName = variableName;
+	}
+
+	public static SimpleTypeVariableTypeSignature create(String variableName) {
+		if (variableName != null && variableName.length() == 1) {
+			char c = variableName.charAt(0);
+			if (c >= 'A' && c <= 'Z') {
+				return SINGLE_CHAR_CACHE[c - 'A'];
+			}
+		}
+		return new SimpleTypeVariableTypeSignature(variableName);
 	}
 
 	@Override
@@ -77,12 +96,20 @@ public final class SimpleTypeVariableTypeSignature implements TypeVariableTypeSi
 		variableName = in.readUTF();
 	}
 
+	private Object readResolve() {
+		String varname = this.variableName;
+		if (varname != null && varname.length() == 1) {
+			char c = varname.charAt(0);
+			if (c >= 'A' && c <= 'Z') {
+				return SINGLE_CHAR_CACHE[c - 'A'];
+			}
+		}
+		return this;
+	}
+
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + variableName.hashCode();
-		return result;
+		return variableName == null ? 0 : variableName.hashCode();
 	}
 
 	@Override
@@ -94,9 +121,11 @@ public final class SimpleTypeVariableTypeSignature implements TypeVariableTypeSi
 		if (getClass() != obj.getClass())
 			return false;
 		SimpleTypeVariableTypeSignature other = (SimpleTypeVariableTypeSignature) obj;
-		if (!this.variableName.equals(other.variableName)) {
+		if (variableName == null) {
+			if (other.variableName != null)
+				return false;
+		} else if (!variableName.equals(other.variableName))
 			return false;
-		}
 		return true;
 	}
 
