@@ -188,8 +188,8 @@ public class FullWorkerJavaCompilerTaskFactory extends WorkerJavaCompilerTaskFac
 		taskcontext.getTaskUtilities().reportInputFileDependency(null, processoraccessedfiles);
 
 		InternalJavaCompilerOutputImpl output = new InternalJavaCompilerOutputImpl(sourceDirectories, classPath,
-				modulePath, abiversionkey, implementationversionkey, outputconfig);
-		output.setHadAnnotationProcessors(!ObjectUtils.isNullOrEmpty(annotationProcessors));
+				modulePath, abiversionkey, implementationversionkey, outputconfig,
+				!ObjectUtils.isNullOrEmpty(annotationProcessors));
 		return output;
 	}
 

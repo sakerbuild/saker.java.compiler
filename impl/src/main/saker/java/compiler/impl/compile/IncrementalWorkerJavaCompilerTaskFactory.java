@@ -225,8 +225,8 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 				outputResourceDirectory.getSakerPath(), outputSourceDirectory.getSakerPath(), modulename, pinnedsdks);
 
 		InternalJavaCompilerOutputImpl output = new InternalJavaCompilerOutputImpl(sourceDirectories, classPath,
-				modulePath, abiversionkey, implementationversionkey, outputconfig);
-		output.setHadAnnotationProcessors(!ObjectUtils.isNullOrEmpty(annotationProcessors));
+				modulePath, abiversionkey, implementationversionkey, outputconfig,
+				!ObjectUtils.isNullOrEmpty(annotationProcessors), info);
 
 		try (ThreadWorkPool pool = ThreadUtils.newFixedWorkPool("javac-")) {
 			pool.offer(() -> {
@@ -240,11 +240,6 @@ public class IncrementalWorkerJavaCompilerTaskFactory extends WorkerJavaCompiler
 					info.getGeneratedSourceFiles()));
 			pool.offer(() -> reportOutputFileDependencies(taskcontext, CompileFileTags.OUTPUT_GENERATED_RESOURCE,
 					info.getGeneratedResourceFiles()));
-			pool.offer(() -> {
-				output.setPackageSignatures(info.getRealizedPackageSignatures());
-				output.setClassSignatures(info.getRealizedClassSignatures());
-				output.setModuleSignature(info.getRealizedModuleSignature());
-			});
 			for (Entry<? extends ProcessorDetails, ProcessorData> entry : info.getProcessorDetails().entrySet()) {
 				NavigableMap<SakerPath, ContentDescriptor> readrescontents = entry.getValue()
 						.getReadResourceFileContents();

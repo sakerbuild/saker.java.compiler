@@ -29,6 +29,7 @@ import saker.java.compiler.api.classpath.JavaSourceDirectory;
 import saker.java.compiler.api.compile.JavaCompilationConfigurationOutput;
 import saker.java.compiler.api.compile.JavaCompilationWorkerTaskIdentifier;
 import saker.java.compiler.api.modulepath.JavaModulePath;
+import saker.java.compiler.impl.compile.handler.info.CompilationInfo;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
@@ -39,10 +40,6 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 
 	private JavaCompilationConfigurationOutput outputConfig;
 
-	private Collection<ClassSignature> classSignatures;
-	private Collection<PackageSignature> packageSignatures;
-	private ModuleSignature moduleSignature;
-
 	private Collection<JavaSourceDirectory> sourceDirectories;
 	private JavaClassPath classPath;
 	private JavaModulePath modulePath;
@@ -52,6 +49,8 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 
 	private boolean hadAnnotationProcessors;
 
+	private CompilationInfo compilationInfo;
+
 	/**
 	 * For {@link Externalizable}.
 	 */
@@ -60,13 +59,23 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 
 	public InternalJavaCompilerOutputImpl(Collection<JavaSourceDirectory> sourcedirs, JavaClassPath classPath,
 			JavaModulePath modulepath, Object abiVersionKey, Object implementationVersionKey,
-			JavaCompilationConfigurationOutput outputconfig) {
+			JavaCompilationConfigurationOutput outputconfig, boolean hadAnnotationProcessors) {
+		this(sourcedirs, classPath, modulepath, abiVersionKey, implementationVersionKey, outputconfig,
+				hadAnnotationProcessors, null);
+	}
+
+	public InternalJavaCompilerOutputImpl(Collection<JavaSourceDirectory> sourcedirs, JavaClassPath classPath,
+			JavaModulePath modulepath, Object abiVersionKey, Object implementationVersionKey,
+			JavaCompilationConfigurationOutput outputconfig, boolean hadAnnotationProcessors,
+			CompilationInfo compilationInfo) {
 		this.sourceDirectories = sourcedirs;
 		this.classPath = classPath;
 		this.modulePath = modulepath;
 		this.abiVersionKey = abiVersionKey;
 		this.implementationVersionKey = implementationVersionKey;
 		this.outputConfig = outputconfig;
+		this.hadAnnotationProcessors = hadAnnotationProcessors;
+		this.compilationInfo = compilationInfo;
 	}
 
 	@Override
@@ -96,34 +105,22 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 
 	@Override
 	public Collection<ClassSignature> getClassSignatures() {
-		return classSignatures;
-	}
-
-	public void setClassSignatures(Collection<ClassSignature> classSignatures) {
-		this.classSignatures = classSignatures;
+		return compilationInfo == null ? null : compilationInfo.getRealizedClassSignatures();
 	}
 
 	@Override
 	public Collection<PackageSignature> getPackageSignatures() {
-		return packageSignatures;
-	}
-
-	public void setPackageSignatures(Collection<PackageSignature> packageSignatures) {
-		this.packageSignatures = packageSignatures;
+		return compilationInfo == null ? null : compilationInfo.getRealizedPackageSignatures();
 	}
 
 	@Override
 	public ModuleSignature getModuleSignature() {
-		return moduleSignature;
+		return compilationInfo == null ? null : compilationInfo.getRealizedModuleSignature();
 	}
 
 	@Override
 	public String getModuleName() {
 		return outputConfig.getModuleName();
-	}
-
-	public void setModuleSignature(ModuleSignature moduleSignature) {
-		this.moduleSignature = moduleSignature;
 	}
 
 	@Override
@@ -166,10 +163,6 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 		return outputConfig.getSDKs();
 	}
 
-	public void setHadAnnotationProcessors(boolean hadAnnotationProcessors) {
-		this.hadAnnotationProcessors = hadAnnotationProcessors;
-	}
-
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(outputConfig);
@@ -179,9 +172,7 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 		out.writeObject(modulePath);
 		out.writeBoolean(hadAnnotationProcessors);
 
-		out.writeObject(moduleSignature);
-		SerialUtils.writeExternalCollection(out, classSignatures);
-		SerialUtils.writeExternalCollection(out, packageSignatures);
+		out.writeObject(compilationInfo);
 		SerialUtils.writeExternalCollection(out, sourceDirectories);
 	}
 
@@ -194,9 +185,7 @@ public class InternalJavaCompilerOutputImpl implements InternalJavaCompilerOutpu
 		modulePath = (JavaModulePath) in.readObject();
 		hadAnnotationProcessors = in.readBoolean();
 
-		moduleSignature = (ModuleSignature) in.readObject();
-		classSignatures = SerialUtils.readExternalImmutableList(in);
-		packageSignatures = SerialUtils.readExternalImmutableList(in);
+		compilationInfo = (CompilationInfo) in.readObject();
 		sourceDirectories = SerialUtils.readExternalImmutableList(in);
 	}
 
