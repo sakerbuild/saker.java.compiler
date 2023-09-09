@@ -19,25 +19,24 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public class ExtendedAnnotationInterfaceSignature extends SimpleAnnotationInterfaceSignature {
 	private static final long serialVersionUID = 1L;
 
 	private transient ClassSignature enclosingClass;
 
-	private List<AnnotationSignature> annotations = Collections.emptyList();
+	private List<AnnotationSignature> annotations;
 	private String docComment;
 
 	/**
@@ -78,17 +77,28 @@ public class ExtendedAnnotationInterfaceSignature extends SimpleAnnotationInterf
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
-		out.writeObject(enclosingClass);
-		SerialUtils.writeExternalCollection(out, annotations);
+
+		JavaSerialUtils.writeOpenEndedList(annotations, out);
+		if (enclosingClass != null) {
+			//optionally written
+			out.writeObject(enclosingClass);
+		}
 		out.writeObject(docComment);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		enclosingClass = (ClassSignature) in.readObject();
-		annotations = SerialUtils.readExternalImmutableList(in);
-		docComment = (String) in.readObject();
+
+		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
+		this.annotations = annotations;
+		Object next = JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
+		if (next instanceof ClassSignature) {
+			//optionally written
+			this.enclosingClass = (ClassSignature) next;
+			next = in.readObject();
+		}
+		this.docComment = (String) next;
 	}
 
 	@Override

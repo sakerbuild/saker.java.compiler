@@ -105,8 +105,11 @@ public final class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSi
 	public void writeExternal(ObjectOutput out) throws IOException {
 		JavaSerialUtils.writeOpenEndedList(annotations, out);
 		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
+		if (enclosing != null) {
+			//optionally written
+			out.writeObject(enclosing);
+		}
 		out.writeObject(qualifiedName);
-		out.writeObject(enclosing);
 	}
 
 	@Override
@@ -117,8 +120,13 @@ public final class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSi
 		this.typeParameters = typeparams;
 
 		Object next = JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
-		this.qualifiedName = (String) JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, typeparams, in);
-		this.enclosing = (ParameterizedTypeSignature) in.readObject();
+		next = JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, typeparams, in);
+		if (next instanceof ParameterizedTypeSignature) {
+			//optionally written, check based on type
+			this.enclosing = (ParameterizedTypeSignature) next;
+			next = in.readObject();
+		}
+		this.qualifiedName = (String) next;
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,6 @@ import javax.lang.model.element.Modifier;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
@@ -43,6 +43,7 @@ import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
 public abstract class ClassSignatureBase implements ClassSignature, Externalizable {
@@ -136,18 +137,19 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
+		JavaSerialUtils.writeOpenEndedList(members, out);
+		out.writeObject(name);
 		out.writeObject(packageName);
-		out.writeUTF(name);
 		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
-		SerialUtils.writeExternalCollection(out, members);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		packageName = (String) in.readObject();
-		name = in.readUTF();
-		modifierFlags = ImmutableModifierSet.readExternalFlag(in);
-		members = SerialUtils.readExternalImmutableList(in);
+		ArrayList<ClassMemberSignature> members = new ArrayList<>();
+		this.members = members;
+		this.name = (String) JavaSerialUtils.readOpenEndedList(ClassMemberSignature.class, members, in);
+		this.packageName = (String) in.readObject();
+		this.modifierFlags = ImmutableModifierSet.readExternalFlag(in);
 	}
 
 	@Override

@@ -19,7 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +29,6 @@ import javax.lang.model.element.Modifier;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
@@ -37,19 +36,20 @@ import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.impl.util.ImmutableModifierSet;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
-public final class FullMethodSignature extends MethodSignatureBase {
+public class FullMethodSignature extends MethodSignatureBase {
 	private static final long serialVersionUID = 1L;
 
 	protected byte elementKindIndex;
 	protected TypeSignature returnType;
 	protected String name;
-	protected List<TypeSignature> throwsTypes = Collections.emptyList();
+	protected List<TypeSignature> throwsTypes;
 
-	protected List<TypeParameterSignature> typeParameters = Collections.emptyList();
+	protected List<TypeParameterSignature> typeParameters;
 
 	protected TypeSignature receiverParameter;
-	protected boolean varArg;
 	protected String docComment;
 
 	/**
@@ -60,9 +60,8 @@ public final class FullMethodSignature extends MethodSignatureBase {
 
 	public static MethodSignature create(String name, Set<Modifier> modifiers,
 			List<MethodParameterSignature> parameters, List<TypeSignature> throwsTypes, TypeSignature returnType,
-			AnnotationSignature.Value defaultValue, ElementKind methodKind,
-			List<TypeParameterSignature> typeParameters, TypeSignature receiverParameter, boolean varArg,
-			String docComment) {
+			AnnotationSignature.Value defaultValue, ElementKind methodKind, List<TypeParameterSignature> typeParameters,
+			TypeSignature receiverParameter, boolean varArg, String docComment) {
 		if (defaultValue != null) {
 			if (docComment == null) {
 				return new AnnotationAttributeMethodSignature(returnType, name, defaultValue);
@@ -98,17 +97,21 @@ public final class FullMethodSignature extends MethodSignatureBase {
 						throwsTypes);
 			}
 		}
+		if (varArg) {
+			return new VarArgFullMethodSignature(modifiers, parameters, returnType, name, typeParameters, throwsTypes,
+					methodKind, receiverParameter, docComment);
+		}
 		return new FullMethodSignature(modifiers, parameters, returnType, name, typeParameters, throwsTypes, methodKind,
-				receiverParameter, varArg, docComment);
+				receiverParameter, docComment);
 	}
 
 	public static MethodSignature createDefaultConstructor(Set<Modifier> modifiers) {
 		return SimpleNoArgConstructor.create(modifiers);
 	}
 
-	private FullMethodSignature(Set<Modifier> modifiers, List<MethodParameterSignature> parameters,
+	protected FullMethodSignature(Set<Modifier> modifiers, List<MethodParameterSignature> parameters,
 			TypeSignature returnType, String name, List<TypeParameterSignature> typeParameters,
-			List<TypeSignature> throwsTypes, ElementKind methodKind, TypeSignature receiverParameter, boolean varArg,
+			List<TypeSignature> throwsTypes, ElementKind methodKind, TypeSignature receiverParameter,
 			String docComment) {
 		super(modifiers, parameters);
 		this.name = name;
@@ -117,7 +120,6 @@ public final class FullMethodSignature extends MethodSignatureBase {
 		this.elementKindIndex = ElementKindCompatUtils.getElementKindIndex(methodKind);
 		this.typeParameters = typeParameters == null ? Collections.emptyList() : typeParameters;
 		this.receiverParameter = receiverParameter;
-		this.varArg = varArg;
 		this.docComment = docComment;
 	}
 
@@ -179,44 +181,55 @@ public final class FullMethodSignature extends MethodSignatureBase {
 	}
 
 	@Override
-	public boolean isVarArg() {
-		return varArg;
-	}
-
-	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
+		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
+		JavaSerialUtils.writeOpenEndedList(parameters, out);
+		JavaSerialUtils.writeOpenEndedList(throwsTypes, out);
+		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
 
-		SerialUtils.writeExternalCollection(out, throwsTypes);
-		SerialUtils.writeExternalCollection(out, typeParameters);
-
-		out.writeUTF(name);
+		if (receiverParameter != null) {
+			//optionally written, as rarely used
+			out.writeObject(receiverParameter);
+		}
+		out.writeObject(name);
+		if (docComment != null) {
+			//optionally written
+			out.writeObject(docComment);
+		}
 		out.writeObject(returnType);
 
 		out.writeByte(elementKindIndex);
-
-		out.writeObject(receiverParameter);
-
-		out.writeBoolean(varArg);
-		out.writeObject(docComment);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
+		this.modifierFlags = ImmutableModifierSet.readExternalFlag(in);
 
-		throwsTypes = SerialUtils.readExternalImmutableList(in);
-		typeParameters = SerialUtils.readExternalImmutableList(in);
+		ArrayList<MethodParameterSignature> parameters = new ArrayList<>();
+		ArrayList<TypeSignature> throwstypes = new ArrayList<>();
+		ArrayList<TypeParameterSignature> typeparams = new ArrayList<>();
+		this.parameters = parameters;
+		this.throwsTypes = throwstypes;
+		this.typeParameters = typeparams;
 
-		name = in.readUTF();
-		returnType = (TypeSignature) in.readObject();
+		Object next = JavaSerialUtils.readOpenEndedList(MethodParameterSignature.class, parameters, in);
+		next = JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, throwstypes, in);
+		next = JavaSerialUtils.readOpenEndedList(next, TypeParameterSignature.class, typeparams, in);
+		if (next instanceof TypeSignature) {
+			//receiver parameter is optionally present
+			this.receiverParameter = (TypeSignature) next;
+			next = in.readObject();
+		}
+		this.name = (String) next;
+		next = in.readObject();
+		if (next instanceof String) {
+			//optional
+			this.docComment = (String) next;
+			next = in.readObject();
+		}
+		this.returnType = (TypeSignature) next;
 
-		elementKindIndex = in.readByte();
-
-		receiverParameter = (TypeSignature) in.readObject();
-
-		varArg = in.readBoolean();
-		docComment = (String) in.readObject();
+		this.elementKindIndex = in.readByte();
 	}
 
 	@Override
@@ -259,8 +272,6 @@ public final class FullMethodSignature extends MethodSignatureBase {
 			if (other.typeParameters != null)
 				return false;
 		} else if (!typeParameters.equals(other.typeParameters))
-			return false;
-		if (varArg != other.varArg)
 			return false;
 		return true;
 	}

@@ -17,7 +17,8 @@ public class JavaSerialUtils {
 	 * The elements of the list is simply written to the output sequentially.
 	 * <p>
 	 * Note that for these serialization methods to work, there must be an additional object written to the output after
-	 * this call.
+	 * this call. This additional object must not be an instance of the type that is used during reading for
+	 * <code>instanceof</code> checks.
 	 * 
 	 * @param objects
 	 *            The objects.
