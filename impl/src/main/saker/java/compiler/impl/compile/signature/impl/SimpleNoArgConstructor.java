@@ -19,7 +19,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -154,6 +153,22 @@ public final class SimpleNoArgConstructor implements MethodSignature, Externaliz
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		modifierFlags = ImmutableModifierSet.readExternalFlag(in);
+	}
+
+	private Object readResolve() {
+		switch (modifierFlags) {
+			case ImmutableModifierSet.FLAG_NONE:
+				return INSTANCE_MODIFIERS_NONE;
+			case ImmutableModifierSet.FLAG_PUBLIC:
+				return INSTANCE_MODIFIERS_PUBLIC;
+			case ImmutableModifierSet.FLAG_PROTECTED:
+				return INSTANCE_MODIFIERS_PROTECTED;
+			case ImmutableModifierSet.FLAG_PRIVATE:
+				return INSTANCE_MODIFIERS_PRIVATE;
+			default:
+				//if by any chance the modifiers are different, create a new instance
+				return this;
+		}
 	}
 
 	@Override
