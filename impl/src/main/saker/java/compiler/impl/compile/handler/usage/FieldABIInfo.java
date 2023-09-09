@@ -1,45 +1,37 @@
 package saker.java.compiler.impl.compile.handler.usage;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 
-public class FieldABIInfo implements Comparable<FieldABIInfo>, Externalizable {
-	private static final long serialVersionUID = 1L;
+public class FieldABIInfo implements Comparable<FieldABIInfo> {
 
 	protected String classCanonicalName;
 	protected String fieldName;
-
-	/**
-	 * For {@link Externalizable}.
-	 */
-	public FieldABIInfo() {
-	}
 
 	private FieldABIInfo(String classCanonicalName, String fieldName) {
 		this.classCanonicalName = classCanonicalName;
 		this.fieldName = fieldName;
 	}
 
-	public static FieldABIInfo create(ClassSignature enclosingclass, FieldSignature signature) {
+	static FieldABIInfo create(ClassSignature enclosingclass, FieldSignature signature) {
+		String classCanonicalName = enclosingclass.getCanonicalName();
+		String fieldName = signature.getSimpleName();
 		if (signature.getConstantValue() != null) {
-			return new ConstantFieldABIInfo(enclosingclass.getCanonicalName(), signature.getSimpleName());
+			return createConstant(classCanonicalName, fieldName);
 		}
-		return new FieldABIInfo(enclosingclass.getCanonicalName(), signature.getSimpleName());
+		return create(classCanonicalName, fieldName);
+	}
+
+	static FieldABIInfo create(String classCanonicalName, String fieldName) {
+		return new FieldABIInfo(classCanonicalName, fieldName);
+	}
+
+	static FieldABIInfo createConstant(String classCanonicalName, String fieldName) {
+		return new ConstantFieldABIInfo(classCanonicalName, fieldName);
 	}
 
 	private static class ConstantFieldABIInfo extends FieldABIInfo {
 		private static final long serialVersionUID = 1L;
-
-		/**
-		 * For {@link Externalizable}.
-		 */
-		public ConstantFieldABIInfo() {
-		}
 
 		protected ConstantFieldABIInfo(String classCanonicalName, String fieldName) {
 			super(classCanonicalName, fieldName);
@@ -115,15 +107,4 @@ public class FieldABIInfo implements Comparable<FieldABIInfo>, Externalizable {
 				+ (fieldName != null ? "fieldName=" + fieldName + ", " : "") + "]";
 	}
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(classCanonicalName);
-		out.writeObject(fieldName);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		classCanonicalName = (String) in.readObject();
-		fieldName = (String) in.readObject();
-	}
 }

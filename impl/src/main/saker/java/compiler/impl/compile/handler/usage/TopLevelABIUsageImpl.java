@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -28,6 +30,7 @@ import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.function.Functionals;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.compile.signature.change.AbiChange;
@@ -58,14 +61,6 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 
 	public TopLevelABIUsageImpl(String packageName) {
 		this.packageName = packageName;
-	}
-
-	public Map<ClassABIInfo, MemberABIUsage> getClasses() {
-		return classes;
-	}
-
-	public Map<MethodABIInfo, Collection<MemberABIUsage>> getMethods() {
-		return methods;
 	}
 
 	@Override
@@ -191,9 +186,31 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		super.writeExternal(out);
 		out.writeObject(packageName);
 
-		SerialUtils.writeExternalMap(out, classes);
-		SerialUtils.writeExternalMap(out, fields);
-		SerialUtils.writeExternalMap(out, methods, ObjectOutput::writeObject, SerialUtils::writeExternalCollection);
+		SerialUtils.writeExternalMap(out, classes, (o, v) -> v.writeExternal(o), ObjectOutput::writeObject);
+		SerialUtils.writeExternalMap(out, methods, (o, v) -> v.writeExternal(o), SerialUtils::writeExternalCollection);
+
+		int size = fields.size();
+		out.writeInt(size);
+		Iterator<Entry<FieldABIInfo, MemberABIUsage>> it = fields.entrySet().iterator();
+		while (size-- > 0) {
+			Entry<FieldABIInfo, MemberABIUsage> entry = it.next();
+			FieldABIInfo info = entry.getKey();
+			MemberABIUsage usage = entry.getValue();
+			//we use this trick to differentiate between constant and non constant FieldABIInfos
+			//serialize in different order to signal const and non-const
+			if (info.hasConstantValue()) {
+				out.writeObject(info.getClassCanonicalName());
+				out.writeObject(info.getFieldName());
+				out.writeObject(usage);
+			} else {
+				out.writeObject(usage);
+				out.writeObject(info.getClassCanonicalName());
+				out.writeObject(info.getFieldName());
+			}
+		}
+		if (it.hasNext()) {
+			throw new ConcurrentModificationException("fields modified during serialization");
+		}
 	}
 
 	@Override
@@ -201,9 +218,33 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		super.readExternal(in);
 		packageName = (String) in.readObject();
 
-		classes = SerialUtils.readExternalSortedImmutableNavigableMap(in);
-		fields = SerialUtils.readExternalSortedImmutableNavigableMap(in);
-		methods = SerialUtils.readExternalSortedImmutableNavigableMap(in, SerialUtils::readExternalObject,
+		classes = SerialUtils.readExternalSortedImmutableNavigableMap(in, ClassABIInfo::createExternal,
+				SerialUtils::readExternalObject);
+		methods = SerialUtils.readExternalSortedImmutableNavigableMap(in, MethodABIInfo::createExternal,
 				SerialUtils::readExternalImmutableList);
+
+		int fieldssize = in.readInt();
+		FieldABIInfo[] keys = new FieldABIInfo[fieldssize];
+		MemberABIUsage[] vals = new MemberABIUsage[fieldssize];
+		for (int i = 0; i < fieldssize; ++i) {
+			Object first = in.readObject();
+			FieldABIInfo info;
+			MemberABIUsage usage;
+			if (first instanceof String) {
+				//const branch
+				String fieldname = (String) in.readObject();
+				usage = (MemberABIUsage) in.readObject();
+				info = FieldABIInfo.createConstant((String) first, fieldname);
+			} else {
+				//non-const branch
+				usage = (MemberABIUsage) first;
+				String classname = (String) in.readObject();
+				String fieldname = (String) in.readObject();
+				info = FieldABIInfo.create(classname, fieldname);
+			}
+			keys[i] = info;
+			vals[i] = usage;
+		}
+		fields = ImmutableUtils.unmodifiableNavigableMap(keys, vals);
 	}
 }

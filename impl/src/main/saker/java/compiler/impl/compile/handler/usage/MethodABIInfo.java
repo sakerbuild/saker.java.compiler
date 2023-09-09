@@ -8,8 +8,7 @@ import java.io.ObjectOutput;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 
-final class MethodABIInfo implements Comparable<MethodABIInfo>, Externalizable {
-	private static final long serialVersionUID = 1L;
+final class MethodABIInfo implements Comparable<MethodABIInfo> {
 
 	protected String classCanonicalName;
 	protected String methodName;
@@ -27,6 +26,12 @@ final class MethodABIInfo implements Comparable<MethodABIInfo>, Externalizable {
 
 	public MethodABIInfo(ClassSignature enclosingclass, MethodSignature method) {
 		this(enclosingclass.getCanonicalName(), method.getSimpleName());
+	}
+
+	public static MethodABIInfo createExternal(ObjectInput in) throws ClassNotFoundException, IOException {
+		String classCanonicalName = (String) in.readObject();
+		String methodName = (String) in.readObject();
+		return new MethodABIInfo(classCanonicalName, methodName);
 	}
 
 	public String getClassCanonicalName() {
@@ -84,15 +89,9 @@ final class MethodABIInfo implements Comparable<MethodABIInfo>, Externalizable {
 				+ (methodName != null ? "methodName=" + methodName : "") + "]";
 	}
 
-	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(classCanonicalName);
 		out.writeObject(methodName);
 	}
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		classCanonicalName = (String) in.readObject();
-		methodName = (String) in.readObject();
-	}
 }

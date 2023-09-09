@@ -1,22 +1,13 @@
 package saker.java.compiler.impl.compile.handler.usage;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import saker.java.compiler.impl.signature.element.ClassSignature;
 
-final class ClassABIInfo implements Comparable<ClassABIInfo>, Externalizable {
-	private static final long serialVersionUID = 1L;
-
+final class ClassABIInfo implements Comparable<ClassABIInfo> {
 	protected String canonicalName;
-
-	/**
-	 * For {@link Externalizable}.
-	 */
-	public ClassABIInfo() {
-	}
 
 	public ClassABIInfo(String canonicalName) {
 		this.canonicalName = canonicalName;
@@ -24,6 +15,10 @@ final class ClassABIInfo implements Comparable<ClassABIInfo>, Externalizable {
 
 	public ClassABIInfo(ClassSignature signature) {
 		this(signature.getCanonicalName());
+	}
+
+	public static ClassABIInfo createExternal(ObjectInput in) throws ClassNotFoundException, IOException {
+		return new ClassABIInfo((String) in.readObject());
 	}
 
 	public String getCanonicalName() {
@@ -62,17 +57,10 @@ final class ClassABIInfo implements Comparable<ClassABIInfo>, Externalizable {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "[" + (canonicalName != null ? "canonicalName=" + canonicalName : "")
-				+ "]";
+		return getClass().getSimpleName() + "[" + (canonicalName != null ? "canonicalName=" + canonicalName : "") + "]";
 	}
 
-	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(canonicalName);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		canonicalName = (String) in.readObject();
 	}
 }
