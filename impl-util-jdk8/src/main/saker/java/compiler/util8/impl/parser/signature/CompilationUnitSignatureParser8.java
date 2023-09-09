@@ -130,7 +130,7 @@ import saker.java.compiler.impl.compile.signature.parser.DottedNameCollector;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.compile.signature.type.impl.IntersectionTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
-import saker.java.compiler.impl.compile.signature.type.impl.TypeParameterTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.TypeParameterSignatureImpl;
 import saker.java.compiler.impl.compile.signature.value.BinaryConstantOperator;
 import saker.java.compiler.impl.compile.signature.value.CastConstantOperator;
 import saker.java.compiler.impl.compile.signature.value.IdentifierConstantResolver;
@@ -151,7 +151,7 @@ import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.element.ModuleSignature;
 import saker.java.compiler.impl.signature.element.PackageSignature;
 import saker.java.compiler.impl.signature.type.IntersectionTypeSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
@@ -1017,7 +1017,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 
 		AnnotationSignature.Value defval = defvaltree == null ? null : createAnnotationValue(defvaltree, context, null);
 
-		List<TypeParameterTypeSignature> typeparams = JavaTaskUtils.cloneImmutableList(typeparametertrees,
+		List<TypeParameterSignature> typeparams = JavaTaskUtils.cloneImmutableList(typeparametertrees,
 				tp -> createTypeParameterTypeSignature(tp, context));
 
 		final List<MethodParameterSignature> methodparams;
@@ -1056,7 +1056,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		return sig;
 	}
 
-	private TypeParameterTypeSignature createTypeParameterTypeSignature(TypeParameterTree tree, ParseContext context) {
+	private TypeParameterSignature createTypeParameterTypeSignature(TypeParameterTree tree, ParseContext context) {
 		SignaturePath sigpath = context.pushSignaturePath();
 
 		List<AnnotationSignature> typeparamannotations = getAnnotations(tree, context);
@@ -1065,18 +1065,18 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		//bounds is in the equals clause
 		String varname = cache.string(tree.getName());
 		int boundssize = bounds.size();
-		TypeParameterTypeSignature result;
+		TypeParameterSignature result;
 		if (boundssize == 0) {
-			result = TypeParameterTypeSignatureImpl.create(typeparamannotations, varname, null, null);
+			result = TypeParameterSignatureImpl.create(typeparamannotations, varname, null, null);
 		} else if (boundssize == 1) {
 			//only single bounds
 			TypeSignature firstbound = typeResolver.resolve(bounds.get(0), context);
-			result = TypeParameterTypeSignatureImpl.create(typeparamannotations, varname, null, firstbound);
+			result = TypeParameterSignatureImpl.create(typeparamannotations, varname, null, firstbound);
 		} else {
 			List<TypeSignature> itsbounds = JavaTaskUtils.cloneImmutableList(bounds,
 					btm -> typeResolver.resolve(btm, context));
 			IntersectionTypeSignature its = IntersectionTypeSignatureImpl.create(itsbounds);
-			result = TypeParameterTypeSignatureImpl.create(typeparamannotations, varname, null, its);
+			result = TypeParameterSignatureImpl.create(typeparamannotations, varname, null, its);
 		}
 
 		context.treeSignatures.put(tree, result);
@@ -1151,7 +1151,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		List<TypeSignature> superinterfacesignatures = JavaTaskUtils.cloneImmutableList(implementstrees,
 				impl -> typeResolver.resolve(impl, context));
 
-		List<TypeParameterTypeSignature> typeparamsignatures = JavaTaskUtils.cloneImmutableList(typeparametertrees,
+		List<TypeParameterSignature> typeparamsignatures = JavaTaskUtils.cloneImmutableList(typeparametertrees,
 				param -> createTypeParameterTypeSignature(param, context));
 
 		PermittedSubclassesList permittedsubclasses = getPermittedSubclasses(tree, context);

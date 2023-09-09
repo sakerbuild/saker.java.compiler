@@ -26,13 +26,13 @@ import javax.lang.model.element.Modifier;
 
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
 public class ExtendedConstructorMethodSignature extends SimpleConstructorMethodSignature {
 	private static final long serialVersionUID = 1L;
 
-	protected List<? extends TypeParameterTypeSignature> typeParameters;
+	protected List<? extends TypeParameterSignature> typeParameters;
 	protected List<? extends TypeSignature> throwsTypes;
 
 	/**
@@ -43,7 +43,7 @@ public class ExtendedConstructorMethodSignature extends SimpleConstructorMethodS
 
 	public ExtendedConstructorMethodSignature(Set<Modifier> modifiers,
 			List<? extends MethodParameterSignature> parameters,
-			List<? extends TypeParameterTypeSignature> typeParameters, List<? extends TypeSignature> throwsTypes) {
+			List<? extends TypeParameterSignature> typeParameters, List<? extends TypeSignature> throwsTypes) {
 		super(modifiers, parameters);
 		this.typeParameters = typeParameters;
 		this.throwsTypes = throwsTypes;
@@ -55,7 +55,7 @@ public class ExtendedConstructorMethodSignature extends SimpleConstructorMethodS
 	}
 
 	@Override
-	public List<? extends TypeParameterTypeSignature> getTypeParameters() {
+	public List<? extends TypeParameterSignature> getTypeParameters() {
 		return typeParameters;
 	}
 

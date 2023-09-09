@@ -35,7 +35,7 @@ import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
 public final class FullMethodSignature extends MethodSignatureBase {
@@ -46,7 +46,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 	protected String name;
 	protected List<TypeSignature> throwsTypes = Collections.emptyList();
 
-	protected List<TypeParameterTypeSignature> typeParameters = Collections.emptyList();
+	protected List<TypeParameterSignature> typeParameters = Collections.emptyList();
 
 	protected TypeSignature receiverParameter;
 	protected boolean varArg;
@@ -61,7 +61,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 	public static MethodSignature create(String name, Set<Modifier> modifiers,
 			List<MethodParameterSignature> parameters, List<TypeSignature> throwsTypes, TypeSignature returnType,
 			AnnotationSignature.Value defaultValue, ElementKind methodKind,
-			List<TypeParameterTypeSignature> typeParameters, TypeSignature receiverParameter, boolean varArg,
+			List<TypeParameterSignature> typeParameters, TypeSignature receiverParameter, boolean varArg,
 			String docComment) {
 		if (defaultValue != null) {
 			if (docComment == null) {
@@ -107,7 +107,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 	}
 
 	private FullMethodSignature(Set<Modifier> modifiers, List<MethodParameterSignature> parameters,
-			TypeSignature returnType, String name, List<TypeParameterTypeSignature> typeParameters,
+			TypeSignature returnType, String name, List<TypeParameterSignature> typeParameters,
 			List<TypeSignature> throwsTypes, ElementKind methodKind, TypeSignature receiverParameter, boolean varArg,
 			String docComment) {
 		super(modifiers, parameters);
@@ -169,7 +169,7 @@ public final class FullMethodSignature extends MethodSignatureBase {
 	}
 
 	@Override
-	public List<? extends TypeParameterTypeSignature> getTypeParameters() {
+	public List<? extends TypeParameterSignature> getTypeParameters() {
 		return typeParameters;
 	}
 

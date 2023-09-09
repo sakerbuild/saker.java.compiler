@@ -43,7 +43,7 @@ import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
@@ -56,7 +56,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 			.singletonList(MethodParameterSignatureImpl.create(ImmutableModifierSet.empty(),
 					SimpleCanonicalTypeSignature.INSTANCE_JAVA_LANG_STRING, "name"));
 
-	private List<TypeParameterTypeSignature> typeParameters = Collections.emptyList();
+	private List<TypeParameterSignature> typeParameters = Collections.emptyList();
 	private List<AnnotationSignature> annotations = Collections.emptyList();
 	private String docComment;
 	private PermittedSubclassesList permittedSubclasses;
@@ -67,7 +67,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	public static ClassSignature create(Set<Modifier> modifiers, String packageName, String name,
 			List<? extends ClassMemberSignature> members, ClassSignature enclosingClass,
 			TypeSignature superTypeSignature, List<TypeSignature> superInterfaces, ElementKind kind,
-			NestingKind nestingKind, List<TypeParameterTypeSignature> typeParameters,
+			NestingKind nestingKind, List<TypeParameterSignature> typeParameters,
 			List<AnnotationSignature> annotations, String docComment) {
 		return create(modifiers, packageName, name, members, enclosingClass, superTypeSignature, superInterfaces, kind,
 				nestingKind, typeParameters, annotations, docComment, null);
@@ -76,7 +76,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	public static ClassSignature create(Set<Modifier> modifiers, String packageName, String name,
 			List<? extends ClassMemberSignature> members, ClassSignature enclosingClass,
 			TypeSignature superTypeSignature, List<TypeSignature> superInterfaces, ElementKind kind,
-			NestingKind nestingKind, List<TypeParameterTypeSignature> typeParameters,
+			NestingKind nestingKind, List<TypeParameterSignature> typeParameters,
 			List<AnnotationSignature> annotations, String docComment, PermittedSubclassesList permittedsubclasses) {
 		if (TestFlag.ENABLED) {
 			if ((enclosingClass == null && nestingKind != NestingKind.TOP_LEVEL)
@@ -106,7 +106,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	private ClassSignatureImpl(Set<Modifier> modifiers, String packageName, String name,
 			List<? extends ClassMemberSignature> members, ClassSignature enclosingClass, ElementKind kind,
 			List<? extends TypeSignature> superInterfaces, TypeSignature superClass,
-			List<TypeParameterTypeSignature> typeParameters, List<AnnotationSignature> annotations, String docComment,
+			List<TypeParameterSignature> typeParameters, List<AnnotationSignature> annotations, String docComment,
 			PermittedSubclassesList permittedsubclasses) {
 		super(modifiers, packageName, name, members, enclosingClass, kind, superInterfaces, superClass);
 		this.typeParameters = typeParameters;
@@ -141,7 +141,7 @@ public final class ClassSignatureImpl extends ExtendedClassSignature {
 	}
 
 	@Override
-	public final List<TypeParameterTypeSignature> getTypeParameters() {
+	public final List<TypeParameterSignature> getTypeParameters() {
 		return typeParameters;
 	}
 

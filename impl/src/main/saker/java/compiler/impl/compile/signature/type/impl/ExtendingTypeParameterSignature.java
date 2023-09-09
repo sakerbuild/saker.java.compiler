@@ -22,7 +22,7 @@ import java.io.ObjectOutput;
 
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class ExtendingTypeParameterTypeSignature extends SimpleTypeParameterTypeSignature {
+public class ExtendingTypeParameterSignature extends SimpleTypeParameterSignature {
 	private static final long serialVersionUID = 1L;
 
 	protected TypeSignature upperBounds;
@@ -30,10 +30,10 @@ public class ExtendingTypeParameterTypeSignature extends SimpleTypeParameterType
 	/**
 	 * For {@link Externalizable};
 	 */
-	public ExtendingTypeParameterTypeSignature() {
+	public ExtendingTypeParameterSignature() {
 	}
 
-	public ExtendingTypeParameterTypeSignature(String varName, TypeSignature upperBounds) {
+	public ExtendingTypeParameterSignature(String varName, TypeSignature upperBounds) {
 		super(varName);
 		this.upperBounds = upperBounds;
 	}
@@ -79,7 +79,7 @@ public class ExtendingTypeParameterTypeSignature extends SimpleTypeParameterType
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ExtendingTypeParameterTypeSignature other = (ExtendingTypeParameterTypeSignature) obj;
+		ExtendingTypeParameterSignature other = (ExtendingTypeParameterSignature) obj;
 		if (upperBounds == null) {
 			if (other.upperBounds != null)
 				return false;

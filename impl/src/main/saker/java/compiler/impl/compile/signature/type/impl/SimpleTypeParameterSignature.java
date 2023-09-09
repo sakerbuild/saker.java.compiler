@@ -23,10 +23,10 @@ import java.util.Collections;
 import java.util.List;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class SimpleTypeParameterTypeSignature implements TypeParameterTypeSignature, Externalizable {
+public class SimpleTypeParameterSignature implements TypeParameterSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	protected String varName;
@@ -34,10 +34,10 @@ public class SimpleTypeParameterTypeSignature implements TypeParameterTypeSignat
 	/**
 	 * For {@link Externalizable}.
 	 */
-	public SimpleTypeParameterTypeSignature() {
+	public SimpleTypeParameterSignature() {
 	}
 
-	public SimpleTypeParameterTypeSignature(String varName) {
+	public SimpleTypeParameterSignature(String varName) {
 		this.varName = varName;
 	}
 
@@ -92,7 +92,7 @@ public class SimpleTypeParameterTypeSignature implements TypeParameterTypeSignat
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SimpleTypeParameterTypeSignature other = (SimpleTypeParameterTypeSignature) obj;
+		SimpleTypeParameterSignature other = (SimpleTypeParameterSignature) obj;
 		if (varName == null) {
 			if (other.varName != null)
 				return false;

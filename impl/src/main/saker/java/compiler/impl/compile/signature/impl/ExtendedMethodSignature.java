@@ -26,7 +26,7 @@ import java.util.Set;
 import javax.lang.model.element.Modifier;
 
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
 import saker.java.compiler.impl.util.JavaSerialUtils;
@@ -34,7 +34,7 @@ import saker.java.compiler.impl.util.JavaSerialUtils;
 public class ExtendedMethodSignature extends SimpleMethodSignature {
 	private static final long serialVersionUID = 1L;
 
-	protected List<? extends TypeParameterTypeSignature> typeParameters;
+	protected List<? extends TypeParameterSignature> typeParameters;
 	protected List<? extends TypeSignature> throwsTypes;
 	//Note: subclasses may have their own serialization functions, 
 	//      so take care when adding new fields
@@ -46,7 +46,7 @@ public class ExtendedMethodSignature extends SimpleMethodSignature {
 	}
 
 	public ExtendedMethodSignature(Set<Modifier> modifiers, List<? extends MethodParameterSignature> parameters,
-			TypeSignature returnType, String name, List<? extends TypeParameterTypeSignature> typeParameters,
+			TypeSignature returnType, String name, List<? extends TypeParameterSignature> typeParameters,
 			List<? extends TypeSignature> throwsTypes) {
 		super(modifiers, parameters, returnType, name);
 		this.typeParameters = typeParameters;
@@ -59,7 +59,7 @@ public class ExtendedMethodSignature extends SimpleMethodSignature {
 	}
 
 	@Override
-	public List<? extends TypeParameterTypeSignature> getTypeParameters() {
+	public List<? extends TypeParameterSignature> getTypeParameters() {
 		return typeParameters;
 	}
 
@@ -79,14 +79,14 @@ public class ExtendedMethodSignature extends SimpleMethodSignature {
 		this.modifierFlags = ImmutableModifierSet.readExternalFlag(in);
 
 		ArrayList<MethodParameterSignature> parameters = new ArrayList<>();
-		ArrayList<TypeParameterTypeSignature> typeparams = new ArrayList<>();
+		ArrayList<TypeParameterSignature> typeparams = new ArrayList<>();
 		ArrayList<TypeSignature> throwstypes = new ArrayList<>();
 		this.parameters = parameters;
 		this.typeParameters = typeparams;
 		this.throwsTypes = throwstypes;
 
 		Object next = JavaSerialUtils.readOpenEndedList(MethodParameterSignature.class, parameters, in);
-		next = JavaSerialUtils.readOpenEndedList(next, TypeParameterTypeSignature.class, typeparams, in);
+		next = JavaSerialUtils.readOpenEndedList(next, TypeParameterSignature.class, typeparams, in);
 		this.name = (String) JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, throwstypes, in);
 		this.returnType = (TypeSignature) in.readObject();
 	}

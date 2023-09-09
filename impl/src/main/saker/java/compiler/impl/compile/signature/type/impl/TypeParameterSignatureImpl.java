@@ -26,40 +26,40 @@ import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class TypeParameterTypeSignatureImpl extends ExtendingTypeParameterTypeSignature {
+public class TypeParameterSignatureImpl extends ExtendingTypeParameterSignature {
 	private static final long serialVersionUID = 1L;
 
 	protected List<AnnotationSignature> annotations;
 	protected TypeSignature lowerBounds;
 
-	public TypeParameterTypeSignatureImpl() {
+	public TypeParameterSignatureImpl() {
 	}
 
-	public static TypeParameterTypeSignature create(String varName, TypeSignature lowerBounds,
+	public static TypeParameterSignature create(String varName, TypeSignature lowerBounds,
 			TypeSignature upperBounds) {
 		if (lowerBounds == null) {
 			if (upperBounds == null) {
 				//just a simple name as a type parameter
-				return new SimpleTypeParameterTypeSignature(varName);
+				return new SimpleTypeParameterSignature(varName);
 			}
 			//T extends Something format
-			return new ExtendingTypeParameterTypeSignature(varName, upperBounds);
+			return new ExtendingTypeParameterSignature(varName, upperBounds);
 		}
-		return new TypeParameterTypeSignatureImpl(varName, upperBounds, Collections.emptyList(), lowerBounds);
+		return new TypeParameterSignatureImpl(varName, upperBounds, Collections.emptyList(), lowerBounds);
 	}
 
-	public static TypeParameterTypeSignature create(List<AnnotationSignature> annotations, String varName,
+	public static TypeParameterSignature create(List<AnnotationSignature> annotations, String varName,
 			TypeSignature lowerBounds, TypeSignature upperBounds) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return create(varName, lowerBounds, upperBounds);
 		}
-		return new TypeParameterTypeSignatureImpl(varName, upperBounds, annotations, lowerBounds);
+		return new TypeParameterSignatureImpl(varName, upperBounds, annotations, lowerBounds);
 	}
 
-	public TypeParameterTypeSignatureImpl(String varName, TypeSignature upperBounds,
+	public TypeParameterSignatureImpl(String varName, TypeSignature upperBounds,
 			List<AnnotationSignature> annotations, TypeSignature lowerBounds) {
 		super(varName, upperBounds);
 		this.annotations = annotations;
@@ -94,7 +94,7 @@ public class TypeParameterTypeSignatureImpl extends ExtendingTypeParameterTypeSi
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		TypeParameterTypeSignatureImpl other = (TypeParameterTypeSignatureImpl) obj;
+		TypeParameterSignatureImpl other = (TypeParameterSignatureImpl) obj;
 		if (lowerBounds == null) {
 			if (other.lowerBounds != null)
 				return false;

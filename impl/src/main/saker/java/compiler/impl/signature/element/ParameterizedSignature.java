@@ -18,10 +18,10 @@ package saker.java.compiler.impl.signature.element;
 import java.util.List;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 
 public interface ParameterizedSignature {
-	public List<? extends TypeParameterTypeSignature> getTypeParameters();
+	public List<? extends TypeParameterSignature> getTypeParameters();
 
 	public static boolean signatureEquals(ParameterizedSignature first, ParameterizedSignature other,
 			SignatureNameChecker checkparameternames) {

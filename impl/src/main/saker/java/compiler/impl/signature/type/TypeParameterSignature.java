@@ -20,7 +20,7 @@ import java.util.Objects;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.signature.element.AnnotatedSignature;
 
-public interface TypeParameterTypeSignature extends AnnotatedSignature {
+public interface TypeParameterSignature extends AnnotatedSignature {
 	/**
 	 * Returns the name of the type variable. <br>
 	 * "?" in case of wildcard type, and user-specified name in case of a variable (Like T, E, etc...)
@@ -33,14 +33,14 @@ public interface TypeParameterTypeSignature extends AnnotatedSignature {
 
 	public TypeSignature getLowerBounds();
 
-	public default boolean signatureEquals(TypeParameterTypeSignature other) {
+	public default boolean signatureEquals(TypeParameterSignature other) {
 		if (!Objects.equals(getVarName(), other.getVarName())) {
 			return false;
 		}
 		return signatureEqualsWithoutName(other);
 	}
 
-	public default boolean signatureEqualsWithoutName(TypeParameterTypeSignature other) {
+	public default boolean signatureEqualsWithoutName(TypeParameterSignature other) {
 		if (!AnnotatedSignature.annotationSignaturesEqual(this, other)) {
 			return false;
 		}

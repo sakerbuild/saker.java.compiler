@@ -37,12 +37,12 @@ import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalNam
 import saker.java.compiler.impl.compile.handler.incremental.model.mirror.IncrementalTypeVariable;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
 import saker.java.compiler.impl.signature.type.IntersectionTypeSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
-public class IncrementalTypeParameterElement extends IncrementalElement<TypeParameterTypeSignature>
+public class IncrementalTypeParameterElement extends IncrementalElement<TypeParameterSignature>
 		implements TypeParameterElement {
 	private static final AtomicReferenceFieldUpdater<IncrementalTypeParameterElement, TypeMirror> ARFU_asType = AtomicReferenceFieldUpdater
 			.newUpdater(IncrementalTypeParameterElement.class, TypeMirror.class, "asType");
@@ -55,7 +55,7 @@ public class IncrementalTypeParameterElement extends IncrementalElement<TypePara
 	private volatile transient TypeMirror asType;
 	private volatile transient List<TypeMirror> bounds;
 
-	public IncrementalTypeParameterElement(TypeParameterTypeSignature signature, IncrementalElementsTypesBase elemTypes,
+	public IncrementalTypeParameterElement(TypeParameterSignature signature, IncrementalElementsTypesBase elemTypes,
 			IncrementalElement<?> genericElement) {
 		super(elemTypes, signature);
 		this.genericElement = genericElement;
@@ -63,7 +63,7 @@ public class IncrementalTypeParameterElement extends IncrementalElement<TypePara
 	}
 
 	@Override
-	public void setSignature(TypeParameterTypeSignature signature) {
+	public void setSignature(TypeParameterSignature signature) {
 		super.setSignature(signature);
 		this.asType = null;
 		this.bounds = null;

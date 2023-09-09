@@ -33,7 +33,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
 
@@ -77,7 +77,7 @@ public abstract class MethodSignatureBase implements MethodSignature, Externaliz
 	}
 
 	@Override
-	public List<? extends TypeParameterTypeSignature> getTypeParameters() {
+	public List<? extends TypeParameterSignature> getTypeParameters() {
 		return Collections.emptyList();
 	}
 

@@ -179,7 +179,7 @@ import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.NullTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.PrimitiveTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
-import saker.java.compiler.impl.compile.signature.type.impl.TypeParameterTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.TypeParameterSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.UnionTypeSignatureImpl;
@@ -208,7 +208,7 @@ import saker.java.compiler.impl.signature.type.NullTypeSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.PrimitiveTypeSignature;
 import saker.java.compiler.impl.signature.type.ResolutionScope;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignatureVisitor;
 import saker.java.compiler.impl.signature.type.TypeVariableTypeSignature;
@@ -5007,19 +5007,19 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			return elem.accept(new ElementToSignatureVisitor(cache, enclosingsignature), null);
 		}
 
-		protected List<TypeParameterTypeSignature> getTypeParametersSignatures(Parameterizable e) {
+		protected List<TypeParameterSignature> getTypeParametersSignatures(Parameterizable e) {
 			return getTypeParametersSignatures(e.getTypeParameters());
 		}
 
-		protected List<TypeParameterTypeSignature> getTypeParametersSignatures(
+		protected List<TypeParameterSignature> getTypeParametersSignatures(
 				List<? extends TypeParameterElement> tparamelems) {
 			if (ObjectUtils.isNullOrEmpty(tparamelems)) {
 				return Collections.emptyList();
 			}
 
 			//can we directly call the visit method instead of calling convert?
-			List<TypeParameterTypeSignature> typeparams = JavaTaskUtils.cloneImmutableList(tparamelems,
-					tpe -> (TypeParameterTypeSignature) convert(tpe, cache));
+			List<TypeParameterSignature> typeparams = JavaTaskUtils.cloneImmutableList(tparamelems,
+					tpe -> (TypeParameterSignature) convert(tpe, cache));
 			return typeparams;
 		}
 
@@ -5075,7 +5075,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 
 			String name = cache.string(e.getSimpleName());
 			Set<Modifier> modifiers = e.getModifiers();
-			List<TypeParameterTypeSignature> typeparamsignatures = getTypeParametersSignatures(e);
+			List<TypeParameterSignature> typeparamsignatures = getTypeParametersSignatures(e);
 			List<AnnotationSignature> annotationsignatures = getAnnotationSignaturesForAnnotatedConstruct(e, cache);
 			String packname = pack.isUnnamed() ? null : cache.string(pack.getQualifiedName());
 
@@ -5155,7 +5155,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			TypeSignature receiversignature = getReceiverSignature(rec);
 			List<TypeSignature> throwntypesignatures = getThrownTypeSignatures(throwntypes);
 			Value defaultvaluesignature = getAnnotationValueSignature(e.getDefaultValue());
-			List<TypeParameterTypeSignature> typeparametersignatures = getTypeParametersSignatures(e);
+			List<TypeParameterSignature> typeparametersignatures = getTypeParametersSignatures(e);
 
 			final List<MethodParameterSignature> methodparamsignatures = params.isEmpty() ? Collections.emptyList()
 					: new ArrayList<>(params.size());
@@ -5200,7 +5200,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		}
 
 		@Override
-		public TypeParameterTypeSignature visitTypeParameter(TypeParameterElement e, Void p) {
+		public TypeParameterSignature visitTypeParameter(TypeParameterElement e, Void p) {
 			List<AnnotationSignature> annotations = getAnnotationSignaturesForAnnotatedConstruct(e, cache);
 
 			TypeSignature upperbound;
@@ -5219,7 +5219,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 				}
 			}
 
-			return TypeParameterTypeSignatureImpl.create(annotations, cache.string(e.getSimpleName()), null,
+			return TypeParameterSignatureImpl.create(annotations, cache.string(e.getSimpleName()), null,
 					upperbound);
 		}
 

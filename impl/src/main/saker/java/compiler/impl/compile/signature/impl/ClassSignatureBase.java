@@ -40,7 +40,7 @@ import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.ClassMemberSignature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
@@ -69,7 +69,7 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 
 	@Override
 	public ParameterizedTypeSignature getTypeSignature() {
-		List<? extends TypeParameterTypeSignature> typeParameters = getTypeParameters();
+		List<? extends TypeParameterSignature> typeParameters = getTypeParameters();
 		List<TypeSignature> tparams = JavaTaskUtils.cloneImmutableList(typeParameters,
 				tp -> TypeVariableTypeSignatureImpl.create(tp.getVarName()));
 		return getTypeSignature(tparams);
@@ -115,7 +115,7 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 	}
 
 	@Override
-	public List<? extends TypeParameterTypeSignature> getTypeParameters() {
+	public List<? extends TypeParameterSignature> getTypeParameters() {
 		return Collections.emptyList();
 	}
 

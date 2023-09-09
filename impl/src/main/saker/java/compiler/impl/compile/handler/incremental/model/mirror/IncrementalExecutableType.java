@@ -36,7 +36,7 @@ import saker.java.compiler.impl.JavaTaskUtils;
 import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
 import saker.java.compiler.impl.compile.handler.incremental.model.IncrementalElementsTypesBase;
 import saker.java.compiler.impl.signature.element.MethodSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 
 public class IncrementalExecutableType extends IncrementalTypeMirror<MethodSignature> implements ExecutableType {
 	@SuppressWarnings("rawtypes")
@@ -92,7 +92,7 @@ public class IncrementalExecutableType extends IncrementalTypeMirror<MethodSigna
 		if (thistypevariables != null) {
 			return thistypevariables;
 		}
-		List<? extends TypeParameterTypeSignature> params = signature.getTypeParameters();
+		List<? extends TypeParameterSignature> params = signature.getTypeParameters();
 		if (ObjectUtils.isNullOrEmpty(params)) {
 			thistypevariables = Collections.emptyList();
 		} else {
@@ -102,11 +102,11 @@ public class IncrementalExecutableType extends IncrementalTypeMirror<MethodSigna
 						+ " - " + params.size() + " - " + typeparams.size());
 			}
 			TypeVariable[] tvars = new TypeVariable[typeparams.size()];
-			Iterator<? extends TypeParameterTypeSignature> pit = params.iterator();
+			Iterator<? extends TypeParameterSignature> pit = params.iterator();
 			Iterator<? extends TypeParameterElement> tpit = typeparams.iterator();
 			int i = 0;
 			while (pit.hasNext()) {
-				TypeParameterTypeSignature p = pit.next();
+				TypeParameterSignature p = pit.next();
 				TypeParameterElement ntpe = tpit.next();
 				if ("?".equals(p.getVarName())) {
 					throw new IllegalArgumentException(

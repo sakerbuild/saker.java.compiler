@@ -40,7 +40,7 @@ import saker.java.compiler.impl.compile.handler.info.SignaturePath;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
@@ -135,7 +135,7 @@ public class IncrementalExecutableElement extends IncrementalElement<MethodSigna
 	public List<? extends TypeParameterElement> getTypeParameters() {
 		List<TypeParameterElement> thistypeparameters = this.typeParameters;
 		if (thistypeparameters == null) {
-			List<? extends TypeParameterTypeSignature> params = signature.getTypeParameters();
+			List<? extends TypeParameterSignature> params = signature.getTypeParameters();
 			thistypeparameters = JavaTaskUtils.cloneImmutableList(params,
 					p -> new IncrementalTypeParameterElement(p, elemTypes, this));
 			if (ARFU_typeParameters.compareAndSet(this, null, thistypeparameters)) {

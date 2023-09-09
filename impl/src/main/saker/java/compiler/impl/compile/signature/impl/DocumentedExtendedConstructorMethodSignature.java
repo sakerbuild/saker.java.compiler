@@ -25,7 +25,7 @@ import java.util.Set;
 import javax.lang.model.element.Modifier;
 
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
-import saker.java.compiler.impl.signature.type.TypeParameterTypeSignature;
+import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
 public class DocumentedExtendedConstructorMethodSignature extends ExtendedConstructorMethodSignature {
@@ -41,7 +41,7 @@ public class DocumentedExtendedConstructorMethodSignature extends ExtendedConstr
 
 	public DocumentedExtendedConstructorMethodSignature(Set<Modifier> modifiers,
 			List<? extends MethodParameterSignature> parameters,
-			List<? extends TypeParameterTypeSignature> typeParameters, List<? extends TypeSignature> throwsTypes,
+			List<? extends TypeParameterSignature> typeParameters, List<? extends TypeSignature> throwsTypes,
 			String docComment) {
 		super(modifiers, parameters, typeParameters, throwsTypes);
 		this.docComment = docComment;
