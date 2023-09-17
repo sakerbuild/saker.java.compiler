@@ -26,18 +26,24 @@ public class ClassPathCompileTaskTest extends JavaCompilerVariablesMetricEnviron
 	@Override
 	protected void runNestTaskTestImpl() throws Throwable {
 		SakerPath fieldjavasrcpath = CP_PATH_BASE.resolve("test/Field.java");
+		SakerPath otherjavasrcpath = SRC_PATH_BASE.resolve("test/Other.java");
 
 		runScriptTask("build");
-		assertCompiled(CP_PATH_BASE.resolve("test/Field.java"), SRC_PATH_BASE.resolve("test/Main.java"));
+		assertCompiled(fieldjavasrcpath, SRC_PATH_BASE.resolve("test/Main.java"), otherjavasrcpath);
 		assertReused();
 
 		runScriptTask("build");
-		assertEquals(getMetric().getRunTaskIdFactories().keySet(), setOf());
+		assertEmpty(getMetric().getRunTaskIdFactories());
 
 		files.putFile(fieldjavasrcpath,
 				files.getAllBytes(fieldjavasrcpath).toString().replace("logging", "modifiedlogging"));
 		runScriptTask("build");
-		assertCompiled(CP_PATH_BASE.resolve("test/Field.java"));
+		assertCompiled(fieldjavasrcpath);
+
+		files.putFile(otherjavasrcpath,
+				files.getAllBytes(otherjavasrcpath).toString().replace("logging", "modifiedlogging"));
+		runScriptTask("build");
+		assertCompiled(otherjavasrcpath);
 	}
 
 }

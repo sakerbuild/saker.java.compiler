@@ -160,12 +160,30 @@ public class MessagerProcessor implements Processor {
 							sb.setLength(slen);
 						}
 					}
+					TypeMirror receivertype = e.getReceiverType();
+					if (receivertype != null) {
+						List<? extends AnnotationMirror> receiverannots = receivertype.getAnnotationMirrors();
+						if (receiverannots != null) {
+							int slen = sb.length();
+							try {
+								sb.append(":receiver");
+								for (AnnotationMirror am : receiverannots) {
+									applyMessages(sb, e, am);
+								}
+							} finally {
+								sb.setLength(slen);
+							}
+						}
+					}
 
 					sb.append('_');
 					for (Element ee : e.getEnclosedElements()) {
 						applyMessages(sb, ee);
 					}
 					for (Element ee : e.getTypeParameters()) {
+						applyMessages(sb, ee);
+					}
+					for (VariableElement ee : e.getParameters()) {
 						applyMessages(sb, ee);
 					}
 					return null;

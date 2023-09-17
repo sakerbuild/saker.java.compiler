@@ -6,4 +6,8 @@ public class Field {
 	public void function() {
 		System.out.println("Field.function() logging");
 	}
+
+	public void receiverFunction(Field this) {
+		System.out.println("Field.receiverFunction() logging");
+	}
 }

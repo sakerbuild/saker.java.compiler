@@ -62,6 +62,7 @@ import javax.lang.model.util.Types;
 import saker.build.thirdparty.saker.util.ArrayUtils;
 import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import testing.saker.SakerTestCase;
 import testing.saker.java.compiler.CompilerCollectingTestMetric;
 
 public class JavacElementCompatibilityCollectingTestMetric extends CompilerCollectingTestMetric {
@@ -493,6 +494,7 @@ public class JavacElementCompatibilityCollectingTestMetric extends CompilerColle
 			}
 		}
 		compareTypes(rec, javacrec, p);
+		compareAnnotationMirrors(rec.getAnnotationMirrors(), javacrec.getAnnotationMirrors(), p);
 	}
 
 	protected void compareReceiverTypes(ExecutableType t, ExecutableType javact, Utils p) {

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import saker.build.util.data.annotation.ValueType;
 import saker.java.compiler.impl.signature.Signature;
 import saker.java.compiler.impl.signature.element.ClassSignature;
 
@@ -79,6 +80,69 @@ public final class SignaturePath implements Externalizable, Cloneable {
 		@Override
 		public String toString() {
 			return binaryName;
+		}
+	}
+
+	@ValueType
+	private static final class MethodParameterIndexSignature
+			implements Signature, Externalizable, Comparable<MethodParameterIndexSignature> {
+		private static final long serialVersionUID = 1L;
+
+		//maximum of 255 parameters as per JVM spec
+		static final MethodParameterIndexSignature[] CACHE = new MethodParameterIndexSignature[256];
+		static {
+			for (int i = 0; i < CACHE.length; i++) {
+				CACHE[i] = new MethodParameterIndexSignature(i);
+			}
+		}
+
+		private int index;
+
+		/**
+		 * For {@link Externalizable}.
+		 */
+		public MethodParameterIndexSignature() {
+		}
+
+		public MethodParameterIndexSignature(int index) {
+			this.index = index;
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeInt(index);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			index = in.readInt();
+		}
+
+		@Override
+		public int compareTo(MethodParameterIndexSignature o) {
+			return Integer.compare(index, o.index);
+		}
+
+		@Override
+		public int hashCode() {
+			return index;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!(obj instanceof MethodParameterIndexSignature))
+				return false;
+			MethodParameterIndexSignature other = (MethodParameterIndexSignature) obj;
+			if (index != other.index)
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName() + "[" + index + "]";
 		}
 	}
 
@@ -213,6 +277,10 @@ public final class SignaturePath implements Externalizable, Cloneable {
 		return new ClassSignaturePathSignature(sig.getBinaryName());
 	}
 
+	public static Signature getMethodParameterIndexSignature(int index) {
+		return MethodParameterIndexSignature.CACHE[index];
+	}
+
 	public static SignaturePath createIndexed(Object index) {
 		SignaturePath res = new SignaturePath();
 		res.index = index;
@@ -229,14 +297,12 @@ public final class SignaturePath implements Externalizable, Cloneable {
 		SignaturePath res = new SignaturePath(parent, signature);
 		res.index = index;
 		return res;
-//		return new IndexedSignaturePath(parent, signature, index);
 	}
 
 	public static SignaturePath createIndexed(Signature signature, Object index) {
 		SignaturePath res = new SignaturePath(signature);
 		res.index = index;
 		return res;
-//		return new IndexedSignaturePath(signature, index);
 	}
 
 }

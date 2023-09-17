@@ -91,3 +91,21 @@ enum MyEnum {
 	ENUM2;
 }
 
+@MyAnnot
+class AnotherClass {
+	public void multiParamed(
+			int p1,
+			int p2,
+			String p3,
+			int p4) {
+	}
+
+//	@MyRepeatable(1) // TODO there's a bug with the positioning of the messages when a same annotation is present here and as receiver parameter annotation (edge case, to be fixed later)
+	public Integer receiverParamed(
+			@MyRepeatable(1)
+			AnotherClass this,
+			@MyRepeatable(1)
+			int otherparam) {
+		return 0;
+	}
+}

@@ -109,3 +109,10 @@ class MixedRepeatableArrayContainer {
 //cannot have more than one outside of the contained annotation
 class MixedRepeatableContainer {
 }
+
+class ReceiverTypeAnnotations {
+	@MyAnyAnnotation(123)
+	public Integer receiverParamed(@MyAnyAnnotation(456) ReceiverTypeAnnotations this) {
+		return 0;
+	}
+}

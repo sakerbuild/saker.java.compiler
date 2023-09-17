@@ -1,10 +1,19 @@
 package saker.java.compiler.impl.util;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+
+import javax.lang.model.element.Modifier;
+
+import saker.java.compiler.impl.compile.signature.impl.MethodParameterSignatureImpl;
+import saker.java.compiler.impl.signature.element.MethodParameterSignature;
+import saker.java.compiler.impl.signature.type.TypeSignature;
+import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
 public class JavaSerialUtils {
 	private JavaSerialUtils() {
@@ -83,5 +92,67 @@ public class JavaSerialUtils {
 			list.add((T) o);
 		}
 		return o;
+	}
+
+	/**
+	 * Writes an open ended list of method parameters.
+	 * <p>
+	 * This methods relies on the known implementations of the {@link MethodParameterSignature} interface.
+	 * <p>
+	 * The object types written after this should not be instance of any of the following:
+	 * <ul>
+	 * <li>{@link TypeSignature}</li>
+	 * <li>{@link String}</li>
+	 * </ul>
+	 * 
+	 * @param parameters
+	 *            The parameter signatures.
+	 * @param out
+	 *            The output
+	 */
+	public static void writeOpenEndedMethodParameterList(List<? extends MethodParameterSignature> parameters,
+			ObjectOutput out) throws IOException {
+		if (parameters == null) {
+			return;
+		}
+		for (MethodParameterSignature sig : parameters) {
+			((Externalizable) sig).writeExternal(out);
+		}
+	}
+
+	public static Object readOpenEndedMethodParameterList(List<? super MethodParameterSignature> list, ObjectInput in)
+			throws ClassNotFoundException, IOException {
+		return readOpenEndedMethodParameterList(in.readObject(), list, in);
+	}
+
+	public static Object readOpenEndedMethodParameterList(Object o, List<? super MethodParameterSignature> list,
+			ObjectInput in) throws ClassNotFoundException, IOException {
+		while (true) {
+			String name;
+			TypeSignature type;
+			Set<Modifier> modifiers;
+			if (o instanceof String) {
+				//MethodParameterSignatureImpl
+				name = (String) o;
+				type = (TypeSignature) in.readObject();
+				modifiers = ImmutableModifierSet.empty();
+			} else if (o instanceof TypeSignature) {
+				type = (TypeSignature) o;
+				Object next = in.readObject();
+				if (ImmutableModifierSet.isExternalObjectFlag(next)) {
+					//FullMethodParameterSignatureImpl
+					modifiers = ImmutableModifierSet.setFromExternalObjectFlag(next);
+					name = (String) in.readObject();
+				} else {
+					//FinalMethodParameterSignatureImpl
+					name = (String) next;
+					modifiers = IncrementalElementsTypes.MODIFIERS_FINAL;
+				}
+			} else {
+				return o;
+			}
+			list.add(MethodParameterSignatureImpl.create(modifiers, type, name));
+			o = in.readObject();
+		}
 	}
 }

@@ -18,6 +18,8 @@ package saker.java.compiler.impl.util;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Collection;
@@ -180,10 +182,37 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> {
 		out.writeShort(flags);
 	}
 
+	public static void writeExternalObjectFlag(ObjectOutput out, short flags) throws IOException {
+		out.writeObject(flags);
+	}
+
 	public static short readExternalFlag(DataInput in) throws IOException {
 		short flags = in.readShort();
 		checkFlagsSupport(flags);
 		return flags;
+	}
+
+	public static short readExternalObjectFlag(ObjectInput in) throws IOException, ClassNotFoundException {
+		return fromExternalObjectFlag(in.readObject());
+	}
+
+	public static ImmutableModifierSet readSetExternalObjectFlag(ObjectInput in)
+			throws IOException, ClassNotFoundException {
+		return forFlags(readExternalObjectFlag(in));
+	}
+
+	public static short fromExternalObjectFlag(Object o) {
+		short flags = (short) o;
+		checkFlagsSupport(flags);
+		return flags;
+	}
+
+	public static ImmutableModifierSet setFromExternalObjectFlag(Object o) {
+		return forFlags(fromExternalObjectFlag(o));
+	}
+
+	public static boolean isExternalObjectFlag(Object o) {
+		return o instanceof Short;
 	}
 
 	public static ImmutableModifierSet readExternalFlagSet(DataInput in) throws IOException {

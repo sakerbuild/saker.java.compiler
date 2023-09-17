@@ -48,15 +48,21 @@ public final class WildcardTypeSignatureImpl extends AnnotatedSignatureImpl impl
 			if (upperBounds == null) {
 				return BOUNDLESS_INSTANCE;
 			}
-			return cache.extendsWildcard(upperBounds);
+			if (cache != null) {
+				return cache.extendsWildcard(upperBounds);
+			}
+			return new SimpleExtendsWildcardTypeSignature(upperBounds);
 		}
 		if (upperBounds == null) {
-			return cache.superWildcard(lowerBounds);
+			if (cache != null) {
+				return cache.superWildcard(lowerBounds);
+			}
+			return new SimpleSuperWildcardTypeSignature(lowerBounds);
 		}
 		return new WildcardTypeSignatureImpl(Collections.emptyList(), lowerBounds, upperBounds);
 	}
 
-	public static WildcardTypeSignature create(ParserCache cache, List<AnnotationSignature> annotations,
+	public static WildcardTypeSignature create(ParserCache cache, List<? extends AnnotationSignature> annotations,
 			TypeSignature lowerBounds, TypeSignature upperBounds) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return create(cache, lowerBounds, upperBounds);
@@ -64,7 +70,7 @@ public final class WildcardTypeSignatureImpl extends AnnotatedSignatureImpl impl
 		return new WildcardTypeSignatureImpl(annotations, lowerBounds, upperBounds);
 	}
 
-	private WildcardTypeSignatureImpl(List<AnnotationSignature> annotations, TypeSignature lowerBounds,
+	private WildcardTypeSignatureImpl(List<? extends AnnotationSignature> annotations, TypeSignature lowerBounds,
 			TypeSignature upperBounds) {
 		super(annotations);
 		this.lowerBounds = lowerBounds;

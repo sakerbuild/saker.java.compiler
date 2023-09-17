@@ -1023,7 +1023,8 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		final List<MethodParameterSignature> methodparams;
 		VariableTree lastparam = null;
 		if (!parametertrees.isEmpty()) {
-			ArrayList<MethodParameterSignature> methodparamsigs = new ArrayList<>(parametertrees.size());
+			int idx = 0;
+			MethodParameterSignature[] methodparamsigs = new MethodParameterSignature[parametertrees.size()];
 			for (Iterator<? extends VariableTree> it = parametertrees.iterator(); it.hasNext();) {
 				lastparam = it.next();
 
@@ -1035,12 +1036,13 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 				MethodParameterSignature mparam = MethodParameterSignatureImpl.create(parammodifiers.getFlags(), type,
 						cache.string(lastparam.getName()));
 				context.treeSignatures.put(lastparam, mparam);
-				methodparamsigs.add(mparam);
 
-				paramsigpath.setSignature(mparam);
+				paramsigpath.setSignature(SignaturePath.getMethodParameterIndexSignature(idx));
 				context.popSignaturePath(lastparam);
+
+				methodparamsigs[idx++] = mparam;
 			}
-			methodparams = ImmutableUtils.unmodifiableList(methodparamsigs);
+			methodparams = ImmutableUtils.asUnmodifiableArrayList(methodparamsigs);
 		} else {
 			methodparams = Collections.emptyList();
 		}

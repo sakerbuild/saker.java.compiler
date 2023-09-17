@@ -40,14 +40,15 @@ public final class ArrayTypeSignatureImpl extends AnnotatedSignatureImpl impleme
 		return SimpleArrayTypeSignature.create(componentType);
 	}
 
-	public static ArrayTypeSignature create(List<AnnotationSignature> annotations, TypeSignature componentType) {
+	public static ArrayTypeSignature create(List<? extends AnnotationSignature> annotations,
+			TypeSignature componentType) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return SimpleArrayTypeSignature.create(componentType);
 		}
 		return new ArrayTypeSignatureImpl(annotations, componentType);
 	}
 
-	private ArrayTypeSignatureImpl(List<AnnotationSignature> annotations, TypeSignature componentType) {
+	private ArrayTypeSignatureImpl(List<? extends AnnotationSignature> annotations, TypeSignature componentType) {
 		super(annotations);
 		this.componentType = componentType;
 	}

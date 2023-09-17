@@ -65,8 +65,8 @@ public class ExtendedMethodSignature extends SimpleMethodSignature {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
-		JavaSerialUtils.writeOpenEndedList(parameters, out);
+		JavaSerialUtils.writeOpenEndedMethodParameterList(parameters, out);
+		ImmutableModifierSet.writeExternalObjectFlag(out, modifierFlags);
 		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
 		JavaSerialUtils.writeOpenEndedList(throwsTypes, out);
 
@@ -76,8 +76,6 @@ public class ExtendedMethodSignature extends SimpleMethodSignature {
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		this.modifierFlags = ImmutableModifierSet.readExternalFlag(in);
-
 		ArrayList<MethodParameterSignature> parameters = new ArrayList<>();
 		ArrayList<TypeParameterSignature> typeparams = new ArrayList<>();
 		ArrayList<TypeSignature> throwstypes = new ArrayList<>();
@@ -85,8 +83,10 @@ public class ExtendedMethodSignature extends SimpleMethodSignature {
 		this.typeParameters = typeparams;
 		this.throwsTypes = throwstypes;
 
-		Object next = JavaSerialUtils.readOpenEndedList(MethodParameterSignature.class, parameters, in);
-		next = JavaSerialUtils.readOpenEndedList(next, TypeParameterSignature.class, typeparams, in);
+		this.modifierFlags = ImmutableModifierSet
+				.fromExternalObjectFlag(JavaSerialUtils.readOpenEndedMethodParameterList(parameters, in));
+
+		Object next = JavaSerialUtils.readOpenEndedList(TypeParameterSignature.class, typeparams, in);
 		this.name = (String) JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, throwstypes, in);
 		this.returnType = (TypeSignature) in.readObject();
 	}

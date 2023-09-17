@@ -41,14 +41,15 @@ public final class TypeVariableTypeSignatureImpl extends AnnotatedSignatureImpl 
 		return SimpleTypeVariableTypeSignature.create(variableName);
 	}
 
-	public static TypeVariableTypeSignature create(List<AnnotationSignature> annotations, String variableName) {
+	public static TypeVariableTypeSignature create(List<? extends AnnotationSignature> annotations,
+			String variableName) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return SimpleTypeVariableTypeSignature.create(variableName);
 		}
 		return new TypeVariableTypeSignatureImpl(annotations, variableName);
 	}
 
-	private TypeVariableTypeSignatureImpl(List<AnnotationSignature> annotations, String variableName) {
+	private TypeVariableTypeSignatureImpl(List<? extends AnnotationSignature> annotations, String variableName) {
 		super(annotations);
 		this.variableName = variableName;
 	}

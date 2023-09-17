@@ -184,6 +184,7 @@ import saker.java.compiler.impl.compile.signature.type.impl.TypeReferenceSignatu
 import saker.java.compiler.impl.compile.signature.type.impl.TypeVariableTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.UnionTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.UnknownTypeSignatureImpl;
+import saker.java.compiler.impl.compile.signature.type.impl.UnresolvedTypeSignatureImpl;
 import saker.java.compiler.impl.compile.signature.type.impl.WildcardTypeSignatureImpl;
 import saker.java.compiler.impl.signature.Signature;
 import saker.java.compiler.impl.signature.element.AnnotatedSignature;
@@ -3878,6 +3879,10 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 			if (resolved == null) {
 				return new IncrementalErrorType(IncrementalElementsTypes8.this, unresolved.toString());
 			}
+			List<? extends AnnotationSignature> annots = unresolved.getAnnotations();
+			if (!ObjectUtils.isNullOrEmpty(annots)) {
+				resolved = resolved.accept(TypeSignatureAnnotationSetterVisitor.INSTANCE, annots);
+			}
 			return resolved.accept(this, p);
 		}
 
@@ -3897,6 +3902,76 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 		public TypeMirror visitNull(NullTypeSignature type, Param p) {
 			return IncrementalNullType.INSTANCE;
 		}
+	}
+
+	private static final class TypeSignatureAnnotationSetterVisitor
+			implements TypeSignatureVisitor<TypeSignature, List<? extends AnnotationSignature>> {
+		public static final TypeSignatureAnnotationSetterVisitor INSTANCE = new TypeSignatureAnnotationSetterVisitor();
+
+		@Override
+		public TypeSignature visitArray(ArrayTypeSignature type, List<? extends AnnotationSignature> p) {
+			return ArrayTypeSignatureImpl.create(p, type.getComponentType());
+		}
+
+		@Override
+		public TypeSignature visitWildcard(WildcardTypeSignature type, List<? extends AnnotationSignature> p) {
+			return WildcardTypeSignatureImpl.create(null, p, type.getLowerBounds(), type.getUpperBounds());
+		}
+
+		@Override
+		public TypeSignature visitTypeVariable(TypeVariableTypeSignature type, List<? extends AnnotationSignature> p) {
+			return TypeVariableTypeSignatureImpl.create(p, type.getVariableName());
+		}
+
+		@Override
+		public TypeSignature visitIntersection(IntersectionTypeSignature type, List<? extends AnnotationSignature> p) {
+			return IntersectionTypeSignatureImpl.create(p, type.getBounds());
+		}
+
+		@Override
+		public TypeSignature visitNoType(NoTypeSignature type, List<? extends AnnotationSignature> p) {
+			return NoTypeSignatureImpl.create(p, type.getKind());
+		}
+
+		@Override
+		public TypeSignature visitPrimitive(PrimitiveTypeSignature type, List<? extends AnnotationSignature> p) {
+			return PrimitiveTypeSignatureImpl.create(p, type.getTypeKind());
+		}
+
+		@Override
+		public TypeSignature visitUnion(UnionTypeSignature type, List<? extends AnnotationSignature> p) {
+			return UnionTypeSignatureImpl.create(p, type.getAlternatives());
+		}
+
+		@Override
+		public TypeSignature visitUnknown(UnknownTypeSignature type, List<? extends AnnotationSignature> p) {
+			return UnknownTypeSignatureImpl.create(p, type.getTypeDescription());
+		}
+
+		@Override
+		public TypeSignature visitUnresolved(UnresolvedTypeSignature type, List<? extends AnnotationSignature> p) {
+			return UnresolvedTypeSignatureImpl.create(p, type.getEnclosingSignature(), type.getUnresolvedName(),
+					type.getTypeParameters());
+		}
+
+		@Override
+		public TypeSignature visitParameterized(ParameterizedTypeSignature type,
+				List<? extends AnnotationSignature> p) {
+			return TypeReferenceSignatureImpl.create(p, type.getEnclosingSignature(), type.getSimpleName(),
+					type.getTypeParameters());
+		}
+
+		@Override
+		public TypeSignature visitEncloser(ParameterizedTypeSignature type, List<? extends AnnotationSignature> p) {
+			return TypeReferenceSignatureImpl.create(p, type.getEnclosingSignature(), type.getSimpleName(),
+					type.getTypeParameters());
+		}
+
+		@Override
+		public TypeSignature visitNull(NullTypeSignature type, List<? extends AnnotationSignature> p) {
+			return NullTypeSignatureImpl.create(p);
+		}
+
 	}
 
 	private class TypeSignatureToMirrorVisitor extends AbstractTypeSignatureToMirrorVisitor<Element> {
@@ -5219,8 +5294,7 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 				}
 			}
 
-			return TypeParameterSignatureImpl.create(annotations, cache.string(e.getSimpleName()), null,
-					upperbound);
+			return TypeParameterSignatureImpl.create(annotations, cache.string(e.getSimpleName()), null, upperbound);
 		}
 
 	}

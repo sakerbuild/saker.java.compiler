@@ -40,7 +40,8 @@ public final class UnknownTypeSignatureImpl extends AnnotatedSignatureImpl imple
 		return new UnknownTypeSignatureImpl(typedescription);
 	}
 
-	public static UnknownTypeSignatureImpl create(List<AnnotationSignature> annotations, String typeDescription) {
+	public static UnknownTypeSignatureImpl create(List<? extends AnnotationSignature> annotations,
+			String typeDescription) {
 		return new UnknownTypeSignatureImpl(annotations, typeDescription);
 	}
 
@@ -49,7 +50,7 @@ public final class UnknownTypeSignatureImpl extends AnnotatedSignatureImpl imple
 		this.typeDescription = typedescription;
 	}
 
-	private UnknownTypeSignatureImpl(List<AnnotationSignature> annotations, String typeDescription) {
+	private UnknownTypeSignatureImpl(List<? extends AnnotationSignature> annotations, String typeDescription) {
 		super(annotations);
 		this.typeDescription = typeDescription;
 	}

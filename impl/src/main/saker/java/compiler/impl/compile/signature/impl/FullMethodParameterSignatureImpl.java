@@ -49,14 +49,16 @@ public final class FullMethodParameterSignatureImpl extends MethodParameterSigna
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
+		out.writeObject(type);
+		ImmutableModifierSet.writeExternalObjectFlag(out, modifierFlags);
+		out.writeObject(name);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		modifierFlags = ImmutableModifierSet.readExternalFlag(in);
+		type = (TypeSignature) in.readObject();
+		modifierFlags = ImmutableModifierSet.readExternalObjectFlag(in);
+		name = (String) in.readObject();
 	}
 
 	//hashCode inherited

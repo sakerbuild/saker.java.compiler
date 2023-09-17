@@ -79,13 +79,13 @@ public class MethodParameterSignatureImpl implements MethodParameterSignature, E
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeUTF(name);
+		out.writeObject(name);
 		out.writeObject(type);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		name = in.readUTF();
+		name = (String) in.readObject();
 		type = (TypeSignature) in.readObject();
 	}
 

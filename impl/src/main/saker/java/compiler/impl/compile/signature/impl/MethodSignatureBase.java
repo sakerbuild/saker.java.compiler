@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +28,6 @@ import java.util.Set;
 import javax.lang.model.element.Modifier;
 
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
@@ -36,6 +36,7 @@ import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
+import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public abstract class MethodSignatureBase implements MethodSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
@@ -103,14 +104,16 @@ public abstract class MethodSignatureBase implements MethodSignature, Externaliz
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
-		SerialUtils.writeExternalCollection(out, parameters);
+		JavaSerialUtils.writeOpenEndedMethodParameterList(parameters, out);
+		ImmutableModifierSet.writeExternalObjectFlag(out, modifierFlags);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		modifierFlags = ImmutableModifierSet.readExternalFlag(in);
-		parameters = SerialUtils.readExternalImmutableList(in);
+		ArrayList<MethodParameterSignature> parameters = new ArrayList<>();
+		this.parameters = parameters;
+		this.modifierFlags = ImmutableModifierSet
+				.fromExternalObjectFlag(JavaSerialUtils.readOpenEndedMethodParameterList(parameters, in));
 	}
 
 	@Override

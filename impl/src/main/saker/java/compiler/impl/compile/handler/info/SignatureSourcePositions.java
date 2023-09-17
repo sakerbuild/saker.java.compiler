@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import saker.java.compiler.impl.signature.Signature;
 import testing.saker.java.compiler.TestFlag;
@@ -123,6 +124,10 @@ public class SignatureSourcePositions implements Externalizable {
 		if (sigpositions.position == null) {
 			//can be duplicate in case syntax errors/compilation failures
 			sigpositions.position = result;
+		} else if (TestFlag.ENABLED) {
+			//log this in case of testing so we can diagnose better
+			System.out.println("SignatureSourcePositions.putPosition() duplicate positions for: " + sig + ": "
+					+ sigpositions.position + " and " + result);
 		}
 		return result;
 	}
@@ -133,7 +138,6 @@ public class SignatureSourcePositions implements Externalizable {
 
 	private SignatureSourcePositions getPathPositions(SignaturePath path, boolean create) {
 		SignaturePath parent = path.getParent();
-		Signature sig = path.getSignature();
 		SignatureSourcePositions computeon;
 		if (parent == null) {
 			computeon = this;
@@ -144,7 +148,21 @@ public class SignatureSourcePositions implements Externalizable {
 			}
 		}
 		Object index = path.getIndex();
-		Object key = index == null ? sig : new IndexedKey(sig, index);
+		Signature sig = path.getSignature();
+		Object key;
+		if (index == null) {
+			if (TestFlag.ENABLED) {
+				//just a sanity check during testing, shouldn't happen
+				if (sig == null) {
+					throw new AssertionError("SignaturePath signature and index both null.");
+				}
+			}
+
+			key = sig;
+		} else {
+			//signature is allowed to be null if index is non-null
+			key = new IndexedKey(sig, index);
+		}
 		if (create) {
 			return computeon.getSubPositions().computeIfAbsent(key, (k) -> new SignatureSourcePositions());
 		}

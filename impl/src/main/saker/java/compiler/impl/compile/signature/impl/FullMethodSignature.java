@@ -182,54 +182,54 @@ public class FullMethodSignature extends MethodSignatureBase {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
-		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
-		JavaSerialUtils.writeOpenEndedList(parameters, out);
+		super.writeExternal(out);
+
 		JavaSerialUtils.writeOpenEndedList(throwsTypes, out);
 		JavaSerialUtils.writeOpenEndedList(typeParameters, out);
 
-		if (receiverParameter != null) {
-			//optionally written, as rarely used
-			out.writeObject(receiverParameter);
-		}
 		out.writeObject(name);
 		if (docComment != null) {
 			//optionally written
 			out.writeObject(docComment);
 		}
+		if (receiverParameter != null) {
+			//optionally written, as rarely used
+			out.writeObject(receiverParameter);
+		}
 		out.writeObject(returnType);
 
-		out.writeByte(elementKindIndex);
+		out.writeObject(elementKindIndex);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		this.modifierFlags = ImmutableModifierSet.readExternalFlag(in);
+		super.readExternal(in);
 
-		ArrayList<MethodParameterSignature> parameters = new ArrayList<>();
 		ArrayList<TypeSignature> throwstypes = new ArrayList<>();
 		ArrayList<TypeParameterSignature> typeparams = new ArrayList<>();
-		this.parameters = parameters;
 		this.throwsTypes = throwstypes;
 		this.typeParameters = typeparams;
 
-		Object next = JavaSerialUtils.readOpenEndedList(MethodParameterSignature.class, parameters, in);
-		next = JavaSerialUtils.readOpenEndedList(next, TypeSignature.class, throwstypes, in);
-		next = JavaSerialUtils.readOpenEndedList(next, TypeParameterSignature.class, typeparams, in);
-		if (next instanceof TypeSignature) {
-			//receiver parameter is optionally present
-			this.receiverParameter = (TypeSignature) next;
-			next = in.readObject();
-		}
-		this.name = (String) next;
+		Object next = JavaSerialUtils.readOpenEndedList(TypeSignature.class, throwstypes, in);
+		this.name = (String) JavaSerialUtils.readOpenEndedList(next, TypeParameterSignature.class, typeparams, in);
+
 		next = in.readObject();
 		if (next instanceof String) {
 			//optional
 			this.docComment = (String) next;
 			next = in.readObject();
 		}
-		this.returnType = (TypeSignature) next;
 
-		this.elementKindIndex = in.readByte();
+		//check receiver parameter presence by checking the second next object
+		Object next2 = in.readObject();
+		if (next2 instanceof TypeSignature) {
+			this.receiverParameter = (TypeSignature) next;
+			this.returnType = (TypeSignature) next2;
+			this.elementKindIndex = (byte) in.readObject();
+		} else {
+			this.returnType = (TypeSignature) next;
+			this.elementKindIndex = (byte) next2;
+		}
 	}
 
 	@Override

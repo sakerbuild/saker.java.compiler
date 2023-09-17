@@ -39,14 +39,14 @@ public final class NullTypeSignatureImpl extends AnnotatedSignatureImpl implemen
 		return INSTANCE;
 	}
 
-	public static NullTypeSignature create(List<AnnotationSignature> annotations) {
+	public static NullTypeSignature create(List<? extends AnnotationSignature> annotations) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return INSTANCE;
 		}
 		return new NullTypeSignatureImpl(annotations);
 	}
 
-	private NullTypeSignatureImpl(List<AnnotationSignature> annotations) {
+	private NullTypeSignatureImpl(List<? extends AnnotationSignature> annotations) {
 		super(annotations);
 	}
 

@@ -16,6 +16,9 @@
 package saker.java.compiler.impl.compile.signature.impl;
 
 import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
@@ -39,5 +42,17 @@ public final class FinalMethodParameterSignatureImpl extends MethodParameterSign
 	@Override
 	public Set<Modifier> getModifiers() {
 		return IncrementalElementsTypes.MODIFIERS_FINAL;
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput out) throws IOException {
+		out.writeObject(type);
+		out.writeObject(name);
+	}
+
+	@Override
+	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		type = (TypeSignature) in.readObject();
+		name = (String) in.readObject();
 	}
 }

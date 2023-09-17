@@ -2593,6 +2593,12 @@ public class IncrementalCompilationDirector implements JavaCompilerInvocationDir
 					if (s != null) {
 						if (IncrementalElementsTypes.ELEMENT_KIND_TYPES.contains(incelemkind)) {
 							s = SignaturePath.getClassSignature((ClassSignature) s);
+						} else if (incelemkind == ElementKind.PARAMETER) {
+							//parameter special handling, use index signature
+							SignaturedElement<?> enclosing = (SignaturedElement<?>) incelem.getEnclosingElement();
+							MethodSignature methodsig = (MethodSignature) enclosing.getSignature();
+							int idx = methodsig.getParameters().indexOf(s);
+							s = SignaturePath.getMethodParameterIndexSignature(idx);
 						}
 						SignaturePath npath = new SignaturePath(s);
 						if (path == null) {
