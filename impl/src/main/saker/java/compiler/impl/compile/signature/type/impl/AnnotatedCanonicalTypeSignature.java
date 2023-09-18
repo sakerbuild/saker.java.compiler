@@ -22,6 +22,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
@@ -105,10 +106,7 @@ public class AnnotatedCanonicalTypeSignature extends AnnotatedSignatureImpl impl
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((canonicalName == null) ? 0 : canonicalName.hashCode());
-		return result;
+		return super.hashCode() * 31 + Objects.hashCode(canonicalName);
 	}
 
 	@Override

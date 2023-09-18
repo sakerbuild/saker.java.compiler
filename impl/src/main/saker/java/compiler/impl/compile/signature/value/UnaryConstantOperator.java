@@ -73,11 +73,7 @@ public class UnaryConstantOperator implements ConstantValueResolver, Externaliza
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((operatorName == null) ? 0 : operatorName.hashCode());
-		result = prime * result + ((subject == null) ? 0 : subject.hashCode());
-		return result;
+		return Objects.hashCode(subject) * 31 + Objects.hashCode(operatorName);
 	}
 
 	@Override

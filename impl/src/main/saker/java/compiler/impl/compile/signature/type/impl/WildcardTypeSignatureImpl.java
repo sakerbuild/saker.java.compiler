@@ -21,6 +21,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
@@ -115,11 +116,7 @@ public final class WildcardTypeSignatureImpl extends AnnotatedSignatureImpl impl
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((lowerBounds == null) ? 0 : lowerBounds.hashCode());
-		result = prime * result + ((upperBounds == null) ? 0 : upperBounds.hashCode());
-		return result;
+		return (super.hashCode() * 31 + Objects.hashCode(lowerBounds)) * 3 + Objects.hash(upperBounds);
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import javax.lang.model.element.Element;
 
@@ -72,12 +73,7 @@ public class TernaryConstantOperator implements ConstantValueResolver, Externali
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((condition == null) ? 0 : condition.hashCode());
-		result = prime * result + ((onFalse == null) ? 0 : onFalse.hashCode());
-		result = prime * result + ((onTrue == null) ? 0 : onTrue.hashCode());
-		return result;
+		return (Objects.hashCode(onTrue) * 31 + Objects.hashCode(onFalse) * 61) * 97 + Objects.hashCode(condition);
 	}
 
 	@Override

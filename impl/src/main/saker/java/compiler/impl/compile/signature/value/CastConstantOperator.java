@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 import java.util.function.Function;
 
 import javax.lang.model.element.Element;
@@ -70,11 +71,7 @@ public class CastConstantOperator implements ConstantValueResolver, Externalizab
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((clazz == null) ? 0 : clazz.hashCode());
-		result = prime * result + ((subject == null) ? 0 : subject.hashCode());
-		return result;
+		return Objects.hashCode(subject) * 31 + Objects.hashCode(clazz);
 	}
 
 	@Override

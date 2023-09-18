@@ -24,7 +24,7 @@ import java.util.Objects;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.LiteralValue;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 
-public class LiteralValueImpl implements LiteralValue, Externalizable {
+public final class LiteralValueImpl implements LiteralValue, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private ConstantValueResolver value;
@@ -57,10 +57,7 @@ public class LiteralValueImpl implements LiteralValue, Externalizable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
-		return result;
+		return Objects.hashCode(value);
 	}
 
 	@Override

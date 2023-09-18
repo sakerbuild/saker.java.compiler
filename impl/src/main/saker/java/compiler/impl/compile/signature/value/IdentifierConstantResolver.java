@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -94,10 +95,7 @@ public class IdentifierConstantResolver implements EnumOrConstantValueResolver, 
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((identifier == null) ? 0 : identifier.hashCode());
-		return result;
+		return Objects.hashCode(identifier);
 	}
 
 	@Override

@@ -21,6 +21,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
@@ -62,10 +63,7 @@ public final class UnknownTypeSignatureImpl extends AnnotatedSignatureImpl imple
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((typeDescription == null) ? 0 : typeDescription.hashCode());
-		return result;
+		return super.hashCode() * 31 + Objects.hashCode(typeDescription);
 	}
 
 	@Override

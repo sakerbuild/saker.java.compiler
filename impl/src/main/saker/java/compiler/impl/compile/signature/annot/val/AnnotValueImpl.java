@@ -19,11 +19,12 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.AnnotValue;
 
-public class AnnotValueImpl implements AnnotValue, Externalizable {
+public final class AnnotValueImpl implements AnnotValue, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private AnnotationSignature annotation;
@@ -42,10 +43,7 @@ public class AnnotValueImpl implements AnnotValue, Externalizable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((annotation == null) ? 0 : annotation.hashCode());
-		return result;
+		return Objects.hashCode(annotation);
 	}
 
 	@Override

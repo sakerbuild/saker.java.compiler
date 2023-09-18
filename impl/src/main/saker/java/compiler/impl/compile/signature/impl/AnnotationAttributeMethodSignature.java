@@ -19,9 +19,9 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -135,13 +135,9 @@ public class AnnotationAttributeMethodSignature implements MethodSignature, Exte
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((defaultValue == null) ? 0 : defaultValue.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((returnType == null) ? 0 : returnType.hashCode());
-		return result;
+	public final int hashCode() {
+		//only nae is sufficiend for annotation method hashcode
+		return Objects.hashCode(name);
 	}
 
 	@Override

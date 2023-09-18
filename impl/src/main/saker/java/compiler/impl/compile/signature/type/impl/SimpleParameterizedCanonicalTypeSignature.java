@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -63,10 +64,7 @@ public final class SimpleParameterizedCanonicalTypeSignature extends SimpleCanon
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((typeParameters == null) ? 0 : typeParameters.hashCode());
-		return result;
+		return super.hashCode() * 31 + Objects.hashCode(typeParameters);
 	}
 
 	@Override

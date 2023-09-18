@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
@@ -28,7 +29,7 @@ import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.ArrayValue;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.Value;
 
-public class ArrayValueImpl implements ArrayValue, Externalizable {
+public final class ArrayValueImpl implements ArrayValue, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	public static final ArrayValue EMPTY_INSTANCE = new ArrayValueImpl(Collections.emptyList());
@@ -69,10 +70,7 @@ public class ArrayValueImpl implements ArrayValue, Externalizable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((values == null) ? 0 : values.hashCode());
-		return result;
+		return Objects.hashCode(values);
 	}
 
 	@Override

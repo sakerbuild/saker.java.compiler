@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
@@ -80,10 +81,7 @@ public final class SimpleIntersectionTypeSignature implements IntersectionTypeSi
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((bounds == null) ? 0 : bounds.hashCode());
-		return result;
+		return Objects.hashCode(bounds);
 	}
 
 	@Override

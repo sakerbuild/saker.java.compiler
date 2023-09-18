@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ArrayTypeSignature;
@@ -123,10 +124,7 @@ public final class SimpleArrayTypeSignature implements ArrayTypeSignature, Exter
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((componentType == null) ? 0 : componentType.hashCode());
-		return result;
+		return Objects.hashCode(componentType);
 	}
 
 	@Override

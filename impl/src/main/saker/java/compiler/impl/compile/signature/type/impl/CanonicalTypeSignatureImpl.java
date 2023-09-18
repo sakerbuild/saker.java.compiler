@@ -21,10 +21,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
-import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.CanonicalTypeSignature;
@@ -134,10 +134,7 @@ public final class CanonicalTypeSignatureImpl extends AnnotatedCanonicalTypeSign
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((typeParameters == null) ? 0 : typeParameters.hashCode());
-		return result;
+		return super.hashCode() * 31 + Objects.hashCode(typeParameters);
 	}
 
 	@Override

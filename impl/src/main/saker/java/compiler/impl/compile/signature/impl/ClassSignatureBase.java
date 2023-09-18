@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
@@ -154,11 +155,7 @@ public abstract class ClassSignatureBase implements ClassSignature, Externalizab
 
 	@Override
 	public final int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((packageName == null) ? 0 : packageName.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return Objects.hashCode(getPackageName()) * 31 + Objects.hash(getSimpleName());
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import javax.lang.model.element.Element;
 
@@ -63,10 +64,7 @@ public class NotConstantResolverImpl implements NotConstantResolver, Externaliza
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((info == null) ? 0 : info.hashCode());
-		return result;
+		return Objects.hashCode(info);
 	}
 
 	@Override

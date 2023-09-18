@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -109,7 +110,7 @@ public class SimpleEnumConstantFieldSignature implements FieldSignature, Externa
 
 	@Override
 	public final int hashCode() {
-		return getSimpleName().hashCode();
+		return Objects.hashCode(getSimpleName());
 	}
 
 	@Override

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.lang.model.type.TypeKind;
 
@@ -122,10 +123,7 @@ public final class NoTypeSignatureImpl extends AnnotatedSignatureImpl implements
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((kind == null) ? 0 : kind.hashCode());
-		return result;
+		return super.hashCode() * 31 + Objects.hashCode(kind);
 	}
 
 	@Override

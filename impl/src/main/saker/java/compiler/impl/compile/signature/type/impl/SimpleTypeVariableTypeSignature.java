@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -109,7 +110,7 @@ public final class SimpleTypeVariableTypeSignature implements TypeVariableTypeSi
 
 	@Override
 	public int hashCode() {
-		return variableName == null ? 0 : variableName.hashCode();
+		return Objects.hashCode(variableName);
 	}
 
 	@Override

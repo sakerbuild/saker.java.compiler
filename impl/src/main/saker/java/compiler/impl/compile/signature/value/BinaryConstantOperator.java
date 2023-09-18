@@ -81,12 +81,7 @@ public class BinaryConstantOperator implements ConstantValueResolver, Externaliz
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((left == null) ? 0 : left.hashCode());
-		result = prime * result + ((operatorName == null) ? 0 : operatorName.hashCode());
-		result = prime * result + ((right == null) ? 0 : right.hashCode());
-		return result;
+		return (Objects.hashCode(left) * 31 + Objects.hashCode(right) * 61) * 97 + Objects.hashCode(operatorName);
 	}
 
 	@Override
@@ -115,7 +110,6 @@ public class BinaryConstantOperator implements ConstantValueResolver, Externaliz
 
 	@Override
 	public String toString() {
-//		return left + " " + JavaUtil.operatorToString(operatorName) + " " + right;
 		return left + " " + operatorName + " " + right;
 	}
 

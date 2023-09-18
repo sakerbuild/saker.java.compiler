@@ -20,6 +20,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
@@ -89,10 +90,7 @@ public final class TypeVariableTypeSignatureImpl extends AnnotatedSignatureImpl 
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((variableName == null) ? 0 : variableName.hashCode());
-		return result;
+		return super.hashCode() * 31 + Objects.hashCode(variableName);
 	}
 
 	@Override

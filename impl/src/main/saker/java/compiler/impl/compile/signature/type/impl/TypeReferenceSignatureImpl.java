@@ -36,7 +36,7 @@ public final class TypeReferenceSignatureImpl extends AnnotatedSignatureImpl imp
 
 	private ParameterizedTypeSignature enclosingSignature;
 	private String simpleName;
-	private List<? extends TypeSignature> typeParameters = Collections.emptyList();
+	private List<? extends TypeSignature> typeParameters;
 
 	/**
 	 * For {@link Externalizable}.

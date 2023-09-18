@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import javax.lang.model.element.Element;
 
@@ -31,7 +32,7 @@ import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
-public class ReferenceValueImpl implements VariableValue, LiteralValue, Externalizable {
+public final class ReferenceValueImpl implements VariableValue, LiteralValue, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private EnumOrConstantValueResolver resolver;
@@ -75,10 +76,7 @@ public class ReferenceValueImpl implements VariableValue, LiteralValue, External
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((resolver == null) ? 0 : resolver.hashCode());
-		return result;
+		return Objects.hashCode(resolver);
 	}
 
 	@Override

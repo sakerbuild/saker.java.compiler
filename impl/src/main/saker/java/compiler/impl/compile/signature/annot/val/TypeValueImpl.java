@@ -19,11 +19,12 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature.TypeValue;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class TypeValueImpl implements TypeValue, Externalizable {
+public final class TypeValueImpl implements TypeValue, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private TypeSignature type;
@@ -56,10 +57,7 @@ public class TypeValueImpl implements TypeValue, Externalizable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		return result;
+		return Objects.hashCode(type);
 	}
 
 	@Override

@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
@@ -82,11 +83,7 @@ public class SimpleTypeReferenceSignature implements ParameterizedTypeSignature,
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((enclosingSignature == null) ? 0 : enclosingSignature.hashCode());
-		result = prime * result + ((simpleName == null) ? 0 : simpleName.hashCode());
-		return result;
+		return Objects.hashCode(enclosingSignature) * 31 + Objects.hashCode(simpleName);
 	}
 
 	@Override

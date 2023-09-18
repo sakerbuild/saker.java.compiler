@@ -23,7 +23,7 @@ import java.util.Objects;
 
 import saker.java.compiler.impl.signature.element.AnnotationSignature.UnknownValue;
 
-public class UnknownValueImpl implements UnknownValue, Externalizable {
+public final class UnknownValueImpl implements UnknownValue, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private Object value;
@@ -59,10 +59,7 @@ public class UnknownValueImpl implements UnknownValue, Externalizable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
-		return result;
+		return Objects.hashCode(value);
 	}
 
 	@Override

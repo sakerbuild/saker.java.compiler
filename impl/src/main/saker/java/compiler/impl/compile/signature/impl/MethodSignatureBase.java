@@ -118,11 +118,7 @@ public abstract class MethodSignatureBase implements MethodSignature, Externaliz
 
 	@Override
 	public final int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + Objects.hashCode(getSimpleName());
-		result = prime * result + Objects.hashCode(getParameters());
-		return result;
+		return Objects.hashCode(getSimpleName()) * 31 + Objects.hashCode(getParameters());
 	}
 
 	@Override

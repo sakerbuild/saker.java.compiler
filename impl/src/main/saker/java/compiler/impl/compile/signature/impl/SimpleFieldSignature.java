@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -113,7 +114,7 @@ public class SimpleFieldSignature implements FieldSignature, Externalizable {
 
 	@Override
 	public final int hashCode() {
-		return getSimpleName().hashCode();
+		return Objects.hashCode(getSimpleName());
 	}
 
 	@Override

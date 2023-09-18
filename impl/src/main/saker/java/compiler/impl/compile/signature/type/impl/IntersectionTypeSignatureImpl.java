@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
+import java.util.Objects;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
@@ -66,10 +67,7 @@ public final class IntersectionTypeSignatureImpl extends AnnotatedSignatureImpl 
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((bounds == null) ? 0 : bounds.hashCode());
-		return result;
+		return super.hashCode() * 31 + Objects.hashCode(bounds);
 	}
 
 	@Override

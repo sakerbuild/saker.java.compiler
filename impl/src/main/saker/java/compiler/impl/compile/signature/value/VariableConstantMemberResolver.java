@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -85,11 +86,7 @@ public class VariableConstantMemberResolver implements EnumOrConstantValueResolv
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		result = prime * result + ((variableName == null) ? 0 : variableName.hashCode());
-		return result;
+		return Objects.hashCode(type) * 31 + Objects.hashCode(variableName);
 	}
 
 	@Override

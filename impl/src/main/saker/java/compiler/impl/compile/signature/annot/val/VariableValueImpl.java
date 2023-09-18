@@ -19,6 +19,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 import javax.lang.model.element.Element;
 
@@ -26,7 +27,7 @@ import saker.java.compiler.api.processing.SakerElementsTypes;
 import saker.java.compiler.impl.signature.element.AnnotationSignature.VariableValue;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class VariableValueImpl implements VariableValue, Externalizable {
+public final class VariableValueImpl implements VariableValue, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	private String name;
@@ -72,11 +73,7 @@ public class VariableValueImpl implements VariableValue, Externalizable {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((enclosingType == null) ? 0 : enclosingType.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		return Objects.hashCode(enclosingType) * 31 + Objects.hashCode(name);
 	}
 
 	@Override
