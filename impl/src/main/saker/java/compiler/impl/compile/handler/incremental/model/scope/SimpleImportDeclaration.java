@@ -19,12 +19,19 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
+import saker.build.util.data.annotation.ValueType;
+
+@ValueType
 public class SimpleImportDeclaration implements ImportDeclaration, Externalizable {
 	public static final long serialVersionUID = 1L;
 
-	private String path;
+	protected String path;
 
+	/**
+	 * For {@link Externalizable}.
+	 */
 	public SimpleImportDeclaration() {
 	}
 
@@ -38,10 +45,12 @@ public class SimpleImportDeclaration implements ImportDeclaration, Externalizabl
 	}
 
 	@Override
+	public boolean isStatic() {
+		return false;
+	}
+
+	@Override
 	public String resolveType(String identifier) {
-		if (isStatic()) {
-			return null;
-		}
 		int lindex = path.lastIndexOf('.');
 		String last = path.substring(lindex + 1);
 		if ("*".equals(last)) {
@@ -56,15 +65,6 @@ public class SimpleImportDeclaration implements ImportDeclaration, Externalizabl
 
 	@Override
 	public String resolveMember(String identifier) {
-		if (!isStatic()) {
-			return null;
-		}
-		int lindex = path.lastIndexOf('.');
-		String last = path.substring(lindex + 1);
-		if ("*".equals(last) || identifier.equals(last)) {
-			//wildcard import
-			return path.substring(0, lindex);
-		}
 		return null;
 	}
 
@@ -80,10 +80,7 @@ public class SimpleImportDeclaration implements ImportDeclaration, Externalizabl
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((path == null) ? 0 : path.hashCode());
-		return result;
+		return Objects.hashCode(path);
 	}
 
 	@Override
@@ -107,10 +104,4 @@ public class SimpleImportDeclaration implements ImportDeclaration, Externalizabl
 	public String toString() {
 		return "import " + path + ";";
 	}
-
-	@Override
-	public boolean isStatic() {
-		return false;
-	}
-
 }
