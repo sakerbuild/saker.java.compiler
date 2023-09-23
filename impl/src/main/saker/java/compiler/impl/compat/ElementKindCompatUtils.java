@@ -67,6 +67,7 @@ public class ElementKindCompatUtils {
 	public static final ElementKind ELEMENTKIND_MODULE;
 	public static final ElementKind ELEMENTKIND_RECORD;
 	public static final ElementKind ELEMENTKIND_RECORD_COMPONENT;
+	public static final ElementKind ELEMENTKIND_BINDING_VARIABLE;
 
 	private static final byte[] ELEMENTKIND_ORDINAL_INDEX_LOOKUP;
 	static {
@@ -91,6 +92,7 @@ public class ElementKindCompatUtils {
 		ELEMENTKIND_MODULE = ELEMENTKINDS[ELEMENTKIND_INDEX_MODULE];
 		ELEMENTKIND_RECORD = ELEMENTKINDS[ELEMENTKIND_INDEX_RECORD];
 		ELEMENTKIND_RECORD_COMPONENT = ELEMENTKINDS[ELEMENTKIND_INDEX_RECORD_COMPONENT];
+		ELEMENTKIND_BINDING_VARIABLE = ELEMENTKINDS[ELEMENTKIND_INDEX_BINDING_VARIABLE];
 	}
 
 	public static boolean isModuleElementKind(ElementKind kind) {
@@ -103,6 +105,10 @@ public class ElementKindCompatUtils {
 
 	public static boolean isRecordComponentElementKind(ElementKind kind) {
 		return kind != null && kind == ELEMENTKIND_RECORD_COMPONENT;
+	}
+
+	public static boolean isBindingVariableElementKind(ElementKind kind) {
+		return kind != null && kind == ELEMENTKIND_BINDING_VARIABLE;
 	}
 
 	public static byte getElementKindIndex(ElementKind kind) {
