@@ -16,6 +16,7 @@
 package saker.java.compiler.impl.signature.element;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 
@@ -24,7 +25,9 @@ public interface FieldSignature extends ClassMemberSignature {
 
 	public ConstantValueResolver getConstantValue();
 
-	public boolean isEnumConstant();
+	public default boolean isEnumConstant() {
+		return getKindIndex() == ElementKindCompatUtils.ELEMENTKIND_INDEX_ENUM_CONSTANT;
+	}
 
 	public static boolean signatureEquals(FieldSignature first, FieldSignature other) {
 		if (!isOnlyInitializerChanged(first, other)) {

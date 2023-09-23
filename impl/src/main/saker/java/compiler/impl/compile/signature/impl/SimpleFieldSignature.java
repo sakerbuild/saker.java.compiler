@@ -20,26 +20,21 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
-import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
-import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
-import saker.java.compiler.impl.signature.value.ConstantValueResolver;
 import saker.java.compiler.impl.util.ImmutableModifierSet;
 
-public class SimpleFieldSignature implements FieldSignature, Externalizable {
+public class SimpleFieldSignature extends FieldSignatureBase implements Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	protected short modifierFlags;
 	protected TypeSignature type;
-	protected String name;
 
 	/**
 	 * For {@link Externalizable}.
@@ -48,14 +43,9 @@ public class SimpleFieldSignature implements FieldSignature, Externalizable {
 	}
 
 	public SimpleFieldSignature(Set<Modifier> modifiers, TypeSignature type, String name) {
+		super(name);
 		this.modifierFlags = ImmutableModifierSet.getFlag(modifiers);
-		this.name = name;
 		this.type = type;
-	}
-
-	@Override
-	public final String getSimpleName() {
-		return name;
 	}
 
 	@Override
@@ -79,18 +69,8 @@ public class SimpleFieldSignature implements FieldSignature, Externalizable {
 	}
 
 	@Override
-	public String getDocComment() {
-		return null;
-	}
-
-	@Override
 	public final TypeSignature getTypeSignature() {
 		return type;
-	}
-
-	@Override
-	public ConstantValueResolver getConstantValue() {
-		return null;
 	}
 
 	@Override
@@ -100,21 +80,16 @@ public class SimpleFieldSignature implements FieldSignature, Externalizable {
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
+		super.writeExternal(out);
 		ImmutableModifierSet.writeExternalFlag(out, modifierFlags);
 		out.writeObject(type);
-		out.writeUTF(name);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+		super.readExternal(in);
 		modifierFlags = ImmutableModifierSet.readExternalFlag(in);
 		type = (TypeSignature) in.readObject();
-		name = in.readUTF();
-	}
-
-	@Override
-	public final int hashCode() {
-		return Objects.hashCode(getSimpleName());
 	}
 
 	@Override
@@ -128,11 +103,6 @@ public class SimpleFieldSignature implements FieldSignature, Externalizable {
 		SimpleFieldSignature other = (SimpleFieldSignature) obj;
 		if (modifierFlags != other.modifierFlags)
 			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
 		if (type == null) {
 			if (other.type != null)
 				return false;
@@ -141,8 +111,4 @@ public class SimpleFieldSignature implements FieldSignature, Externalizable {
 		return true;
 	}
 
-	@Override
-	public String toString() {
-		return JavaUtil.modifiersToStringWithSpace(getModifiers()) + type + " " + name;
-	}
 }
