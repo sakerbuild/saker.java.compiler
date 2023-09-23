@@ -476,8 +476,7 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 			sigcontext = param;
 		} else {
 			param.pushClassSignature(membersig);
-			MemberABIUsage sigusage = new MemberABIUsage(param.topLevelUsage);
-			param.topLevelUsage.addMember(membersig, sigusage);
+			MemberABIUsage sigusage = param.topLevelUsage.addClassMember(membersig);
 			sigcontext = new ParseContext(param, sigusage);
 		}
 
@@ -531,8 +530,7 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 		if (membersig == null) {
 			sigcontext = param;
 		} else {
-			MemberABIUsage sigusage = new MemberABIUsage(param.topLevelUsage);
-			param.topLevelUsage.setPackageUsage(sigusage);
+			MemberABIUsage sigusage = param.topLevelUsage.setPackageUsage();
 			sigcontext = new ParseContext(param, sigusage);
 		}
 		for (AnnotationTree annot : tree.getPackageAnnotations()) {
@@ -956,8 +954,8 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 		if (membersig == null) {
 			sigcontext = param;
 		} else {
-			MemberABIUsage sigusage = new MemberABIUsage(param.topLevelUsage);
-			param.topLevelUsage.addMember(param.getEnclosingClassSignature(), membersig, sigusage);
+			MemberABIUsage sigusage = param.topLevelUsage.addMethodMember(param.getEnclosingClassSignature(),
+					membersig);
 			sigcontext = new ParseContext(param, sigusage);
 		}
 
@@ -1247,9 +1245,8 @@ public class AbiUsageParser8 implements AbiUsageParserBase, DefaultedTreeVisitor
 		Signature treesig = param.treeSignatures.get(tree);
 		if (treesig instanceof FieldSignature) {
 			FieldSignature membersig = (FieldSignature) treesig;
-			MemberABIUsage sigusage = new MemberABIUsage(param.topLevelUsage);
+			MemberABIUsage sigusage = param.topLevelUsage.addFieldMember(param.getEnclosingClassSignature(), membersig);
 			sigcontext = new ParseContext(param, sigusage);
-			param.topLevelUsage.addMember(param.getEnclosingClassSignature(), membersig, sigusage);
 		} else {
 			sigcontext = param;
 		}

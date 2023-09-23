@@ -31,8 +31,6 @@ public class FieldABIInfo implements Comparable<FieldABIInfo> {
 	}
 
 	private static class ConstantFieldABIInfo extends FieldABIInfo {
-		private static final long serialVersionUID = 1L;
-
 		protected ConstantFieldABIInfo(String classCanonicalName, String fieldName) {
 			super(classCanonicalName, fieldName);
 		}
@@ -58,15 +56,16 @@ public class FieldABIInfo implements Comparable<FieldABIInfo> {
 
 	@Override
 	public int compareTo(FieldABIInfo o) {
-		int cmp = classCanonicalName.compareTo(o.classCanonicalName);
+		//order constants first, so serialization can be done in a slightly more efficient way in TopLevelABIUsageImpl
+		int cmp = Boolean.compare(hasConstantValue(), o.hasConstantValue());
 		if (cmp != 0) {
 			return cmp;
 		}
-		cmp = fieldName.compareTo(o.fieldName);
+		cmp = classCanonicalName.compareTo(o.classCanonicalName);
 		if (cmp != 0) {
 			return cmp;
 		}
-		return Boolean.compare(hasConstantValue(), o.hasConstantValue());
+		return fieldName.compareTo(o.fieldName);
 	}
 
 	@Override

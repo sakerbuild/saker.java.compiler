@@ -41,8 +41,9 @@ import saker.java.compiler.impl.compile.signature.change.member.MethodChangedABI
 import saker.java.compiler.impl.signature.element.ClassSignature;
 import saker.java.compiler.impl.signature.element.FieldSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
+import testing.saker.java.compiler.TestFlag;
 
-public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsage {
+public final class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsage {
 	private static final long serialVersionUID = 1L;
 
 	private String packageName;
@@ -68,8 +69,13 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		return fields;
 	}
 
-	public void setPackageUsage(MemberABIUsage packageUsage) {
-		this.packageUsage = packageUsage;
+	public MemberABIUsage setPackageUsage() {
+		if (this.packageUsage != null) {
+			throw new IllegalStateException("Package usage already set.");
+		}
+		MemberABIUsage usage = new MemberABIUsage(this);
+		this.packageUsage = usage;
+		return usage;
 	}
 
 	@Override
@@ -77,36 +83,41 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		return packageUsage;
 	}
 
-	public void addMember(ClassSignature enclosingclass, FieldSignature field, MemberABIUsage usage) {
+	public MemberABIUsage addFieldMember(ClassSignature enclosingclass, FieldSignature field) {
 		Objects.requireNonNull(enclosingclass, "class signature");
 		Objects.requireNonNull(field, "field");
-		Objects.requireNonNull(usage, "abi usage");
 		FieldABIInfo abiinfo = FieldABIInfo.create(enclosingclass, field);
+		MemberABIUsage usage = new MemberABIUsage(this);
 		MemberABIUsage prev = fields.putIfAbsent(abiinfo, usage);
 		if (prev != null) {
 			throw new AssertionError("Member usage defined multiple times: " + enclosingclass.getClass().getName()
 					+ ": " + enclosingclass + " field: " + field.getClass().getName() + ": " + field + " for "
 					+ abiinfo);
 		}
+		return usage;
 	}
 
-	public void addMember(ClassSignature enclosingclass, MethodSignature method, MemberABIUsage usage) {
+	public MemberABIUsage addMethodMember(ClassSignature enclosingclass, MethodSignature method) {
 		Objects.requireNonNull(enclosingclass, "class signature");
 		Objects.requireNonNull(method, "method");
-		Objects.requireNonNull(usage, "abi usage");
+		MemberABIUsage usage = new MemberABIUsage(this);
 		methods.computeIfAbsent(new MethodABIInfo(enclosingclass, method), Functionals.arrayListComputer()).add(usage);
 		//not checked for duplicates, as the key only contains the method name, not the method signature
+		return usage;
 	}
 
-	public void addMember(ClassSignature clazz, MemberABIUsage usage) {
+	public MemberABIUsage addClassMember(ClassSignature clazz) {
 		Objects.requireNonNull(clazz, "class signature");
-		Objects.requireNonNull(usage, "abi usage");
+		MemberABIUsage usage = new MemberABIUsage(this);
+
 		ClassABIInfo abiinfo = new ClassABIInfo(clazz);
 		MemberABIUsage prev = classes.putIfAbsent(abiinfo, usage);
 		if (prev != null) {
 			throw new AssertionError("Member usage defined multiple times: " + clazz.getClass().getName() + ": " + clazz
 					+ " for " + abiinfo);
 		}
+
+		return usage;
 	}
 
 //	@Override
@@ -164,7 +175,6 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 			}
 		}
 		for (Entry<MethodABIInfo, Collection<MemberABIUsage>> entry : methods.entrySet()) {
-//			MemberABIUsage memberusage = entry.getValue();
 			for (MemberABIUsage memberusage : entry.getValue()) {
 				if (predicate.apply(memberusage)) {
 					MethodABIInfo info = entry.getKey();
@@ -186,9 +196,12 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		super.writeExternal(out);
 		out.writeObject(packageName);
 
-		SerialUtils.writeExternalMap(out, classes, (o, v) -> v.writeExternal(o), ObjectOutput::writeObject);
-		SerialUtils.writeExternalMap(out, methods, (o, v) -> v.writeExternal(o), SerialUtils::writeExternalCollection);
+		SerialUtils.writeExternalMap(out, classes, (o, v) -> v.writeExternal(o),
+				TopLevelABIUsageImpl::writeMemberAbiUsage);
+		SerialUtils.writeExternalMap(out, methods, (o, v) -> v.writeExternal(o),
+				(o, v) -> SerialUtils.writeExternalCollection(o, v, TopLevelABIUsageImpl::writeMemberAbiUsage));
 
+		boolean constants = false;
 		int size = fields.size();
 		out.writeInt(size);
 		Iterator<Entry<FieldABIInfo, MemberABIUsage>> it = fields.entrySet().iterator();
@@ -196,17 +209,24 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 			Entry<FieldABIInfo, MemberABIUsage> entry = it.next();
 			FieldABIInfo info = entry.getKey();
 			MemberABIUsage usage = entry.getValue();
-			//we use this trick to differentiate between constant and non constant FieldABIInfos
-			//serialize in different order to signal const and non-const
-			if (info.hasConstantValue()) {
-				out.writeObject(info.getClassCanonicalName());
-				out.writeObject(info.getFieldName());
-				out.writeObject(usage);
-			} else {
-				out.writeObject(usage);
-				out.writeObject(info.getClassCanonicalName());
-				out.writeObject(info.getFieldName());
+
+			if (!constants) {
+				if (info.hasConstantValue()) {
+					//a null separator of the constants
+					//null separator should be safe, as the class canonical name that is written shouldn't be null
+					out.writeObject(null);
+					constants = true;
+				}
+			} else if (TestFlag.ENABLED) {
+				if (!info.hasConstantValue()) {
+					//all infos after the constants marker should be constant
+					//check this during testing as this never happen
+					throw new AssertionError("Field ABI info serialization consistency error.");
+				}
 			}
+			out.writeObject(info.getClassCanonicalName());
+			out.writeObject(info.getFieldName());
+			writeMemberAbiUsage(out, usage);
 		}
 		if (it.hasNext()) {
 			throw new ConcurrentModificationException("fields modified during serialization");
@@ -219,32 +239,43 @@ public class TopLevelABIUsageImpl extends AbiUsageImpl implements TopLevelAbiUsa
 		packageName = (String) in.readObject();
 
 		classes = SerialUtils.readExternalSortedImmutableNavigableMap(in, ClassABIInfo::createExternal,
-				SerialUtils::readExternalObject);
+				this::readMemberAbiUsage);
 		methods = SerialUtils.readExternalSortedImmutableNavigableMap(in, MethodABIInfo::createExternal,
-				SerialUtils::readExternalImmutableList);
+				(i) -> SerialUtils.readExternalImmutableList(i, this::readMemberAbiUsage));
 
+		boolean constants = false;
 		int fieldssize = in.readInt();
 		FieldABIInfo[] keys = new FieldABIInfo[fieldssize];
 		MemberABIUsage[] vals = new MemberABIUsage[fieldssize];
 		for (int i = 0; i < fieldssize; ++i) {
 			Object first = in.readObject();
-			FieldABIInfo info;
-			MemberABIUsage usage;
-			if (first instanceof String) {
-				//const branch
-				String fieldname = (String) in.readObject();
-				usage = (MemberABIUsage) in.readObject();
-				info = FieldABIInfo.createConstant((String) first, fieldname);
-			} else {
-				//non-const branch
-				usage = (MemberABIUsage) first;
-				String classname = (String) in.readObject();
-				String fieldname = (String) in.readObject();
-				info = FieldABIInfo.create(classname, fieldname);
+			if (first == null) {
+				//the constants separator
+				constants = true;
+				first = in.readObject();
 			}
+
+			String classcanonicalname = (String) first;
+			String fieldname = (String) in.readObject();
+			FieldABIInfo info = constants ? FieldABIInfo.createConstant(classcanonicalname, fieldname)
+					: FieldABIInfo.create(classcanonicalname, fieldname);
+
+			MemberABIUsage usage = readMemberAbiUsage(in);
+
 			keys[i] = info;
 			vals[i] = usage;
 		}
 		fields = ImmutableUtils.unmodifiableNavigableMap(keys, vals);
+	}
+
+	private MemberABIUsage readMemberAbiUsage(ObjectInput in) throws ClassNotFoundException, IOException {
+		MemberABIUsage usage = new MemberABIUsage();
+		usage.readExternal(in);
+		usage.setParent(this);
+		return usage;
+	}
+
+	private static void writeMemberAbiUsage(ObjectOutput out, MemberABIUsage usage) throws IOException {
+		usage.writeExternal(out);
 	}
 }

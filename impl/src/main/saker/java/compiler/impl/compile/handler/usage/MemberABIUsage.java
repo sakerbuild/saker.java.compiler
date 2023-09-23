@@ -15,32 +15,27 @@
  */
 package saker.java.compiler.impl.compile.handler.usage;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Externalizable;
 
-public class MemberABIUsage extends AbiUsageImpl {
+public final class MemberABIUsage extends AbiUsageImpl {
 	private static final long serialVersionUID = 1L;
 
-	private TopLevelABIUsageImpl parent;
+	private transient TopLevelABIUsageImpl parent;
 
+	/**
+	 * For {@link Externalizable}.
+	 */
 	public MemberABIUsage() {
 	}
 
-	public MemberABIUsage(TopLevelABIUsageImpl parent) {
+	//can be called by TopLevelABIUsageInpl
+	MemberABIUsage(TopLevelABIUsageImpl parent) {
 		this.parent = parent;
 	}
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeObject(parent);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		parent = (TopLevelABIUsageImpl) in.readObject();
+	//called after deserialization
+	void setParent(TopLevelABIUsageImpl parent) {
+		this.parent = parent;
 	}
 
 	@Override
