@@ -531,7 +531,7 @@ public class CompilationUnitSignatureParser8 implements CompilationUnitSignature
 		switch (context.getDeclaringKindIndex()) {
 			case ElementKindCompatUtils.ELEMENTKIND_INDEX_ANNOTATION_TYPE:
 			case ElementKindCompatUtils.ELEMENTKIND_INDEX_INTERFACE: {
-				varmodifierflagss = varmodifierflagss.added(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
+				varmodifierflagss = varmodifierflagss.added(ImmutableModifierSet.INSTANCE_PUBLIC_STATIC_FINAL);
 				break;
 			}
 			default: {
