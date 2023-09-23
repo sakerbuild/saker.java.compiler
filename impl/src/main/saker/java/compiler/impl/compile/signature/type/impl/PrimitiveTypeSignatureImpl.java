@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -173,12 +172,12 @@ public final class PrimitiveTypeSignatureImpl extends AnnotatedSignatureImpl imp
 	}
 
 	private Object readResolve() {
-		Collection<? extends AnnotationSignature> annots = getAnnotations();
+		List<? extends AnnotationSignature> annots = getAnnotations();
 		if (ObjectUtils.isNullOrEmpty(annots)) {
 			return SIMPLE_PRIMTIVE_SIGNATURES.get(this.typeKind);
 		}
 		if (annots.size() == 1) {
-			AnnotationSignature annot = annotations.get(0);
+			AnnotationSignature annot = annots.get(0);
 			PrimitiveTypeSignature cached = getSimpleAnnotatedCached(this.typeKind, annot);
 			if (cached != null) {
 				return cached;
