@@ -43,22 +43,12 @@ public class FieldSignatureImpl extends ConstantFieldSignature {
 	public static FieldSignature create(ElementKind kind, Set<Modifier> modifiers, TypeSignature type, String name,
 			ConstantValueResolver constantValue, String docComment) {
 		if (kind == ElementKind.ENUM_CONSTANT) {
-			if (docComment == null) {
-				return new SimpleEnumConstantFieldSignature(type, name);
-			}
-			return new DocumentedSimpleEnumConstantFieldSignature(type, name, docComment);
+			return createEnumSignature(type, name, docComment);
 		}
 		if (ElementKindCompatUtils.isRecordComponentElementKind(kind)) {
-			return new RecordComponentSignatureImpl(modifiers, type, name, docComment);
+			return createRecordComponent(modifiers, type, name, docComment);
 		}
-		if (docComment == null) {
-			if (constantValue == null) {
-				return new SimpleFieldSignature(modifiers, type, name);
-			}
-			return new ConstantFieldSignature(modifiers, type, name, constantValue);
-		}
-
-		return new FieldSignatureImpl(modifiers, type, name, constantValue, docComment);
+		return createField(modifiers, type, name, constantValue, docComment);
 	}
 
 	public static FieldSignature createField(Set<Modifier> modifiers, TypeSignature type, String name,
@@ -68,6 +58,9 @@ public class FieldSignatureImpl extends ConstantFieldSignature {
 				return new SimpleFieldSignature(modifiers, type, name);
 			}
 			return new ConstantFieldSignature(modifiers, type, name, constantValue);
+		}
+		if (constantValue == null) {
+			return new DocumentedFieldSignature(modifiers, type, name, docComment);
 		}
 		return new FieldSignatureImpl(modifiers, type, name, constantValue, docComment);
 	}
