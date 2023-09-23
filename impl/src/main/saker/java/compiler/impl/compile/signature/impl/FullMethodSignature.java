@@ -36,7 +36,6 @@ import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.TypeParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
-import saker.java.compiler.impl.util.ImmutableModifierSet;
 import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public class FullMethodSignature extends MethodSignatureBase {
@@ -68,36 +67,42 @@ public class FullMethodSignature extends MethodSignatureBase {
 			}
 			return new DocumentedAnnotationAttributeMethodSignature(returnType, name, defaultValue, docComment);
 		}
-		if (!varArg && receiverParameter == null) {
-			if (methodKind == ElementKind.CONSTRUCTOR) {
-				if (NoTypeSignatureImpl.getVoid().equals(returnType)) {
-					//no annotations
+		if (!varArg) {
+			if (receiverParameter == null) {
+				if (methodKind == ElementKind.CONSTRUCTOR) {
+					if (NoTypeSignatureImpl.getVoid().equals(returnType)) {
+						//no annotations
+						if (docComment != null) {
+							return new DocumentedExtendedConstructorMethodSignature(modifiers, parameters,
+									typeParameters, throwsTypes, docComment);
+						}
+						if (ObjectUtils.isNullOrEmpty(typeParameters) && ObjectUtils.isNullOrEmpty(throwsTypes)) {
+							if (ObjectUtils.isNullOrEmpty(parameters)) {
+								return SimpleNoArgConstructor.create(modifiers);
+							}
+							return new SimpleConstructorMethodSignature(modifiers, parameters);
+						}
+						return new ExtendedConstructorMethodSignature(modifiers, parameters, typeParameters,
+								throwsTypes);
+					}
+					//annotated constructor, create full signature
+				} else {
 					if (docComment != null) {
-						return new DocumentedExtendedConstructorMethodSignature(modifiers, parameters, typeParameters,
-								throwsTypes, docComment);
+						return new DocumentedExtendedMethodSignature(modifiers, parameters, returnType, name,
+								typeParameters, throwsTypes, docComment);
 					}
 					if (ObjectUtils.isNullOrEmpty(typeParameters) && ObjectUtils.isNullOrEmpty(throwsTypes)) {
-						if (ObjectUtils.isNullOrEmpty(parameters)) {
-							return SimpleNoArgConstructor.create(modifiers);
+						if (NoTypeSignatureImpl.getVoid().equals(returnType)) {
+							return new SimpleVoidMethodSignature(modifiers, parameters, name);
 						}
-						return new SimpleConstructorMethodSignature(modifiers, parameters);
+						return new SimpleMethodSignature(modifiers, parameters, returnType, name);
 					}
-					return new ExtendedConstructorMethodSignature(modifiers, parameters, typeParameters, throwsTypes);
+					return new ExtendedMethodSignature(modifiers, parameters, returnType, name, typeParameters,
+							throwsTypes);
 				}
-				//annotated constructor, create full signature
-			} else {
-				if (docComment != null) {
-					return new DocumentedExtendedMethodSignature(modifiers, parameters, returnType, name,
-							typeParameters, throwsTypes, docComment);
-				}
-				if (ObjectUtils.isNullOrEmpty(typeParameters) && ObjectUtils.isNullOrEmpty(throwsTypes)) {
-					return new SimpleMethodSignature(modifiers, parameters, returnType, name);
-				}
-				return new ExtendedMethodSignature(modifiers, parameters, returnType, name, typeParameters,
-						throwsTypes);
 			}
-		}
-		if (varArg) {
+		} else {
+			// vararg
 			return new VarArgFullMethodSignature(modifiers, parameters, returnType, name, typeParameters, throwsTypes,
 					methodKind, receiverParameter, docComment);
 		}

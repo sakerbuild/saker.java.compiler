@@ -19,38 +19,41 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
+import saker.java.compiler.impl.compat.ElementKindCompatUtils;
+import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public class SimpleMethodSignature extends SimpleVoidMethodSignature {
+public class SimpleVoidMethodSignature extends MethodSignatureBase {
 	private static final long serialVersionUID = 1L;
 
-	protected TypeSignature returnType;
+	protected String name;
 	//Note: subclasses may have their own serialization functions, 
 	//      so take care when adding new fields
 
 	/**
 	 * For {@link Externalizable}.
 	 */
-	public SimpleMethodSignature() {
+	public SimpleVoidMethodSignature() {
 	}
 
 	@Override
 	public TypeSignature getReturnType() {
-		return returnType;
+		return NoTypeSignatureImpl.getVoid();
 	}
 
-	public SimpleMethodSignature(Set<Modifier> modifiers, List<? extends MethodParameterSignature> parameters,
-			TypeSignature returnType, String name) {
-		super(modifiers, parameters, name);
-		this.returnType = returnType;
+	public SimpleVoidMethodSignature(Set<Modifier> modifiers, List<? extends MethodParameterSignature> parameters,
+			String name) {
+		super(modifiers, parameters);
+		this.name = name;
 	}
 
 	@Override
@@ -64,22 +67,27 @@ public class SimpleMethodSignature extends SimpleVoidMethodSignature {
 	}
 
 	@Override
+	public final byte getKindIndex() {
+		return ElementKindCompatUtils.ELEMENTKIND_INDEX_METHOD;
+	}
+
+	@Override
 	public List<? extends AnnotationSignature> getAnnotations() {
-		return returnType.getAnnotations();
+		return Collections.emptyList();
 	}
 
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
 
-		out.writeObject(returnType);
+		out.writeObject(name);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 
-		this.returnType = (TypeSignature) in.readObject();
+		this.name = (String) in.readObject();
 	}
 
 	@Override
@@ -90,11 +98,11 @@ public class SimpleMethodSignature extends SimpleVoidMethodSignature {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SimpleMethodSignature other = (SimpleMethodSignature) obj;
-		if (returnType == null) {
-			if (other.returnType != null)
+		SimpleVoidMethodSignature other = (SimpleVoidMethodSignature) obj;
+		if (name == null) {
+			if (other.name != null)
 				return false;
-		} else if (!returnType.equals(other.returnType))
+		} else if (!name.equals(other.name))
 			return false;
 		return true;
 	}
