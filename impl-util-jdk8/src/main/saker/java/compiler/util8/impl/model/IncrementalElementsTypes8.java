@@ -851,12 +851,19 @@ public class IncrementalElementsTypes8 implements IncrementalElementsTypesBase {
 	}
 
 	private static AnnotationSignature annotationMirrorToSignature(AnnotationMirror a, ParserCache cache) {
-		LinkedHashMap<String, AnnotationSignature.Value> vals = new LinkedHashMap<>();
-		for (Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : a.getElementValues().entrySet()) {
-			ExecutableElement method = entry.getKey();
-			AnnotationValue value = entry.getValue();
-			vals.put(method.getSimpleName().toString(),
-					AnnotationValueToSignatureConverterVisitor.convert(value, cache));
+		Map<? extends ExecutableElement, ? extends AnnotationValue> elementvalues = a.getElementValues();
+
+		Map<String, AnnotationSignature.Value> vals;
+		if (ObjectUtils.isNullOrEmpty(elementvalues)) {
+			vals = Collections.emptyMap();
+		} else {
+			vals = new LinkedHashMap<>();
+			for (Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : elementvalues.entrySet()) {
+				ExecutableElement method = entry.getKey();
+				AnnotationValue value = entry.getValue();
+				vals.put(method.getSimpleName().toString(),
+						AnnotationValueToSignatureConverterVisitor.convert(value, cache));
+			}
 		}
 		DeclaredType annottype = a.getAnnotationType();
 		//XXX should we create a dynamically unresolved declared type class?

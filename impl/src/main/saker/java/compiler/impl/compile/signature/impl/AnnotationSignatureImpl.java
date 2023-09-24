@@ -22,6 +22,7 @@ import java.io.ObjectOutput;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 
 import saker.build.thirdparty.saker.util.ObjectUtils;
@@ -48,6 +49,15 @@ public final class AnnotationSignatureImpl implements Externalizable, Annotation
 		if (ObjectUtils.isNullOrEmpty(values)) {
 			return SimpleAnnotationSignature.create(annotationType);
 		}
+		if (values.size() == 1) {
+			Entry<String, Value> entry = values.entrySet().iterator().next();
+			String name = entry.getKey();
+			Value value = entry.getValue();
+			if ("value".equals(name)) {
+				return new ValueAttributeSimpleAnnotationSignature(annotationType, value);
+			}
+			return new SingleAttributeAnnotationSignature(annotationType, name, value);
+		}
 		return new AnnotationSignatureImpl(annotationType, values);
 	}
 
@@ -71,27 +81,28 @@ public final class AnnotationSignatureImpl implements Externalizable, Annotation
 		StringBuilder sb = new StringBuilder();
 		sb.append("@");
 		sb.append(annotationType);
-		sb.append("(");
-		for (Iterator<Entry<String, Value>> it = values.entrySet().iterator(); it.hasNext();) {
-			Entry<String, Value> entry = it.next();
-			sb.append(entry.getKey());
-			sb.append(" = ");
-			sb.append(entry.getValue());
-			if (it.hasNext()) {
-				sb.append(", ");
+		Iterator<Entry<String, Value>> it = values.entrySet().iterator();
+		if (it.hasNext()) {
+			sb.append("(");
+			while (true) {
+				Entry<String, Value> entry = it.next();
+				sb.append(entry.getKey());
+				sb.append(" = ");
+				sb.append(entry.getValue());
+				if (it.hasNext()) {
+					sb.append(", ");
+				} else {
+					break;
+				}
 			}
+			sb.append(")");
 		}
-		sb.append(")");
 		return sb.toString();
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((annotationType == null) ? 0 : annotationType.hashCode());
-		result = prime * result + ((values == null) ? 0 : values.hashCode());
-		return result;
+		return Objects.hashCode(annotationType) * 31 + Objects.hashCode(values);
 	}
 
 	@Override

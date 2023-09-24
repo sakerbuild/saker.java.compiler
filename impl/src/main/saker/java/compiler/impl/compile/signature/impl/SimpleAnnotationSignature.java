@@ -22,13 +22,14 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import saker.java.compiler.impl.compile.signature.type.impl.SimpleCanonicalTypeSignature;
 import saker.java.compiler.impl.compile.signature.type.impl.SimpleUnresolvedTypeSignature;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 
-public final class SimpleAnnotationSignature implements AnnotationSignature, Externalizable {
+public class SimpleAnnotationSignature implements AnnotationSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
 
 	public static final SimpleAnnotationSignature INSTANCE_OVERRIDE = new SimpleAnnotationSignature(
@@ -52,12 +53,14 @@ public final class SimpleAnnotationSignature implements AnnotationSignature, Ext
 		SIMPLE_CACHE.put(sig.getAnnotationType(), sig);
 	}
 
-	private TypeSignature annotationType;
+	protected TypeSignature annotationType;
+	//Note: subclasses may have their own serialization functions, 
+	//      so take care when adding new fields
 
 	public SimpleAnnotationSignature() {
 	}
 
-	private SimpleAnnotationSignature(TypeSignature annotationType) {
+	protected SimpleAnnotationSignature(TypeSignature annotationType) {
 		this.annotationType = annotationType;
 	}
 
@@ -100,10 +103,7 @@ public final class SimpleAnnotationSignature implements AnnotationSignature, Ext
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((annotationType == null) ? 0 : annotationType.hashCode());
-		return result;
+		return Objects.hashCode(annotationType);
 	}
 
 	@Override
