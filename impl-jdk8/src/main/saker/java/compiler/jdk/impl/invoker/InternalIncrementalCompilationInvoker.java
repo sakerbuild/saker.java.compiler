@@ -73,8 +73,9 @@ import saker.java.compiler.jdk.impl.parser.signature.CompilationUnitSignaturePar
 
 public class InternalIncrementalCompilationInvoker extends InternalIncrementalCompilationInvokerBase {
 	@Override
-	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
-			String[] optionsarray, String sourceversionoptionname, String targetversionoptionname) throws IOException {
+	public CompilationInitResultData initCompilation(JavaCompilerInvocationDirector director,
+			IncrementalDirectoryPaths directorypaths, String[] optionsarray, String sourceversionoptionname,
+			String targetversionoptionname) throws IOException {
 		super.initCompilation(director, directorypaths, optionsarray, sourceversionoptionname, targetversionoptionname);
 
 		//we're running on java 8, a different invoker is instantiated for 9+
@@ -144,6 +145,8 @@ public class InternalIncrementalCompilationInvoker extends InternalIncrementalCo
 		javac.genEndPos = true;
 
 		super.sourceVersion = Source.toSourceVersion(Source.instance(context));
+
+		return new CompilationInitResultData(getSourceVersionName());
 	}
 
 	private Context createJavacFileManagerContext() {

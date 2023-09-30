@@ -37,7 +37,7 @@ import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths.Increment
 import saker.java.compiler.util8.impl.file.IncrementalJavaFileManager8;
 
 public class IncrementalJavaFileManager9 extends IncrementalJavaFileManager8 {
-	private NavigableMap<String, IncrementalDirectoryLocation> modulePathLocations;
+	private NavigableMap<String, ? extends IncrementalDirectoryLocation> modulePathLocations;
 
 	public IncrementalJavaFileManager9(StandardJavaFileManager fileManager, IncrementalDirectoryPaths directorypaths) {
 		super(fileManager, directorypaths);
@@ -76,7 +76,7 @@ public class IncrementalJavaFileManager9 extends IncrementalJavaFileManager8 {
 		if (location == StandardLocation.MODULE_PATH) {
 			if (!ObjectUtils.isNullOrEmpty(modulePathLocations)) {
 				Set<Location> addset = new LinkedHashSet<>();
-				for (Entry<String, IncrementalDirectoryLocation> entry : modulePathLocations.entrySet()) {
+				for (Entry<String, ? extends IncrementalDirectoryLocation> entry : modulePathLocations.entrySet()) {
 					addset.add(new ModulePathLocationImpl(entry));
 				}
 				@SuppressWarnings("unchecked")
@@ -129,9 +129,9 @@ public class IncrementalJavaFileManager9 extends IncrementalJavaFileManager8 {
 	}
 
 	private static class ModulePathLocationImpl implements Location {
-		private Entry<String, IncrementalDirectoryLocation> moduleEntry;
+		private Entry<String, ? extends IncrementalDirectoryLocation> moduleEntry;
 
-		public ModulePathLocationImpl(Entry<String, IncrementalDirectoryLocation> moduleEntry) {
+		public ModulePathLocationImpl(Entry<String, ? extends IncrementalDirectoryLocation> moduleEntry) {
 			this.moduleEntry = moduleEntry;
 		}
 

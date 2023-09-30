@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
 
+import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.LineIndexMapBuilder;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
@@ -40,6 +41,12 @@ public class SakerPathJavaOutputFileObject extends SakerPathOutputFileObject
 	private transient int[] lineIndexMap;
 
 	public SakerPathJavaOutputFileObject(Kind kind, String className) {
+		this.kind = kind;
+		this.className = className;
+	}
+
+	public SakerPathJavaOutputFileObject(SakerPath path, Kind kind, String className) {
+		super(path);
 		this.kind = kind;
 		this.className = className;
 	}

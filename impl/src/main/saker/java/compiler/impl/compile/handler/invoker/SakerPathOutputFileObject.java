@@ -41,6 +41,13 @@ public class SakerPathOutputFileObject implements JavaCompilerFileObject, Output
 
 	private transient URI uri;
 
+	public SakerPathOutputFileObject() {
+	}
+
+	public SakerPathOutputFileObject(SakerPath path) {
+		this.path = path;
+	}
+
 	public final void setPath(SakerPath path) {
 		this.path = path;
 	}

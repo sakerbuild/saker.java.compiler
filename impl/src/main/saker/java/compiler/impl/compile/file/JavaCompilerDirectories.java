@@ -23,11 +23,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
@@ -41,6 +41,7 @@ import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject.Kind;
 
 import saker.build.exception.InvalidPathFormatException;
+import saker.build.file.ByteArraySakerFile;
 import saker.build.file.DirectoryVisitPredicate;
 import saker.build.file.SakerDirectory;
 import saker.build.file.SakerFile;
@@ -51,22 +52,25 @@ import saker.build.file.path.SakerPath;
 import saker.build.file.provider.SakerPathFiles;
 import saker.build.task.TaskContext;
 import saker.build.task.TaskExecutionUtilities;
+import saker.build.thirdparty.saker.rmi.annot.transfer.RMIWrap;
+import saker.build.thirdparty.saker.rmi.io.RMIObjectInput;
+import saker.build.thirdparty.saker.rmi.io.RMIObjectOutput;
+import saker.build.thirdparty.saker.rmi.io.wrap.RMIWrapper;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.function.LazySupplier;
 import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
+import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.io.UnsyncByteArrayInputStream;
+import saker.build.thirdparty.saker.util.rmi.wrap.RMITreeMapSerializeKeyRemoteValueWrapper;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths.IncrementalDirectoryLocation.IncrementalDirectoryFile;
 import saker.java.compiler.impl.compile.handler.ExternalizableLocation;
 import saker.java.compiler.impl.compile.handler.invoker.IncrementalCompilationDirector;
 import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
-import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
-import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassVisitor;
-import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassWriter;
-import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ModuleVisitor;
-import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Opcodes;
+import testing.saker.java.compiler.TestFlag;
 
+@RMIWrap(JavaCompilerDirectories.JavaCompilerDirectoriesRMIWrapper.class)
 public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 	private static final Pattern PATTERN_DOT = Pattern.compile("[.]+");
 
@@ -132,13 +136,13 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 	}
 
 	@Override
-	public NavigableMap<String, IncrementalDirectoryLocation> getModulePathLocations() {
+	public NavigableMap<String, ? extends IncrementalDirectoryLocation> getModulePathLocations() {
 		return modulePathLocations;
 	}
 
 	@Override
-	public IncrementalDirectoryLocation getDirectoryLocation(ExternalizableLocation location) {
-		return dirLocations.get(location);
+	public NavigableMap<ExternalizableLocation, ? extends IncrementalDirectoryLocation> getDirectoryLocations() {
+		return dirLocations;
 	}
 
 	public void setResourceOutputDirectory(SakerDirectory directory) {
@@ -153,31 +157,29 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		addDirectory(new ExternalizableLocation(location), dir);
 	}
 
-	public void addDirectory(ExternalizableLocation extloc, SakerDirectory dir) {
-		Objects.requireNonNull(dir, "directory");
-		Collection<SakerDirectory> dirs = getDirectoriesModifiable(extloc);
+	public void addDirectory(ExternalizableLocation extloc, SakerDirectory directory) {
+		Objects.requireNonNull(directory, "directory");
+		NavigableMap<SakerPath, SakerDirectory> dirs = getDirectoriesModifiable(extloc);
 		if (extloc.isOutputLocation() && !dirs.isEmpty()) {
 			throw new IllegalArgumentException(
 					"Cannot specify multiple output directories for location: " + extloc.getName());
 		}
-		dirs.add(dir);
+		dirs.put(SakerPathFiles.requireAbsolutePath(directory), directory);
 	}
 
-	public void addDirectory(Location location, Collection<? extends SakerDirectory> dir) {
-		ExternalizableLocation extloc = new ExternalizableLocation(location);
-		addDirectory(extloc, dir);
-	}
-
-	public void addDirectory(ExternalizableLocation extloc, Collection<? extends SakerDirectory> dir) {
-		if (ObjectUtils.isNullOrEmpty(dir)) {
+	public void addDirectory(ExternalizableLocation extloc,
+			NavigableMap<SakerPath, ? extends SakerDirectory> directories) {
+		if (ObjectUtils.isNullOrEmpty(directories)) {
 			return;
 		}
-		Collection<SakerDirectory> dirs = getDirectoriesModifiable(extloc);
-		if (extloc.isOutputLocation() && (!dirs.isEmpty() || dir.size() > 1)) {
+		NavigableMap<SakerPath, SakerDirectory> dirs = getDirectoriesModifiable(extloc);
+		if (extloc.isOutputLocation() && (!dirs.isEmpty() || directories.size() > 1)) {
 			throw new IllegalArgumentException(
 					"Cannot specify multiple output directories for location: " + extloc.getName());
 		}
-		dirs.addAll(dir);
+		for (Entry<SakerPath, ? extends SakerDirectory> entry : directories.entrySet()) {
+			dirs.put(SakerPathFiles.requireAbsolutePath(entry.getKey()), entry.getValue());
+		}
 	}
 
 	public SakerFile getExistingResourceFile(ExternalizableLocation location, SakerPath resourcepath) {
@@ -251,40 +253,119 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 	public SakerPath putJavaFileForOutput(ExternalizableLocation location, String classname, String extension,
 			OutputFileObject output) {
 		DirectoryLocationImpl dirs = dirLocations.get(location);
-		if (dirs == null || dirs.directories.isEmpty()) {
+		if (dirs == null) {
 			return null;
 		}
-		String[] split = PATTERN_DOT.split(classname);
-		split[split.length - 1] += extension;
-		SakerDirectory dir = dirs.directories.iterator().next();
-		dir = SakerPathFiles.resolveDirectoryAtRelativePathNamesCreate(dir,
-				ImmutableUtils.unmodifiableArrayList(split, 0, split.length - 1));
-		SakerFile mfile;
-		if (".class".equals(extension) && location.equals(ExternalizableLocation.LOCATION_CLASS_OUTPUT)) {
-			mfile = new BytecodeManipulationLazyByteArraySakerFile(split[split.length - 1], bytecodeManipulation,
-					output);
-		} else {
-			mfile = new LazyByteArraySakerFile(split[split.length - 1], output);
+		Entry<SakerPath, SakerDirectory> firstdirentry = dirs.directories.firstEntry();
+		if (firstdirentry == null) {
+			return null;
 		}
+		String[] split = splitClassNameForFilePath(classname, extension);
+		if (split == null) {
+			return null;
+		}
+
+		String filename = split[split.length - 1];
+		boolean classfileoutput = location.equals(ExternalizableLocation.LOCATION_CLASS_OUTPUT)
+				&& Kind.CLASS.extension.equals(extension);
+		SakerFile mfile = LazyByteArraySakerFile.create(filename, classfileoutput ? bytecodeManipulation : null,
+				output);
+		SakerDirectory dir = SakerPathFiles.resolveDirectoryAtRelativePathNamesCreate(firstdirentry.getValue(),
+				ImmutableUtils.unmodifiableArrayList(split, 0, split.length - 1));
 		dir.add(mfile);
 		SakerPath resultpath = mfile.getSakerPath();
-		if (location.equals(ExternalizableLocation.LOCATION_CLASS_OUTPUT) && Kind.CLASS.extension.equals(extension)) {
+		if (classfileoutput) {
 			outputClassFiles.put(classname, mfile);
 		}
 		allOutputFiles.put(resultpath, mfile);
+
+		if (TestFlag.ENABLED) {
+			SakerPath expectedpath = firstdirentry.getKey().resolve(split);
+			if (!resultpath.equals(expectedpath)) {
+				throw new AssertionError("Inconsistent paths: " + resultpath + " with " + expectedpath);
+			}
+		}
 		return resultpath;
+	}
+
+	@Override
+	public void bulkPutJavaFilesForOutput(NavigableMap<OutputJavaFileData, ByteArrayRegion> data) {
+		//directory instance caches
+		DirectoryLocationImpl dirs = null;
+		ExternalizableLocation dirloc = null;
+		for (Entry<OutputJavaFileData, ByteArrayRegion> entry : data.entrySet()) {
+			OutputJavaFileData filedata = entry.getKey();
+			SakerPath path = filedata.getPath();
+
+			ExternalizableLocation loc = filedata.getLocation();
+			if (!loc.equals(dirloc)) {
+				//location changed, get from cache again
+				dirs = dirLocations.get(loc);
+				dirloc = loc;
+				if (dirs == null) {
+					throw new IllegalArgumentException(
+							"Invalid output java file, no location found: " + loc + " : " + path);
+				}
+			}
+			Entry<SakerPath, SakerDirectory> firstdirentry = dirs.directories.firstEntry();
+			if (firstdirentry == null) {
+				throw new IllegalArgumentException(
+						"Invalid output java file, no directory found: " + loc + " : " + path);
+			}
+			SakerPath dirpath = firstdirentry.getKey();
+			if (!path.startsWith(dirpath)) {
+				throw new IllegalArgumentException(
+						"Output file path: " + path + " doesn't start with directory path: " + dirpath);
+			}
+			SakerPath reldirpath = path.subPath(dirpath.getNameCount(), path.getNameCount() - 1);
+
+			String filename = path.getFileName();
+			boolean classfileoutput = loc.equals(ExternalizableLocation.LOCATION_CLASS_OUTPUT)
+					&& filename.endsWith(Kind.CLASS.extension);
+			ByteArrayRegion bytes = entry.getValue();
+			if (classfileoutput && JavaUtil.isBytecodeManipulationAffects(filename, bytecodeManipulation)) {
+				bytes = JavaUtil.performBytecodeManipulation(filename, bytes, bytecodeManipulation);
+			}
+			ByteArraySakerFile mfile = new ByteArraySakerFile(filename, bytes);
+
+			SakerDirectory dir = SakerPathFiles.resolveDirectoryAtRelativePathCreate(firstdirentry.getValue(),
+					reldirpath);
+			dir.add(mfile);
+
+			if (classfileoutput) {
+				outputClassFiles.put(filedata.getClassName(), mfile);
+			}
+			allOutputFiles.put(path, mfile);
+		}
+
+	}
+
+	public static String[] splitClassNameForFilePath(String classname, String extension) {
+		String[] split = PATTERN_DOT.split(classname);
+		if (split.length == 0) {
+			//sanity check
+			return null;
+		}
+		if (!ObjectUtils.isNullOrEmpty(extension)) {
+			split[split.length - 1] += extension;
+		}
+		return split;
 	}
 
 	@Override
 	public SakerPath putFileForOutput(ExternalizableLocation location, String packagename, String relativename,
 			OutputFileObject output) {
 		DirectoryLocationImpl dirs = dirLocations.get(location);
-		if (dirs == null || dirs.directories.isEmpty()) {
+		if (dirs == null) {
+			return null;
+		}
+		Entry<SakerPath, SakerDirectory> firstdirentry = dirs.directories.firstEntry();
+		if (firstdirentry == null) {
 			return null;
 		}
 		SakerPath resourcepath = IncrementalCompilationDirector.toPackageRelativePath(packagename, relativename);
 
-		SakerDirectory dir = dirs.directories.iterator().next();
+		SakerDirectory dir = firstdirentry.getValue();
 		if (resourcepath.getNameCount() > 1) {
 			dir = SakerPathFiles.resolveDirectoryAtRelativePathCreate(dir, resourcepath.getParent());
 		}
@@ -292,6 +373,13 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		dir.add(mfile);
 		SakerPath resultpath = mfile.getSakerPath();
 		allOutputFiles.put(resultpath, mfile);
+
+		if (TestFlag.ENABLED) {
+			SakerPath expectedpath = firstdirentry.getKey().resolve(resourcepath);
+			if (!resultpath.equals(expectedpath)) {
+				throw new AssertionError("Inconsistent paths: " + resultpath + " with " + expectedpath);
+			}
+		}
 		return resultpath;
 	}
 
@@ -303,113 +391,13 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		return allOutputFiles;
 	}
 
-	private static class BytecodeManipulationLazyByteArraySakerFile extends LazyByteArraySakerFile {
-		protected BytecodeManipulationLazyByteArraySakerFile(String name,
-				OutputBytecodeManipulationOption bytecodeManipulation, OutputFileObject output)
-				throws NullPointerException, InvalidPathFormatException {
-			super(name, toRewritingSupplier(name, bytecodeManipulation, output));
+	@Override
+	public ByteArrayRegion getFileBytes(SakerPath path) throws IOException {
+		SakerFile f = taskUtils.resolveAtPath(path);
+		if (f == null) {
+			throw new FileNotFoundException("File not found at path: " + path);
 		}
-
-		private static void patchEnablePreview(ByteArrayRegion cfbytes, boolean patch) {
-			if (patch) {
-				patchEnablePreviewImpl(cfbytes);
-			}
-		}
-
-		private static void patchEnablePreviewImpl(ByteArrayRegion cfbytes) {
-			//should start with
-			//u4             magic; 0xcafebabe
-			//u2             minor_version;
-			//u2             major_version;
-			if (cfbytes.getLength() < 8) {
-				//not enough bytes? what? shouldn't ever happen, just a sanity check
-				return;
-			}
-			byte[] array = cfbytes.getArray();
-			//change 0xFFFF minor to 0x0000
-			if (array[4] == (byte) 0xFF && array[5] == (byte) 0xFF) {
-				array[4] = 0;
-				array[5] = 0;
-			}
-		}
-
-		private static Supplier<ByteArrayRegion> toRewritingSupplier(String name,
-				OutputBytecodeManipulationOption bytecodeManipulation, OutputFileObject output) {
-			if (bytecodeManipulation == null) {
-				return LazySupplier.of(output::getOutputBytes);
-			}
-			boolean patchenablepreview = bytecodeManipulation.isPatchEnablePreview();
-			Supplier<ByteArrayRegion> supplier = LazySupplier.of(output::getOutputBytes);
-			if ("module-info.class".equals(name)) {
-				String moduleMainClassInjectValue = bytecodeManipulation.getModuleMainClassInjectValue();
-				String moduleVersionInjectValue = bytecodeManipulation.getModuleVersionInjectValue();
-				if (moduleMainClassInjectValue != null || moduleVersionInjectValue != null) {
-					return LazySupplier.of(() -> {
-						ByteArrayRegion bytes = output.getOutputBytes();
-						patchEnablePreview(bytes, patchenablepreview);
-						ClassReader reader = new ClassReader(bytes.getArray(), bytes.getOffset(), bytes.getLength());
-						ClassWriter writer = new ClassWriter(reader, 0);
-						reader.accept(new ModuleMainClassInjectorClassVisitor(writer, moduleMainClassInjectValue,
-								moduleVersionInjectValue), 0);
-						return ByteArrayRegion.wrap(writer.toByteArray());
-					});
-				}
-			}
-			if (patchenablepreview) {
-				return LazySupplier.of(() -> {
-					ByteArrayRegion bytes = output.getOutputBytes();
-					patchEnablePreviewImpl(bytes);
-					return bytes;
-				});
-			}
-			return supplier;
-		}
-	}
-
-	private static class ModuleMainClassInjectorClassVisitor extends ClassVisitor {
-		private String mainClassName;
-		private String moduleVersion;
-
-		public ModuleMainClassInjectorClassVisitor(ClassVisitor classVisitor, String mainclassname,
-				String moduleVersion) {
-			super(Opcodes.ASM7, classVisitor);
-			this.mainClassName = mainclassname;
-			this.moduleVersion = moduleVersion;
-		}
-
-		@Override
-		public ModuleVisitor visitModule(String name, int access, String version) {
-			if (version == null) {
-				version = this.moduleVersion;
-			}
-			ModuleVisitor sv = super.visitModule(name, access, version);
-			if (mainClassName == null) {
-				return sv;
-			}
-			return new ModuleMainClassInjectorModuleVisitor(sv);
-		}
-
-		private class ModuleMainClassInjectorModuleVisitor extends ModuleVisitor {
-			private boolean alreadyHasMainClass = false;
-
-			public ModuleMainClassInjectorModuleVisitor(ModuleVisitor moduleVisitor) {
-				super(Opcodes.ASM7, moduleVisitor);
-			}
-
-			@Override
-			public void visitMainClass(String mainClass) {
-				alreadyHasMainClass = true;
-				super.visitMainClass(mainClass);
-			}
-
-			@Override
-			public void visitEnd() {
-				if (!alreadyHasMainClass) {
-					super.visitMainClass(mainClassName);
-				}
-				super.visitEnd();
-			}
-		}
+		return f.getBytes();
 	}
 
 	//TODO rework this file type?
@@ -425,6 +413,24 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 
 		public LazyByteArraySakerFile(String name, OutputFileObject output) throws NullPointerException {
 			this(name, LazySupplier.of(output::getOutputBytes));
+		}
+
+		public static LazyByteArraySakerFile create(String name, OutputBytecodeManipulationOption bytecodeManipulation,
+				OutputFileObject output) {
+			if (!JavaUtil.isBytecodeManipulationAffects(name, bytecodeManipulation)) {
+				return new LazyByteArraySakerFile(name, output);
+			}
+			return new LazyByteArraySakerFile(name, toRewritingSupplier(name, bytecodeManipulation, output));
+		}
+
+		private static Supplier<ByteArrayRegion> toRewritingSupplier(String name,
+				OutputBytecodeManipulationOption bytecodeManipulation, OutputFileObject output) {
+			if (!JavaUtil.isBytecodeManipulationAffects(name, bytecodeManipulation)) {
+				return LazySupplier.of(output::getOutputBytes);
+			}
+			return LazySupplier.of(() -> {
+				return JavaUtil.performBytecodeManipulation(name, output.getOutputBytes(), bytecodeManipulation);
+			});
 		}
 
 		@Override
@@ -471,29 +477,20 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		}
 	}
 
-	@Override
-	public Set<ExternalizableLocation> getPresentLocations() {
-		//create a new set so it is RMI transferrable
-		return ImmutableUtils.makeImmutableNavigableSet(dirLocations.navigableKeySet());
-	}
-
-	@Override
-	public ByteArrayRegion getFileBytes(SakerPath path) throws IOException {
-		SakerFile f = taskUtils.resolveAtPath(path);
-		if (f == null) {
-			throw new FileNotFoundException("File not found at path: " + path);
-		}
-		return f.getBytes();
-	}
-
+	@RMIWrap(IncrementalDirectoryLocationRMIWrapper.class)
 	protected class DirectoryLocationImpl implements IncrementalDirectoryLocation {
-		protected Collection<SakerDirectory> directories = new LinkedHashSet<>();
+		protected NavigableMap<SakerPath, SakerDirectory> directories = new TreeMap<>();
 
 		public DirectoryLocationImpl() {
 		}
 
 		public DirectoryLocationImpl(SakerDirectory directory) {
-			this.directories.add(directory);
+			this.directories.put(SakerPathFiles.requireAbsolutePath(directory), directory);
+		}
+
+		@Override
+		public NavigableSet<SakerPath> getDirectoryPaths() {
+			return directories.navigableKeySet();
 		}
 
 		@Override
@@ -504,7 +501,7 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		}
 
 		protected IncrementalDirectoryFile findFileWithResourcePath(SakerPath resourcepath) {
-			for (SakerDirectory dir : directories) {
+			for (SakerDirectory dir : directories.values()) {
 				SakerFile file = taskUtils.resolveAtRelativePath(dir, resourcepath);
 				if (file == null) {
 					continue;
@@ -522,7 +519,7 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		public IncrementalDirectoryFile getJavaFileAt(String classname, Kind kind) {
 			SakerPath resourcepath = SakerPath.valueOf(classname.replace('.', '/') + kind.extension);
 
-			for (SakerDirectory dir : directories) {
+			for (SakerDirectory dir : directories.values()) {
 				SakerFile file = taskUtils.resolveAtRelativePath(dir, resourcepath);
 				if (file == null) {
 					continue;
@@ -550,7 +547,7 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 			List<String> packagesplitlist = ImmutableUtils.asUnmodifiableArrayList(packagesplit);
 			ArrayList<IncrementalDirectoryFile> result = new ArrayList<>();
 			StringBuilder sb = new StringBuilder();
-			for (SakerDirectory dir : directories) {
+			for (SakerDirectory dir : directories.values()) {
 				SakerDirectory packdir = taskUtils.resolveDirectoryAtRelativePathNames(dir, packagesplitlist);
 				if (packdir == null) {
 					continue;
@@ -607,6 +604,7 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		}
 	}
 
+	@RMIWrap(IncrementalDirectoryFileRMIWrapper.class)
 	protected static class DirectoryFileImpl implements IncrementalDirectoryFile {
 		protected SakerFile file;
 		protected String inferredBinaryName;
@@ -638,6 +636,113 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		}
 	}
 
+	public static class IncrementalDirectoryFileRMIWrapper implements RMIWrapper, IncrementalDirectoryFile {
+		private IncrementalDirectoryFile file;
+
+		private transient SakerPath path;
+		private transient String inferredBinaryName;
+
+		public IncrementalDirectoryFileRMIWrapper() {
+		}
+
+		public IncrementalDirectoryFileRMIWrapper(IncrementalDirectoryFile file) {
+			this.file = file;
+		}
+
+		@Override
+		public Object getWrappedObject() {
+			return file;
+		}
+
+		@Override
+		public Object resolveWrapped() {
+			return this;
+		}
+
+		@Override
+		public void writeWrapped(RMIObjectOutput out) throws IOException {
+			out.writeRemoteObject(file);
+			out.writeObject(file.getPath());
+			out.writeObject(file.getInferredBinaryName());
+		}
+
+		@Override
+		public void readWrapped(RMIObjectInput in) throws IOException, ClassNotFoundException {
+			this.file = (IncrementalDirectoryFile) in.readObject();
+			this.path = (SakerPath) in.readObject();
+			this.inferredBinaryName = (String) in.readObject();
+		}
+
+		@Override
+		public ByteArrayRegion getBytes() throws IOException {
+			return file.getBytes();
+		}
+
+		@Override
+		public SakerPath getPath() {
+			return path;
+		}
+
+		@Override
+		public String getInferredBinaryName() {
+			return inferredBinaryName;
+		}
+	}
+
+	public static class IncrementalDirectoryLocationRMIWrapper implements RMIWrapper, IncrementalDirectoryLocation {
+		private IncrementalDirectoryLocation location;
+		private NavigableSet<SakerPath> directoryPaths;
+
+		public IncrementalDirectoryLocationRMIWrapper() {
+		}
+
+		public IncrementalDirectoryLocationRMIWrapper(IncrementalDirectoryLocation location) {
+			this.location = location;
+		}
+
+		@Override
+		public NavigableSet<SakerPath> getDirectoryPaths() {
+			return directoryPaths;
+		}
+
+		@Override
+		public IncrementalDirectoryFile getJavaFileAt(String classname, Kind kind) {
+			return location.getJavaFileAt(classname, kind);
+		}
+
+		@Override
+		public IncrementalDirectoryFile getFileAtPackageRelative(String packagename, String relativename) {
+			return location.getFileAtPackageRelative(packagename, relativename);
+		}
+
+		@Override
+		public Iterable<? extends IncrementalDirectoryFile> list(String packagename, Set<Kind> kinds, boolean recurse) {
+			return location.list(packagename, kinds, recurse);
+		}
+
+		@Override
+		public Object getWrappedObject() {
+			return location;
+		}
+
+		@Override
+		public Object resolveWrapped() {
+			return this;
+		}
+
+		@Override
+		public void writeWrapped(RMIObjectOutput out) throws IOException {
+			out.writeRemoteObject(location);
+			SerialUtils.writeExternalCollection(out, location.getDirectoryPaths());
+		}
+
+		@Override
+		public void readWrapped(RMIObjectInput in) throws IOException, ClassNotFoundException {
+			location = (IncrementalDirectoryLocation) in.readObject();
+			directoryPaths = SerialUtils.readExternalSortedImmutableNavigableSet(in);
+		}
+	}
+
 	private static String getBinaryNameFromRelativePath(SakerPath relative, StringBuilder sb, Kind kind) {
 		sb.setLength(0);
 		for (Iterator<String> it = relative.nameIterator(); it.hasNext();) {
@@ -661,15 +766,16 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		return SakerPathFiles.resolveAtRelativePath(pkgdir, relativepath);
 	}
 
-	private Collection<SakerDirectory> getDirectoriesModifiable(Location location) {
+	private NavigableMap<SakerPath, SakerDirectory> getDirectoriesModifiable(Location location) {
 		ExternalizableLocation extloc = new ExternalizableLocation(location);
 		return getDirectoriesModifiable(extloc);
 	}
 
-	private Collection<SakerDirectory> getDirectoriesModifiable(ExternalizableLocation extloc) {
+	private NavigableMap<SakerPath, SakerDirectory> getDirectoriesModifiable(ExternalizableLocation extloc) {
 		return dirLocations.computeIfAbsent(extloc, x -> createDirectoryLocation()).directories;
 	}
 
+	//may be overridden by subclass
 	protected DirectoryLocationImpl createDirectoryLocation() {
 		return new DirectoryLocationImpl();
 	}
@@ -684,7 +790,7 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		if (dirs == null) {
 			return Collections.emptySet();
 		}
-		return dirs.directories;
+		return dirs.directories.values();
 	}
 
 	private static SakerDirectory getPackageSubDirectoryCreate(SakerDirectory base, String pkg) {
@@ -719,4 +825,92 @@ public class JavaCompilerDirectories implements IncrementalDirectoryPaths {
 		return qualifiedname.substring(0, dot);
 	}
 
+	public static class JavaCompilerDirectoriesRMIWrapper implements RMIWrapper, IncrementalDirectoryPaths {
+		private IncrementalDirectoryPaths dirs;
+		private NavigableMap<ExternalizableLocation, ? extends IncrementalDirectoryLocation> directoryLocations;
+		private NavigableMap<String, ? extends IncrementalDirectoryLocation> modulePathLocations;
+		private boolean noCommandLineClassPath;
+		private boolean allowCommandLineBootClassPath;
+
+		public JavaCompilerDirectoriesRMIWrapper() {
+		}
+
+		public JavaCompilerDirectoriesRMIWrapper(IncrementalDirectoryPaths dirs) {
+			this.dirs = dirs;
+		}
+
+		@Override
+		public Object getWrappedObject() {
+			return dirs;
+		}
+
+		@Override
+		public Object resolveWrapped() {
+			return this;
+		}
+
+		@Override
+		public void writeWrapped(RMIObjectOutput out) throws IOException {
+			out.writeRemoteObject(dirs);
+			out.writeBoolean(dirs.isNoCommandLineClassPath());
+			out.writeBoolean(dirs.isAllowCommandLineBootClassPath());
+			out.writeWrappedObject(dirs.getDirectoryLocations(), RMITreeMapSerializeKeyRemoteValueWrapper.class);
+			out.writeWrappedObject(dirs.getModulePathLocations(), RMITreeMapSerializeKeyRemoteValueWrapper.class);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void readWrapped(RMIObjectInput in) throws IOException, ClassNotFoundException {
+			dirs = (IncrementalDirectoryPaths) in.readObject();
+			noCommandLineClassPath = in.readBoolean();
+			allowCommandLineBootClassPath = in.readBoolean();
+			directoryLocations = (NavigableMap<ExternalizableLocation, ? extends IncrementalDirectoryLocation>) in
+					.readObject();
+			modulePathLocations = (NavigableMap<String, ? extends IncrementalDirectoryLocation>) in.readObject();
+		}
+
+		@Override
+		public NavigableMap<ExternalizableLocation, ? extends IncrementalDirectoryLocation> getDirectoryLocations() {
+			return directoryLocations;
+		}
+
+		@Override
+		public boolean isNoCommandLineClassPath() {
+			return noCommandLineClassPath;
+		}
+
+		@Override
+		public boolean isAllowCommandLineBootClassPath() {
+			return allowCommandLineBootClassPath;
+		}
+
+		@Override
+		public NavigableMap<String, ? extends IncrementalDirectoryLocation> getModulePathLocations() {
+			return modulePathLocations;
+		}
+
+		@Override
+		public SakerPath putJavaFileForOutput(ExternalizableLocation location, String classname, String extension,
+				OutputFileObject output) {
+			return dirs.putJavaFileForOutput(location, classname, extension, output);
+		}
+
+		@Override
+		public void bulkPutJavaFilesForOutput(NavigableMap<OutputJavaFileData, ByteArrayRegion> data) {
+			dirs.bulkPutJavaFilesForOutput(data);
+		}
+
+		@Override
+		public SakerPath putFileForOutput(ExternalizableLocation location, String packagename, String relativename,
+				OutputFileObject output) {
+			return dirs.putFileForOutput(location, packagename, relativename, output);
+		}
+
+		@Override
+		@SuppressWarnings("deprecation")
+		public ByteArrayRegion getFileBytes(SakerPath path) throws IOException {
+			return dirs.getFileBytes(path);
+		}
+
+	}
 }

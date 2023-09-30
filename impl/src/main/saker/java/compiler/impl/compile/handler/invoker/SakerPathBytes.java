@@ -30,7 +30,15 @@ public class SakerPathBytes implements Externalizable {
 	private SakerPath path;
 	private ByteArrayRegion bytes;
 
+	/**
+	 * For {@link Externalizable}.
+	 */
 	public SakerPathBytes() {
+	}
+
+	public SakerPathBytes(SakerPath path, ByteArrayRegion bytes) {
+		this.path = path;
+		this.bytes = bytes;
 	}
 
 	public SakerPath getPath() {
@@ -39,11 +47,6 @@ public class SakerPathBytes implements Externalizable {
 
 	public ByteArrayRegion getBytes() {
 		return bytes;
-	}
-
-	public SakerPathBytes(SakerPath path, ByteArrayRegion bytes) {
-		this.path = path;
-		this.bytes = bytes;
 	}
 
 	@Override

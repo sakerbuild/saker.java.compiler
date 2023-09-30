@@ -122,8 +122,9 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 	private Set<String> addReadsReferencedModules;
 
 	@Override
-	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
-			String[] optionsarray, String sourceversionoptionname, String targetversionoptionname) throws IOException {
+	public CompilationInitResultData initCompilation(JavaCompilerInvocationDirector director,
+			IncrementalDirectoryPaths directorypaths, String[] optionsarray, String sourceversionoptionname,
+			String targetversionoptionname) throws IOException {
 		super.initCompilation(director, directorypaths, optionsarray, sourceversionoptionname, targetversionoptionname);
 
 		java.util.List<String> options = ObjectUtils.newArrayList(optionsarray);
@@ -212,6 +213,8 @@ public class InternalIncrementalCompilationInvoker9 extends InternalIncrementalC
 		//XXX set these options for javac?
 		// ClassReader.instance(context).saveParameterNames = true
 		// as seen in JavaCompiler.initProcessAnnotations
+
+		return new CompilationInitResultData(getSourceVersionName());
 	}
 
 	private JavaFileManager createFileManagerWithoutSpecificRelease(IncrementalDirectoryPaths directorypaths) {

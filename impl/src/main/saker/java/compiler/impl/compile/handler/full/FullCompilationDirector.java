@@ -34,6 +34,7 @@ import saker.build.runtime.execution.SakerLog;
 import saker.build.task.CommonTaskContentDescriptors;
 import saker.build.task.TaskContext;
 import saker.build.task.TaskExecutionUtilities;
+import saker.build.thirdparty.saker.rmi.annot.transfer.RMIWrap;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.TransformingNavigableMap;
@@ -41,6 +42,8 @@ import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
 import saker.java.compiler.api.compile.exc.JavaCompilationFailedException;
 import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.compile.file.JavaCompilerDirectories;
+import saker.java.compiler.impl.compile.file.JavaCompilerDirectories.IncrementalDirectoryFileRMIWrapper;
+import saker.java.compiler.impl.compile.file.JavaCompilerDirectories.IncrementalDirectoryLocationRMIWrapper;
 import saker.java.compiler.impl.compile.handler.ExternalizableLocation;
 import saker.java.compiler.impl.compile.handler.NativeHeaderSakerFile;
 import saker.java.compiler.impl.compile.handler.invoker.SakerPathBytes;
@@ -79,8 +82,9 @@ public class FullCompilationDirector {
 			SakerDirectory outputNativeHeaderDirectory, SakerDirectory outputSourceDirectory,
 			SakerDirectory outputResourceDirectory, boolean generateNativeHeaders, Collection<String> options,
 			List<Processor> processors, NavigableMap<SakerPath, SakerFile> sourceFiles,
-			NavigableMap<String, SakerPath> processorInputLocations, OutputBytecodeManipulationOption bytecodeManipulation,
-			boolean nocmdlineclasspath, boolean allowcommandlinebootclasspath) {
+			NavigableMap<String, SakerPath> processorInputLocations,
+			OutputBytecodeManipulationOption bytecodeManipulation, boolean nocmdlineclasspath,
+			boolean allowcommandlinebootclasspath) {
 		this.taskContext = taskContext;
 		this.outputClassDirectory = outputClassDirectory;
 		this.outputNativeHeaderDirectory = outputNativeHeaderDirectory;
@@ -178,18 +182,21 @@ public class FullCompilationDirector {
 			return new InputTrackingDirectoryLocationImpl();
 		}
 
+		@RMIWrap(IncrementalDirectoryLocationRMIWrapper.class)
 		private class InputTrackingDirectoryLocationImpl extends DirectoryLocationImpl {
-
 			@Override
 			protected IncrementalDirectoryFile findFileWithResourcePath(SakerPath resourcepath) {
-				for (SakerDirectory dir : directories) {
+				for (Entry<SakerPath, SakerDirectory> entry : directories.entrySet()) {
+					SakerDirectory dir = entry.getValue();
+					SakerPath dirpath = entry.getKey();
+
 					SakerFile file = taskUtils.resolveFileAtRelativePath(dir, resourcepath);
 					if (file == null) {
-						readContents.putIfAbsent(dir.getSakerPath().resolve(resourcepath),
+						readContents.putIfAbsent(dirpath.resolve(resourcepath),
 								CommonTaskContentDescriptors.IS_NOT_FILE);
 						continue;
 					}
-					SakerPath fpath = dir.getSakerPath().resolve(resourcepath);
+					SakerPath fpath = dirpath.resolve(resourcepath);
 					readContents.putIfAbsent(fpath, CommonTaskContentDescriptors.PRESENT);
 					return new InputTrackingDirectoryResourceFileImpl(file, fpath);
 				}
@@ -197,6 +204,7 @@ public class FullCompilationDirector {
 			}
 		}
 
+		@RMIWrap(IncrementalDirectoryFileRMIWrapper.class)
 		private class InputTrackingDirectoryResourceFileImpl extends DirectoryFileImpl {
 			private SakerPath path;
 

@@ -20,11 +20,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Supplier;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.annotation.processing.FilerException;
 import javax.tools.FileObject;
@@ -37,13 +39,15 @@ import javax.tools.StandardLocation;
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ConcatIterable;
 import saker.build.thirdparty.saker.util.ImmutableUtils;
-import saker.build.thirdparty.saker.util.ObjectUtils;
-import saker.build.thirdparty.saker.util.function.LazySupplier;
+import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths.IncrementalDirectoryLocation;
 import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths.IncrementalDirectoryLocation.IncrementalDirectoryFile;
+import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths.OutputJavaFileData;
+import saker.java.compiler.impl.compile.file.JavaCompilerDirectories;
 import saker.java.compiler.impl.compile.file.JavaCompilerFileObject;
 import saker.java.compiler.impl.compile.file.JavaCompilerJavaFileObject;
+import saker.java.compiler.impl.compile.file.OutputFileObject;
 import saker.java.compiler.impl.compile.handler.ExternalizableLocation;
 import saker.java.compiler.impl.compile.handler.invoker.IncrementalDirectoryFileInputFileObject;
 import saker.java.compiler.impl.compile.handler.invoker.IncrementalDirectoryJavaInputFileObject;
@@ -56,29 +60,26 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 
 	//TODO handle if relative names contain "." or "..", as they are invalid
 
-	private IncrementalDirectoryPaths directoryPaths;
+	private final IncrementalDirectoryPaths directoryPaths;
 
-	private Map<ExternalizableLocation, Supplier<IncrementalDirectoryLocation>> locationDirectoryLocations = new TreeMap<>();
+	private NavigableMap<ExternalizableLocation, ? extends IncrementalDirectoryLocation> locationDirectoryLocations;
 	private final boolean noCommandLineClassPath;
 	private final boolean allowCommandLineBootClassPath;
+
+	private final ConcurrentNavigableMap<OutputJavaFileData, OutputFileObject> outputJavaFiles = new ConcurrentSkipListMap<>();
 
 	public IncrementalJavaFileManager8(StandardJavaFileManager fileManager, IncrementalDirectoryPaths directorypaths) {
 		super(fileManager);
 		this.directoryPaths = directorypaths;
-		Set<ExternalizableLocation> presentlocations = directoryPaths.getPresentLocations();
-		for (ExternalizableLocation extloc : presentlocations) {
-			this.locationDirectoryLocations.put(extloc,
-					LazySupplier.of(() -> directoryPaths.getDirectoryLocation(extloc)));
-		}
-		noCommandLineClassPath = directorypaths.isNoCommandLineClassPath();
-		allowCommandLineBootClassPath = directorypaths.isAllowCommandLineBootClassPath();
+		this.locationDirectoryLocations = directorypaths.getDirectoryLocations();
+		this.noCommandLineClassPath = directorypaths.isNoCommandLineClassPath();
+		this.allowCommandLineBootClassPath = directorypaths.isAllowCommandLineBootClassPath();
 	}
 
 	@Override
 	public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse)
 			throws IOException {
-		IncrementalDirectoryLocation dirloc = ObjectUtils
-				.getSupplier(locationDirectoryLocations.get(new ExternalizableLocation(location)));
+		IncrementalDirectoryLocation dirloc = locationDirectoryLocations.get(new ExternalizableLocation(location));
 		Iterable<JavaFileObject> superresult;
 		if (location == StandardLocation.CLASS_PATH && noCommandLineClassPath) {
 			superresult = Collections.emptySet();
@@ -163,7 +164,7 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 			//actually returned non null and non empty iterable.
 			//this causes it to NPE, and fail.
 			//Around com.sun.tools.javac.main.Arguments.java:504
-			//by returning false for CLASS_OUTPUT, we circumwent javac to fail
+			//by returning false for CLASS_OUTPUT, we circumvent javac to fail
 			//with further testing, we haven't seen any changes in other usage of the compiler API
 			//therefore we conclude that it is safe to return false in this case.
 			return false;
@@ -203,8 +204,7 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 			//do not allow javac to access the files at output locations
 			//javac might query module-info class files in the CLASS_OUTPUT directory 
 
-			IncrementalDirectoryLocation dirloc = ObjectUtils
-					.getSupplier(locationDirectoryLocations.get(new ExternalizableLocation(location)));
+			IncrementalDirectoryLocation dirloc = locationDirectoryLocations.get(new ExternalizableLocation(location));
 			JavaFileObject found = getJavaFileForInputAtDirectoryLocationImpl(className, kind, dirloc);
 			if (found != null) {
 				return found;
@@ -225,14 +225,24 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 		Objects.requireNonNull(className, "class name");
 		Objects.requireNonNull(kind, "kind");
 		requireOutputLocation(location);
+		ExternalizableLocation extlocation = new ExternalizableLocation(location);
 
-		SakerPathJavaOutputFileObject result = new SakerPathJavaOutputFileObject(kind, className);
-		SakerPath fpath = directoryPaths.putJavaFileForOutput(new ExternalizableLocation(location), className,
-				kind.extension, result);
-		if (fpath == null) {
+		IncrementalDirectoryLocation dirloc = locationDirectoryLocations.get(extlocation);
+		if (dirloc == null) {
 			throw new FilerException("Location not found: " + location);
 		}
-		result.setPath(fpath);
+
+		SakerPath dirpath = dirloc.getDirectoryPaths().first();
+
+		String[] split = JavaCompilerDirectories.splitClassNameForFilePath(className, kind.extension);
+		if (split == null) {
+			return null;
+		}
+		SakerPath filepath = dirpath.resolve(split);
+
+		SakerPathJavaOutputFileObject result = new SakerPathJavaOutputFileObject(filepath, kind, className);
+
+		outputJavaFiles.put(new OutputJavaFileData(extlocation, filepath, className), result);
 		return result;
 	}
 
@@ -244,8 +254,7 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 
 		if (!location.isOutputLocation()) {
 			//do not allow javac to access the files at output locations
-			IncrementalDirectoryLocation dirloc = ObjectUtils
-					.getSupplier(locationDirectoryLocations.get(new ExternalizableLocation(location)));
+			IncrementalDirectoryLocation dirloc = locationDirectoryLocations.get(new ExternalizableLocation(location));
 			FileObject found = getFileForInputAtDirectoryLocationImpl(packageName, relativeName, dirloc);
 			if (found != null) {
 				return found;
@@ -275,6 +284,26 @@ public class IncrementalJavaFileManager8 extends ForwardingJavaFileManager<Stand
 		}
 		result.setPath(fpath);
 		return result;
+	}
+
+	@Override
+	public void flush() throws IOException {
+		Entry<OutputJavaFileData, OutputFileObject> entry = outputJavaFiles.pollFirstEntry();
+		if (entry != null) {
+			NavigableMap<OutputJavaFileData, ByteArrayRegion> filedata = new TreeMap<>();
+			do {
+				filedata.put(entry.getKey(), entry.getValue().getOutputBytes());
+				entry = outputJavaFiles.pollFirstEntry();
+			} while (entry != null);
+			directoryPaths.bulkPutJavaFilesForOutput(filedata);
+		}
+		super.flush();
+	}
+
+	@Override
+	public void close() throws IOException {
+		flush();
+		super.close();
 	}
 
 	protected static JavaFileObject getJavaFileForInputAtDirectoryLocationImpl(String className, Kind kind,

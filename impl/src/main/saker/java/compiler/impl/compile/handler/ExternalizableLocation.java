@@ -24,7 +24,9 @@ import java.util.Objects;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.StandardLocation;
 
-public class ExternalizableLocation implements Location, Externalizable, Comparable<ExternalizableLocation> {
+public final class ExternalizableLocation implements Location, Externalizable, Comparable<ExternalizableLocation> {
+	private static final long serialVersionUID = 1L;
+
 	public static final ExternalizableLocation LOCATION_CLASS_OUTPUT = new ExternalizableLocation(
 			StandardLocation.CLASS_OUTPUT);
 	public static final ExternalizableLocation LOCATION_SOURCE_OUTPUT = new ExternalizableLocation(
@@ -35,8 +37,6 @@ public class ExternalizableLocation implements Location, Externalizable, Compara
 			StandardLocation.CLASS_PATH);
 	public static final ExternalizableLocation LOCATION_PLATFORM_CLASS_PATH = new ExternalizableLocation(
 			StandardLocation.PLATFORM_CLASS_PATH);
-
-	private static final long serialVersionUID = 1L;
 
 	private String name;
 	private boolean output;
@@ -80,12 +80,17 @@ public class ExternalizableLocation implements Location, Externalizable, Compara
 	}
 
 	@Override
+	public int compareTo(ExternalizableLocation o) {
+		int cmp = this.name.compareTo(o.name);
+		if (cmp != 0) {
+			return cmp;
+		}
+		return Boolean.compare(this.output, o.output);
+	}
+
+	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + (output ? 1231 : 1237);
-		return result;
+		return Objects.hashCode(name);
 	}
 
 	@Override
@@ -110,16 +115,6 @@ public class ExternalizableLocation implements Location, Externalizable, Compara
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[name=" + name + ", output=" + output + "]";
-	}
-
-	@Override
-	public int compareTo(ExternalizableLocation o) {
-		int cmp;
-		cmp = this.name.compareTo(o.name);
-		if (cmp != 0) {
-			return cmp;
-		}
-		return Boolean.compare(this.output, o.output);
 	}
 
 }

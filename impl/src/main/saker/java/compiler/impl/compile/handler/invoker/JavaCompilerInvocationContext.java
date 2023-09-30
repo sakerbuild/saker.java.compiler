@@ -18,8 +18,10 @@ package saker.java.compiler.impl.compile.handler.invoker;
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.NavigableMap;
 
 import saker.build.file.SakerDirectory;
+import saker.build.file.path.SakerPath;
 import saker.java.compiler.api.compile.JavaAnnotationProcessor;
 
 public interface JavaCompilerInvocationContext extends Closeable {
@@ -37,9 +39,9 @@ public interface JavaCompilerInvocationContext extends Closeable {
 
 	public SakerDirectory getOutputNativeHeaderDirectory();
 
-	public Collection<SakerDirectory> getClassPathDirectories();
+	public NavigableMap<SakerPath, SakerDirectory> getClassPathDirectories();
 
-	public Collection<SakerDirectory> getBootClassPathDirectories();
+	public NavigableMap<SakerPath, SakerDirectory> getBootClassPathDirectories();
 
 	public Map<String, SakerDirectory> getModulePathDirectories();
 

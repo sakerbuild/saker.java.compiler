@@ -91,6 +91,7 @@ import saker.java.compiler.api.modulepath.SDKModulePath;
 import saker.java.compiler.api.option.JavaAddExports;
 import saker.java.compiler.api.option.JavaAddReads;
 import saker.java.compiler.impl.JavaTaskUtils;
+import saker.java.compiler.impl.JavaUtil;
 import saker.java.compiler.impl.JavaTaskUtils.LocalDirectoryClassFilesExecutionProperty;
 import saker.java.compiler.impl.RemoteJavaRMIProcess;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
@@ -221,13 +222,13 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 		}
 
 		@Override
-		public Collection<SakerDirectory> getClassPathDirectories() {
-			return passClassPaths.values();
+		public NavigableMap<SakerPath, SakerDirectory> getClassPathDirectories() {
+			return passClassPaths;
 		}
 
 		@Override
-		public Collection<SakerDirectory> getBootClassPathDirectories() {
-			return passBootClassPaths.values();
+		public NavigableMap<SakerPath, SakerDirectory> getBootClassPathDirectories() {
+			return passBootClassPaths;
 		}
 
 		@Override
@@ -1718,8 +1719,8 @@ public class IncrementalCompilationHandler extends CompilationHandler {
 									passbootclasspathdirs, generalprocessoroptions, passProcessorReferences,
 									passmodulepaths)) {
 
-						JavaCompilationInvoker invoker = (JavaCompilationInvoker) vars
-								.newRemoteInstance(InternalIncrementalCompilationInvoker.class.getConstructor());
+						JavaCompilationInvoker invoker = (JavaCompilationInvoker) vars.invokeRemoteStaticMethod(
+								JavaUtil.class.getMethod("newJavaCompilationInvokerInstance"));
 						IncrementalCompilationDirector director = new IncrementalCompilationDirector(taskContext,
 								invcontext, invoker);
 						resultCompilationInfo = invokeCompilation(director, firstroundsourcefiles, removedsourcefiles,

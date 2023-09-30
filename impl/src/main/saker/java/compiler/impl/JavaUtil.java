@@ -20,11 +20,13 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -68,6 +70,7 @@ import javax.tools.StandardLocation;
 import saker.build.file.path.SakerPath;
 import saker.build.file.provider.FileEntry;
 import saker.build.file.provider.LocalFileProvider;
+import saker.build.thirdparty.saker.rmi.annot.transfer.RMIWrap;
 import saker.build.thirdparty.saker.rmi.connection.MethodTransferProperties;
 import saker.build.thirdparty.saker.rmi.connection.RMITransferProperties;
 import saker.build.thirdparty.saker.rmi.io.RMIObjectInput;
@@ -78,6 +81,8 @@ import saker.build.thirdparty.saker.rmi.io.writer.WrapperRMIObjectWriteHandler;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.ReflectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
+import saker.build.thirdparty.saker.util.function.LazySupplier;
+import saker.build.thirdparty.saker.util.io.ByteArrayRegion;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListRemoteElementWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMIArrayListWrapper;
 import saker.build.thirdparty.saker.util.rmi.wrap.RMIIdentityHashSetRemoteElementWrapper;
@@ -85,11 +90,26 @@ import saker.build.thirdparty.saker.util.rmi.wrap.RMILinkedHashSetStringElementW
 import saker.build.thirdparty.saker.util.rmi.wrap.RMITreeSetStringElementWrapper;
 import saker.java.compiler.api.processing.exc.EnumerationArrayNotFoundException;
 import saker.java.compiler.impl.compat.ImmutableElementTypeSet;
+import saker.java.compiler.impl.compile.file.IncrementalDirectoryPaths;
 import saker.java.compiler.impl.compile.handler.incremental.IncrementalCompilationHandler;
+import saker.java.compiler.impl.compile.handler.info.ClassHoldingData;
+import saker.java.compiler.impl.compile.handler.invoker.JavaCompilationInvoker;
+import saker.java.compiler.impl.compile.handler.invoker.JavaCompilerInvocationDirector;
+import saker.java.compiler.impl.compile.handler.invoker.PreviousCompilationClassInfo;
+import saker.java.compiler.impl.compile.handler.invoker.SakerPathBytes;
 import saker.java.compiler.impl.compile.handler.invoker.rmi.ModifierEnumSetRMIWrapper;
 import saker.java.compiler.impl.compile.handler.invoker.rmi.NameRMIWrapper;
+import saker.java.compiler.impl.options.OutputBytecodeManipulationOption;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassReader;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ClassWriter;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.ModuleVisitor;
+import saker.java.compiler.impl.thirdparty.org.objectweb.asm.Opcodes;
+import saker.java.compiler.impl.util.RemoteKeyValueLinkedHashMapRMIWrapper;
 import saker.java.compiler.jdk.impl.JavaCompilationUtils;
+import saker.java.compiler.jdk.impl.invoker.InternalIncrementalCompilationInvoker;
+import saker.java.compiler.jdk.impl.model.ForwardingElements;
 
 public class JavaUtil {
 
@@ -639,6 +659,11 @@ public class JavaUtil {
 							.returnWriter(new WrapperRMIObjectWriteHandler(RMIArrayListRemoteElementWrapper.class))
 							.build());
 
+					builder.add(MethodTransferProperties
+							.builder(ReflectUtils.getMethodAssert(AnnotationMirror.class, "getElementValues"))
+							.returnWriter(new WrapperRMIObjectWriteHandler(RemoteKeyValueLinkedHashMapRMIWrapper.class))
+							.build());
+
 					JavaCompilationUtils.applyRMIProperties(builder);
 					result = builder.build();
 					compilationRMIProperties = result;
@@ -740,7 +765,137 @@ public class JavaUtil {
 		}
 	}
 
-	private static class LocaleRMIWrapper implements RMIWrapper {
+	/**
+	 * Creates a new java compilation invoker.
+	 * 
+	 * @return The invoker.
+	 */
+	//Note: this method is invoked via RMI instead of the constructor directly to be able to customize the object transfer
+	@RMIWrap(JavaCompilationInvokerRMIWrapper.class)
+	public static JavaCompilationInvoker newJavaCompilationInvokerInstance() {
+		return new InternalIncrementalCompilationInvoker();
+	}
+
+	public static boolean isBytecodeManipulationAffects(String name,
+			OutputBytecodeManipulationOption bytecodeManipulation) {
+		if (bytecodeManipulation == null) {
+			return false;
+		}
+		if (bytecodeManipulation.isPatchEnablePreview()) {
+			return true;
+		}
+		if ("module-info.class".equals(name)) {
+			if (bytecodeManipulation.getModuleMainClassInjectValue() != null
+					|| bytecodeManipulation.getModuleVersionInjectValue() != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Performs the requested bytecode manipulation on the input class bytes.
+	 * <p>
+	 * The function may modify the input class byte array directly.
+	 * 
+	 * @param name
+	 *            The name of the file. E.g. <code>module-info.class</code> if this is the module class file.
+	 * @param cfbytes
+	 *            The class bytes.
+	 * @param bytecodeManipulation
+	 *            The manipulation option, may be <code>null</code>.
+	 * @return The result byte array region, might be the same as the input.
+	 */
+	public static ByteArrayRegion performBytecodeManipulation(String name, ByteArrayRegion cfbytes,
+			OutputBytecodeManipulationOption bytecodeManipulation) {
+
+		if (bytecodeManipulation == null) {
+			return cfbytes;
+		}
+		boolean patchenablepreview = bytecodeManipulation.isPatchEnablePreview();
+
+		if (patchenablepreview) {
+			patchEnablePreview(cfbytes);
+		}
+
+		if ("module-info.class".equals(name)) {
+			String moduleMainClassInjectValue = bytecodeManipulation.getModuleMainClassInjectValue();
+			String moduleVersionInjectValue = bytecodeManipulation.getModuleVersionInjectValue();
+			if (moduleMainClassInjectValue != null || moduleVersionInjectValue != null) {
+				ClassReader reader = new ClassReader(cfbytes.getArray(), cfbytes.getOffset(), cfbytes.getLength());
+				ClassWriter writer = new ClassWriter(reader, 0);
+				reader.accept(new ModuleMainClassInjectorClassVisitor(writer, moduleMainClassInjectValue,
+						moduleVersionInjectValue), 0);
+				cfbytes = ByteArrayRegion.wrap(writer.toByteArray());
+			}
+		}
+		return cfbytes;
+	}
+
+	private static void patchEnablePreview(ByteArrayRegion cfbytes) {
+		//should start with
+		//u4             magic; 0xcafebabe
+		//u2             minor_version;
+		//u2             major_version;
+		if (cfbytes.getLength() < 8) {
+			//not enough bytes? what? shouldn't ever happen, just a sanity check
+			return;
+		}
+		byte[] array = cfbytes.getArray();
+		//change 0xFFFF minor to 0x0000
+		if (array[4] == (byte) 0xFF && array[5] == (byte) 0xFF) {
+			array[4] = 0;
+			array[5] = 0;
+		}
+	}
+
+	private static class ModuleMainClassInjectorClassVisitor extends ClassVisitor {
+		private String mainClassName;
+		private String moduleVersion;
+
+		public ModuleMainClassInjectorClassVisitor(ClassVisitor classVisitor, String mainclassname,
+				String moduleVersion) {
+			super(Opcodes.ASM7, classVisitor);
+			this.mainClassName = mainclassname;
+			this.moduleVersion = moduleVersion;
+		}
+
+		@Override
+		public ModuleVisitor visitModule(String name, int access, String version) {
+			if (version == null) {
+				version = this.moduleVersion;
+			}
+			ModuleVisitor sv = super.visitModule(name, access, version);
+			if (mainClassName == null) {
+				return sv;
+			}
+			return new ModuleMainClassInjectorModuleVisitor(sv);
+		}
+
+		private class ModuleMainClassInjectorModuleVisitor extends ModuleVisitor {
+			private boolean alreadyHasMainClass = false;
+
+			public ModuleMainClassInjectorModuleVisitor(ModuleVisitor moduleVisitor) {
+				super(Opcodes.ASM7, moduleVisitor);
+			}
+
+			@Override
+			public void visitMainClass(String mainClass) {
+				alreadyHasMainClass = true;
+				super.visitMainClass(mainClass);
+			}
+
+			@Override
+			public void visitEnd() {
+				if (!alreadyHasMainClass) {
+					super.visitMainClass(mainClassName);
+				}
+				super.visitEnd();
+			}
+		}
+	}
+
+	public static final class LocaleRMIWrapper implements RMIWrapper {
 		private Locale locale;
 
 		public LocaleRMIWrapper() {
@@ -776,7 +931,7 @@ public class JavaUtil {
 		}
 	}
 
-	private static class AnnotationValueValueRMIWrapper implements RMIWrapper {
+	public static final class AnnotationValueValueRMIWrapper implements RMIWrapper {
 		private Object value;
 
 		public AnnotationValueValueRMIWrapper() {
@@ -811,7 +966,7 @@ public class JavaUtil {
 		}
 	}
 
-	private static class CharSequenceStringizeRMIWrapper implements RMIWrapper {
+	public static final class CharSequenceStringizeRMIWrapper implements RMIWrapper {
 		private CharSequence cs;
 
 		public CharSequenceStringizeRMIWrapper() {
@@ -839,6 +994,147 @@ public class JavaUtil {
 		@Override
 		public void writeWrapped(RMIObjectOutput out) throws IOException {
 			out.writeObject(cs.toString());
+		}
+	}
+
+	public static final class JavaCompilationInvokerRMIWrapper implements RMIWrapper, JavaCompilationInvoker {
+		private JavaCompilationInvoker invoker;
+		private Elements elements;
+		private String sourceVersionName;
+		private String javaVersionProperty;
+		private int compilerJVMJavaMajorVersion;
+
+		public JavaCompilationInvokerRMIWrapper() {
+		}
+
+		public JavaCompilationInvokerRMIWrapper(JavaCompilationInvoker invoker) {
+			this.invoker = invoker;
+		}
+
+		@Override
+		public Object getWrappedObject() {
+			return invoker;
+		}
+
+		@Override
+		public Object resolveWrapped() {
+			return this;
+		}
+
+		@Override
+		public void writeWrapped(RMIObjectOutput out) throws IOException {
+			JavaCompilationInvoker invoker = this.invoker;
+			out.writeRemoteObject(invoker);
+			//The actual Elements can only be created after the compilation is initialized.
+			//so cache a forwarding elements on the remote side that gets the elements instance if a 
+			//method is invoked on it
+			out.writeRemoteObject(new InvokerForwardingElements(invoker));
+			out.writeObject(invoker.getJavaVersionProperty());
+			out.writeInt(invoker.getCompilerJVMJavaMajorVersion());
+		}
+
+		@Override
+		public void readWrapped(RMIObjectInput in) throws IOException, ClassNotFoundException {
+			this.invoker = (JavaCompilationInvoker) in.readObject();
+			this.elements = (Elements) in.readObject();
+			this.javaVersionProperty = (String) in.readObject();
+			this.compilerJVMJavaMajorVersion = in.readInt();
+		}
+
+		@Override
+		public Elements getElements() {
+			return elements;
+		}
+
+		@Override
+		public String getSourceVersionName() {
+			if (sourceVersionName == null) {
+				throw new IllegalStateException("Compilation hasn't been initialized yet.");
+			}
+			return sourceVersionName;
+		}
+
+		@Override
+		public String getJavaVersionProperty() {
+			return javaVersionProperty;
+		}
+
+		@Override
+		public int getCompilerJVMJavaMajorVersion() {
+			return compilerJVMJavaMajorVersion;
+		}
+
+		@Override
+		public void close() throws IOException {
+			invoker.close();
+		}
+
+		@Override
+		public CompilationInitResultData initCompilation(JavaCompilerInvocationDirector director,
+				IncrementalDirectoryPaths directorypaths, String[] options, String sourceversionoptionname,
+				String targetversionoptionname) throws IOException {
+			CompilationInitResultData res = invoker.initCompilation(director, directorypaths, options,
+					sourceversionoptionname, targetversionoptionname);
+			this.sourceVersionName = res.getSourceVersionName();
+			return res;
+		}
+
+		@Override
+		public void invokeCompilation(SakerPathBytes[] units) throws IOException {
+			invoker.invokeCompilation(units);
+		}
+
+		@Override
+		public void addSourceForCompilation(String sourcename, SakerPath file) throws IOException {
+			invoker.addSourceForCompilation(sourcename, file);
+		}
+
+		@Override
+		public void addClassFileForCompilation(String classname, SakerPath file) throws IOException {
+			invoker.addClassFileForCompilation(classname, file);
+		}
+
+		@Override
+		public Collection<? extends ClassHoldingData> parseRoundAddedSources() {
+			return invoker.parseRoundAddedSources();
+		}
+
+		@Override
+		public Collection<? extends ClassHoldingData> parseRoundAddedClassFiles() {
+			return parseRoundAddedClassFiles();
+		}
+
+		@Override
+		public Types getTypes() {
+			return invoker.getTypes();
+		}
+
+		@Override
+		public void addClassFilesFromPreviousCompilation(PreviousCompilationClassInfo previoussources) {
+			invoker.addClassFilesFromPreviousCompilation(previoussources);
+		}
+
+		@Override
+		public NavigableMap<SakerPath, ABIParseInfo> getParsedSourceABIUsages() {
+			return invoker.getParsedSourceABIUsages();
+		}
+
+		@Override
+		public NavigableSet<String> getCompilationModuleSet() {
+			return invoker.getCompilationModuleSet();
+		}
+	}
+
+	private static final class InvokerForwardingElements extends ForwardingElements {
+		private final transient LazySupplier<Elements> lazyElements;
+
+		private InvokerForwardingElements(JavaCompilationInvoker invoker) {
+			lazyElements = LazySupplier.of(invoker::getElements);
+		}
+
+		@Override
+		protected Elements getForwardedElements() {
+			return lazyElements.get();
 		}
 	}
 }

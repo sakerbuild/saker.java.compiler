@@ -109,12 +109,16 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 	};
 
 	@Override
-	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
-			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException {
+	public CompilationInitResultData initCompilation(JavaCompilerInvocationDirector director,
+			IncrementalDirectoryPaths directorypaths, String[] options, String sourceversionoptionname,
+			String targetversionoptionname) throws IOException {
 		super.initCompilation(director, directorypaths, options, sourceversionoptionname, targetversionoptionname);
 		context = new Context();
 		context.put(DiagnosticListener.class, getDiagnosticListener());
 		context.put(Locale.class, (Locale) null);
+
+		//result is created by subclass
+		return null;
 	}
 
 	@Override
@@ -125,6 +129,12 @@ public abstract class InternalIncrementalCompilationInvokerBase extends Abstract
 			parsedTrees = new ListBuffer<>();
 
 			invokeInternalCompilation();
+
+			JavaFileManager fm = fileManager;
+			if (fm != null) {
+				//shouldn't be null, but check so we don't get surprised
+				fm.flush();
+			}
 		} catch (LinkageError | AssertionError e) {
 			//in case of a method access error or others
 			throw new JavacPrivateAPIError(e);

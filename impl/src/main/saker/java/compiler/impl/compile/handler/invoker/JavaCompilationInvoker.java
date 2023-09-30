@@ -27,7 +27,6 @@ import java.util.NavigableSet;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import javax.tools.JavaFileManager;
 
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.rmi.annot.invoke.RMICacheResult;
@@ -99,7 +98,7 @@ public interface JavaCompilationInvoker extends Closeable {
 	 * @param targetversionoptionname
 	 *            The user provided target version name in <code>RELEASE_*</code> format
 	 */
-	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
+	public CompilationInitResultData initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
 			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException;
 
 	/**
@@ -149,4 +148,34 @@ public interface JavaCompilationInvoker extends Closeable {
 	 */
 	@RMICacheResult
 	public String getSourceVersionName();
+
+	public static final class CompilationInitResultData implements Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		protected String sourceVersionName;
+
+		/**
+		 * For {@link Externalizable}.
+		 */
+		public CompilationInitResultData() {
+		}
+
+		public CompilationInitResultData(String sourceVersionName) {
+			this.sourceVersionName = sourceVersionName;
+		}
+
+		public String getSourceVersionName() {
+			return sourceVersionName;
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(sourceVersionName);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			sourceVersionName = (String) in.readObject();
+		}
+	}
 }

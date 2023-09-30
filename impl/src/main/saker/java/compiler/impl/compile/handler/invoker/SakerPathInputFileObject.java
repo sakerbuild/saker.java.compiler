@@ -44,6 +44,7 @@ public class SakerPathInputFileObject implements JavaCompilerFileObject {
 	private transient URI uri;
 
 	@Deprecated
+	@SuppressWarnings("deprecation")
 	public SakerPathInputFileObject(IncrementalDirectoryPaths directorypaths, SakerPath path) {
 		this.path = Functionals.valSupplier(path);
 		this.bytes = LazySupplier.of(() -> {
@@ -69,8 +70,7 @@ public class SakerPathInputFileObject implements JavaCompilerFileObject {
 	@Override
 	public URI toUri() {
 		if (uri == null) {
-			uri = URI.create(
-					CompilationHandler.URI_SCHEME_INPUT + ":" + path.get().toString().replace(" ", "%20"));
+			uri = URI.create(CompilationHandler.URI_SCHEME_INPUT + ":" + path.get().toString().replace(" ", "%20"));
 		}
 		return uri;
 	}

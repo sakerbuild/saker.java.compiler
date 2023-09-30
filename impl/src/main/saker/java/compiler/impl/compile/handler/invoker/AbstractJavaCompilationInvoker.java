@@ -40,6 +40,7 @@ import com.sun.source.util.Trees;
 import saker.build.file.path.SakerPath;
 import saker.build.thirdparty.saker.util.ConcurrentPrependAccumulator;
 import saker.build.thirdparty.saker.util.ObjectUtils;
+import saker.build.thirdparty.saker.util.PeekableIterable;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
 import saker.build.thirdparty.saker.util.thread.ThreadUtils;
@@ -87,10 +88,14 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 	}
 
 	@Override
-	public void initCompilation(JavaCompilerInvocationDirector director, IncrementalDirectoryPaths directorypaths,
-			String[] options, String sourceversionoptionname, String targetversionoptionname) throws IOException {
+	public CompilationInitResultData initCompilation(JavaCompilerInvocationDirector director,
+			IncrementalDirectoryPaths directorypaths, String[] options, String sourceversionoptionname,
+			String targetversionoptionname) throws IOException {
 		this.director = director;
 		this.directoryPaths = directorypaths;
+
+		//result is created by subclass
+		return null;
 	}
 
 	@Override
@@ -122,7 +127,11 @@ public abstract class AbstractJavaCompilationInvoker implements JavaCompilationI
 				throw ObjectUtils.sneakyThrow(exece);
 			}
 		} finally {
-			director.reportDiagnostics(diagnosticListener.entries.clearAndIterable());
+			PeekableIterable<DiagnosticEntry> diags = diagnosticListener.entries.clearAndIterable();
+			if (!diags.isEmpty()) {
+				//only report diagnostics if there are any (avoid unnecessary calls)
+				director.reportDiagnostics(diags);
+			}
 		}
 	}
 
