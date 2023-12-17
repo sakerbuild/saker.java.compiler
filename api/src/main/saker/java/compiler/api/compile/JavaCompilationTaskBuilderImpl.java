@@ -372,6 +372,8 @@ final class JavaCompilationTaskBuilderImpl implements JavaCompilationTaskBuilder
 		} else {
 			passidstring = StringUtils.toStringJoin("-", dirnames);
 		}
+		//replace potential space characters from the directory names as the compilation identifier doesn't support spaces
+		passidstring = passidstring.replace(' ', '_');
 		if (passidstring.isEmpty()) {
 			passidstring = "default";
 		}
