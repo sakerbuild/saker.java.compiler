@@ -102,7 +102,7 @@ public final class ArrayValueImpl implements ArrayValue, Externalizable {
 		return "{ " + StringUtils.toStringJoin(", ", values) + " }";
 	}
 
-	protected static class SingletonArrayValueImpl implements ArrayValue, Externalizable {
+	protected static final class SingletonArrayValueImpl implements ArrayValue, Externalizable {
 		private static final long serialVersionUID = 1L;
 
 		private Value value;
