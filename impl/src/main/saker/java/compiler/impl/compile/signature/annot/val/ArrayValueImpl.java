@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.build.thirdparty.saker.util.StringUtils;
 import saker.build.thirdparty.saker.util.io.SerialUtils;
@@ -49,6 +50,9 @@ public final class ArrayValueImpl implements ArrayValue, Externalizable {
 	public static ArrayValue create(List<? extends Value> values) {
 		if (ObjectUtils.isNullOrEmpty(values)) {
 			return EMPTY_INSTANCE;
+		}
+		if (values.size() == 1) {
+			return new SingletonArrayValueImpl(values.get(0));
 		}
 		return new ArrayValueImpl(values);
 	}
@@ -96,6 +100,65 @@ public final class ArrayValueImpl implements ArrayValue, Externalizable {
 			return "{}";
 		}
 		return "{ " + StringUtils.toStringJoin(", ", values) + " }";
+	}
+
+	protected static class SingletonArrayValueImpl implements ArrayValue, Externalizable {
+		private static final long serialVersionUID = 1L;
+
+		private Value value;
+
+		/**
+		 * For {@link Externalizable}.
+		 */
+		public SingletonArrayValueImpl() {
+		}
+
+		public SingletonArrayValueImpl(Value value) {
+			this.value = value;
+		}
+
+		@Override
+		public List<? extends Value> getValues() {
+			return ImmutableUtils.singletonList(value);
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeObject(value);
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			value = (Value) in.readObject();
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hashCode(value);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			SingletonArrayValueImpl other = (SingletonArrayValueImpl) obj;
+			if (value == null) {
+				if (other.value != null)
+					return false;
+			} else if (!value.equals(other.value))
+				return false;
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "{ " + value + " }";
+		}
+
 	}
 
 }
