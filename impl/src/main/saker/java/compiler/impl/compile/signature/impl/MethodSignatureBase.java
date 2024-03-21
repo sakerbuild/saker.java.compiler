@@ -53,12 +53,12 @@ public abstract class MethodSignatureBase implements MethodSignature, Externaliz
 	}
 
 	protected MethodSignatureBase(Set<Modifier> modifiers, List<? extends MethodParameterSignature> parameters) {
-		this(ImmutableModifierSet.getFlag(modifiers), parameters == null ? Collections.emptyList() : parameters);
+		this(ImmutableModifierSet.getFlag(modifiers), parameters);
 	}
 
 	protected MethodSignatureBase(short modifierFlags, List<? extends MethodParameterSignature> parameters) {
 		this.modifierFlags = modifierFlags;
-		this.parameters = parameters;
+		this.parameters = parameters == null ? Collections.emptyList() : parameters;
 	}
 
 	@Override
