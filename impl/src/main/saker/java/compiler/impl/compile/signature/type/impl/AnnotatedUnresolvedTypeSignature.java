@@ -22,8 +22,14 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import saker.build.thirdparty.saker.util.ImmutableUtils;
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
+import saker.java.compiler.impl.compile.signature.impl.SimpleAnnotationSignature;
+import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.ParameterizedTypeSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
@@ -33,6 +39,34 @@ import saker.java.compiler.impl.util.JavaSerialUtils;
 public class AnnotatedUnresolvedTypeSignature extends AnnotatedSignatureImpl
 		implements UnresolvedTypeSignature, Externalizable {
 	private static final long serialVersionUID = 1L;
+
+	public static final AnnotatedUnresolvedTypeSignature INSTANCE_OVERRIDE_STRING;
+
+	private static final Map<String, AnnotatedUnresolvedTypeSignature> CACHE_OVERRIDE;
+	static {
+		TreeMap<String, AnnotatedUnresolvedTypeSignature> overridecache = new TreeMap<>();
+		List<SimpleAnnotationSignature> overrideannotlist = ImmutableUtils
+				.singletonList(SimpleAnnotationSignature.INSTANCE_OVERRIDE);
+		INSTANCE_OVERRIDE_STRING = initCache(overridecache, "String", overrideannotlist);
+		initCache(overridecache, "Object", overrideannotlist);
+		initCache(overridecache, "Byte", overrideannotlist);
+		initCache(overridecache, "Short", overrideannotlist);
+		initCache(overridecache, "Integer", overrideannotlist);
+		initCache(overridecache, "Long", overrideannotlist);
+		initCache(overridecache, "Float", overrideannotlist);
+		initCache(overridecache, "Double", overrideannotlist);
+		initCache(overridecache, "Character", overrideannotlist);
+		initCache(overridecache, "Boolean", overrideannotlist);
+		initCache(overridecache, "Void", overrideannotlist);
+		CACHE_OVERRIDE = overridecache;
+	}
+
+	private static AnnotatedUnresolvedTypeSignature initCache(Map<String, AnnotatedUnresolvedTypeSignature> map,
+			String canonicalName, List<? extends AnnotationSignature> annots) {
+		AnnotatedUnresolvedTypeSignature signature = new AnnotatedUnresolvedTypeSignature(annots, canonicalName);
+		map.put(canonicalName, signature);
+		return signature;
+	}
 
 	protected String qualifiedName;
 	//Note: subclasses may have their own serialization functions, 
@@ -44,9 +78,38 @@ public class AnnotatedUnresolvedTypeSignature extends AnnotatedSignatureImpl
 	public AnnotatedUnresolvedTypeSignature() {
 	}
 
-	public AnnotatedUnresolvedTypeSignature(List<? extends AnnotationSignature> annotations, String qualifiedName) {
+	protected AnnotatedUnresolvedTypeSignature(List<? extends AnnotationSignature> annotations, String qualifiedName) {
 		super(annotations);
 		this.qualifiedName = qualifiedName;
+	}
+
+	public static UnresolvedTypeSignature create(List<? extends AnnotationSignature> annotations,
+			String qualifiedName) {
+		if (ObjectUtils.isNullOrEmpty(annotations)) {
+			return SimpleUnresolvedTypeSignature.create(qualifiedName);
+		}
+		return createOrCached(annotations, qualifiedName);
+	}
+
+	public static UnresolvedTypeSignature create(ParserCache cache, List<? extends AnnotationSignature> annotations,
+			String qualifiedName) {
+		if (ObjectUtils.isNullOrEmpty(annotations)) {
+			return cache.unresolved(qualifiedName);
+		}
+		return createOrCached(annotations, qualifiedName);
+	}
+
+	private static AnnotatedUnresolvedTypeSignature createOrCached(List<? extends AnnotationSignature> annotations,
+			String qualifiedName) {
+		if (annotations.size() == 1) {
+			if (SimpleAnnotationSignature.INSTANCE_OVERRIDE.equals(annotations.get(0))) {
+				AnnotatedUnresolvedTypeSignature cached = CACHE_OVERRIDE.get(qualifiedName);
+				if (cached != null) {
+					return cached;
+				}
+			}
+		}
+		return new AnnotatedUnresolvedTypeSignature(annotations, qualifiedName);
 	}
 
 	@Override
@@ -75,6 +138,15 @@ public class AnnotatedUnresolvedTypeSignature extends AnnotatedSignatureImpl
 		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
 		this.annotations = annotations;
 		this.qualifiedName = (String) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
+	}
+
+	private Object readResolve() {
+		if (annotations.size() == 1) {
+			if (SimpleAnnotationSignature.INSTANCE_OVERRIDE.equals(annotations.get(0))) {
+				return CACHE_OVERRIDE.getOrDefault(qualifiedName, this);
+			}
+		}
+		return this;
 	}
 
 	@Override

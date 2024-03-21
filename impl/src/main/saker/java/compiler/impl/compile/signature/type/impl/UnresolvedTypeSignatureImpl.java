@@ -55,14 +55,11 @@ public final class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSi
 	public static UnresolvedTypeSignature create(List<? extends AnnotationSignature> annotations,
 			ParameterizedTypeSignature enclosing, String qualifiedName, List<? extends TypeSignature> typeParameters) {
 		if (enclosing == null) {
-			if (ObjectUtils.isNullOrEmpty(annotations)) {
-				if (ObjectUtils.isNullOrEmpty(typeParameters)) {
-					return create(qualifiedName);
-				}
-				return new SimpleParameterizedUnresolvedTypeSignature(qualifiedName, typeParameters);
-			}
 			if (ObjectUtils.isNullOrEmpty(typeParameters)) {
-				return new AnnotatedUnresolvedTypeSignature(annotations, qualifiedName);
+				return AnnotatedUnresolvedTypeSignature.create(annotations, qualifiedName);
+			}
+			if (ObjectUtils.isNullOrEmpty(annotations)) {
+				return new SimpleParameterizedUnresolvedTypeSignature(qualifiedName, typeParameters);
 			}
 		}
 		return new UnresolvedTypeSignatureImpl(annotations, enclosing, qualifiedName, typeParameters);
@@ -71,14 +68,11 @@ public final class UnresolvedTypeSignatureImpl extends AnnotatedUnresolvedTypeSi
 	public static UnresolvedTypeSignature create(ParserCache cache, List<? extends AnnotationSignature> annotations,
 			ParameterizedTypeSignature enclosing, String qualifiedName, List<? extends TypeSignature> typeParameters) {
 		if (enclosing == null) {
-			if (ObjectUtils.isNullOrEmpty(annotations)) {
-				if (ObjectUtils.isNullOrEmpty(typeParameters)) {
-					return create(cache, qualifiedName);
-				}
-				return new SimpleParameterizedUnresolvedTypeSignature(qualifiedName, typeParameters);
-			}
 			if (ObjectUtils.isNullOrEmpty(typeParameters)) {
-				return new AnnotatedUnresolvedTypeSignature(annotations, qualifiedName);
+				return AnnotatedUnresolvedTypeSignature.create(cache, annotations, qualifiedName);
+			}
+			if (ObjectUtils.isNullOrEmpty(annotations)) {
+				return new SimpleParameterizedUnresolvedTypeSignature(qualifiedName, typeParameters);
 			}
 		}
 		return new UnresolvedTypeSignatureImpl(annotations, enclosing, qualifiedName, typeParameters);

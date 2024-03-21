@@ -77,10 +77,7 @@ public class FullMethodSignature extends MethodSignatureBase {
 									typeParameters, throwsTypes, docComment);
 						}
 						if (ObjectUtils.isNullOrEmpty(typeParameters) && ObjectUtils.isNullOrEmpty(throwsTypes)) {
-							if (ObjectUtils.isNullOrEmpty(parameters)) {
-								return SimpleNoArgConstructor.create(modifiers);
-							}
-							return new SimpleConstructorMethodSignature(modifiers, parameters);
+							return SimpleConstructorMethodSignature.create(modifiers, parameters);
 						}
 						return new ExtendedConstructorMethodSignature(modifiers, parameters, typeParameters,
 								throwsTypes);
@@ -92,10 +89,7 @@ public class FullMethodSignature extends MethodSignatureBase {
 								typeParameters, throwsTypes, docComment);
 					}
 					if (ObjectUtils.isNullOrEmpty(typeParameters) && ObjectUtils.isNullOrEmpty(throwsTypes)) {
-						if (NoTypeSignatureImpl.getVoid().equals(returnType)) {
-							return new SimpleVoidMethodSignature(modifiers, parameters, name);
-						}
-						return new SimpleMethodSignature(modifiers, parameters, returnType, name);
+						return SimpleMethodSignature.create(modifiers, parameters, returnType, name);
 					}
 					return new ExtendedMethodSignature(modifiers, parameters, returnType, name, typeParameters,
 							throwsTypes);

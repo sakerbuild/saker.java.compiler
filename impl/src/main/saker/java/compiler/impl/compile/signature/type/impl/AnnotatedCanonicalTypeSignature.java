@@ -22,10 +22,14 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
+import saker.build.thirdparty.saker.util.ImmutableUtils;
 import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.compile.signature.impl.AnnotatedSignatureImpl;
+import saker.java.compiler.impl.compile.signature.impl.SimpleAnnotationSignature;
 import saker.java.compiler.impl.compile.signature.parser.ParserCache;
 import saker.java.compiler.impl.signature.element.AnnotationSignature;
 import saker.java.compiler.impl.signature.type.CanonicalTypeSignature;
@@ -35,6 +39,34 @@ import saker.java.compiler.impl.util.JavaSerialUtils;
 
 public class AnnotatedCanonicalTypeSignature extends AnnotatedSignatureImpl implements CanonicalTypeSignature {
 	private static final long serialVersionUID = 1L;
+
+	public static final AnnotatedCanonicalTypeSignature INSTANCE_OVERRIDE_JAVA_LANG_STRING;
+
+	private static final Map<String, AnnotatedCanonicalTypeSignature> CACHE_JAVA_LANG_OVERRIDE;
+	static {
+		TreeMap<String, AnnotatedCanonicalTypeSignature> javalangoverridecache = new TreeMap<>();
+		List<SimpleAnnotationSignature> overrideannotlist = ImmutableUtils
+				.singletonList(SimpleAnnotationSignature.INSTANCE_JAVA_LANG_OVERRIDE);
+		INSTANCE_OVERRIDE_JAVA_LANG_STRING = initCache(javalangoverridecache, "java.lang.String", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Object", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Byte", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Short", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Integer", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Long", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Float", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Double", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Character", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Boolean", overrideannotlist);
+		initCache(javalangoverridecache, "java.lang.Void", overrideannotlist);
+		CACHE_JAVA_LANG_OVERRIDE = javalangoverridecache;
+	}
+
+	private static AnnotatedCanonicalTypeSignature initCache(Map<String, AnnotatedCanonicalTypeSignature> map,
+			String canonicalName, List<? extends AnnotationSignature> annots) {
+		AnnotatedCanonicalTypeSignature signature = new AnnotatedCanonicalTypeSignature(annots, canonicalName);
+		map.put(canonicalName, signature);
+		return signature;
+	}
 
 	protected String canonicalName;
 	//Note: subclasses may have their own serialization functions, 
@@ -55,13 +87,26 @@ public class AnnotatedCanonicalTypeSignature extends AnnotatedSignatureImpl impl
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return SimpleCanonicalTypeSignature.create(canonicalName);
 		}
-		return new AnnotatedCanonicalTypeSignature(annotations, canonicalName);
+		return createOrCached(annotations, canonicalName);
 	}
 
 	public static CanonicalTypeSignature create(ParserCache cache, List<? extends AnnotationSignature> annotations,
 			String canonicalName) {
 		if (ObjectUtils.isNullOrEmpty(annotations)) {
 			return cache.canonicalTypeSignature(canonicalName);
+		}
+		return createOrCached(annotations, canonicalName);
+	}
+
+	private static CanonicalTypeSignature createOrCached(List<? extends AnnotationSignature> annotations,
+			String canonicalName) {
+		if (annotations.size() == 1) {
+			if (SimpleAnnotationSignature.INSTANCE_JAVA_LANG_OVERRIDE.equals(annotations.get(0))) {
+				AnnotatedCanonicalTypeSignature cached = CACHE_JAVA_LANG_OVERRIDE.get(canonicalName);
+				if (cached != null) {
+					return cached;
+				}
+			}
 		}
 		return new AnnotatedCanonicalTypeSignature(annotations, canonicalName);
 	}
@@ -102,6 +147,15 @@ public class AnnotatedCanonicalTypeSignature extends AnnotatedSignatureImpl impl
 		ArrayList<AnnotationSignature> annotations = new ArrayList<>();
 		this.annotations = annotations;
 		this.canonicalName = (String) JavaSerialUtils.readOpenEndedList(AnnotationSignature.class, annotations, in);
+	}
+
+	private Object readResolve() {
+		if (annotations.size() == 1) {
+			if (SimpleAnnotationSignature.INSTANCE_JAVA_LANG_OVERRIDE.equals(annotations.get(0))) {
+				return CACHE_JAVA_LANG_OVERRIDE.getOrDefault(canonicalName, this);
+			}
+		}
+		return this;
 	}
 
 	@Override

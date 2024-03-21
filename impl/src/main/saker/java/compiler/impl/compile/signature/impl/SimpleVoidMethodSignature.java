@@ -56,6 +56,12 @@ public class SimpleVoidMethodSignature extends MethodSignatureBase {
 		this.name = name;
 	}
 
+	protected SimpleVoidMethodSignature(short modifierFlags, List<? extends MethodParameterSignature> parameters,
+			String name) {
+		super(modifierFlags, parameters);
+		this.name = name;
+	}
+
 	@Override
 	public String getSimpleName() {
 		return name;

@@ -22,9 +22,11 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 
+import saker.build.thirdparty.saker.util.ObjectUtils;
 import saker.java.compiler.impl.compat.ElementKindCompatUtils;
 import saker.java.compiler.impl.compile.signature.type.impl.NoTypeSignatureImpl;
 import saker.java.compiler.impl.signature.element.MethodParameterSignature;
+import saker.java.compiler.impl.signature.element.MethodSignature;
 import saker.java.compiler.impl.signature.type.TypeSignature;
 import saker.java.compiler.jdk.impl.incremental.model.IncrementalElementsTypes;
 
@@ -40,9 +42,21 @@ public class SimpleConstructorMethodSignature extends MethodSignatureBase {
 	public SimpleConstructorMethodSignature() {
 	}
 
-	public SimpleConstructorMethodSignature(Set<Modifier> modifiers,
+	protected SimpleConstructorMethodSignature(Set<Modifier> modifiers,
 			List<? extends MethodParameterSignature> parameters) {
 		super(modifiers, parameters);
+	}
+
+	protected SimpleConstructorMethodSignature(short modifierFlags,
+			List<? extends MethodParameterSignature> parameters) {
+		super(modifierFlags, parameters);
+	}
+
+	public static MethodSignature create(Set<Modifier> modifiers, List<? extends MethodParameterSignature> parameters) {
+		if (ObjectUtils.isNullOrEmpty(parameters)) {
+			return SimpleNoArgConstructor.create(modifiers);
+		}
+		return new SimpleConstructorMethodSignature(modifiers, parameters);
 	}
 
 	@Override

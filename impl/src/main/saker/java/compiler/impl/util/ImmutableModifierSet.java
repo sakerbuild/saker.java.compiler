@@ -116,6 +116,8 @@ public final class ImmutableModifierSet extends AbstractSet<Modifier> {
 	public static final short FLAG_SEALED = 1 << 12;
 	public static final short FLAG_NON_SEALED = 1 << 13;
 
+	public static final short FLAGS_ACCESS_MODIFIERS = FLAG_PUBLIC | FLAG_PROTECTED | FLAG_PRIVATE;
+
 	public static final ImmutableModifierSet INSTANCE_NONE = new ImmutableModifierSet(FLAG_NONE);
 	public static final ImmutableModifierSet INSTANCE_PUBLIC = new ImmutableModifierSet(FLAG_PUBLIC);
 	public static final ImmutableModifierSet INSTANCE_PROTECTED = new ImmutableModifierSet(FLAG_PROTECTED);
